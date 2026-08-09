@@ -62,13 +62,17 @@ async function toPlainRequestInit(
 ): Promise<{ url: string; method: string; requestInit: UndiciRequestInit }> {
     if (typeof input === 'string' || input instanceof URL) {
         const method = (init?.method ?? 'GET').toUpperCase()
-        return { url: String(input), method, requestInit: { ...init } }
+        return { url: String(input), method, requestInit: { ...init, method } }
     }
     const method = (init?.method ?? input.method ?? 'GET').toUpperCase()
     const headers: Record<string, string> = {}
     for (const [key, value] of input.headers) headers[key] = value
     const body = input.body ? Buffer.from(await input.arrayBuffer()) : undefined
-    return { url: input.url, method, requestInit: { headers, body, ...init } }
+    return {
+        url: input.url,
+        method,
+        requestInit: { headers, body, ...init, method }
+    }
 }
 
 function makeFetch(opts: ApiClientOptions) {

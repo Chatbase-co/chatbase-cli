@@ -29,6 +29,15 @@ function headerValue(headers: unknown, name: string): string {
     return record[name] ?? record[name.toLowerCase()] ?? ''
 }
 
+// The mock reply callback's `opts.body` may arrive as a string, Buffer, or
+// Uint8Array depending on how the request body was read off the wire.
+function bodyText(body: unknown): string {
+    if (body == null) return ''
+    if (typeof body === 'string') return body
+    if (body instanceof Uint8Array) return Buffer.from(body).toString('utf8')
+    return String(body)
+}
+
 beforeEach(() => {
     mock = new MockAgent()
     mock.disableNetConnect()
@@ -80,6 +89,26 @@ describe('createApiClient', () => {
         const { data, response } = await client.GET('/health')
         expect(response.status).toBe(200)
         expect(data?.status).toBe('ok')
+    })
+
+    it('sends a POST with a JSON body as POST on the wire (not silently downgraded to GET)', async () => {
+        let seenMethod = ''
+        let seenBody = ''
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/agents', method: 'POST' })
+            .reply(201, (opts) => {
+                seenMethod = opts.method
+                seenBody = bodyText(opts.body)
+                return { id: 'agent_test' }
+            })
+        const client = createApiClient({ apiKey: 'sk-test' })
+        const { data, response } = await client.POST('/agents', {
+            body: { name: 'Test Agent' }
+        })
+        expect(response.status).toBe(201)
+        expect(data?.id).toBe('agent_test')
+        expect(seenMethod).toBe('POST')
+        expect(JSON.parse(seenBody)).toEqual({ name: 'Test Agent' })
     })
 })
 
