@@ -1,0 +1,63 @@
+{
+    "name": "chatbase",
+    "version": "0.1.0",
+    "description": "The official command-line interface for the Chatbase API v2",
+    "license": "MIT",
+    "type": "module",
+    "engines": {
+        "node": ">=20"
+    },
+    "bin": {
+        "chatbase": "./bin/run.js"
+    },
+    "files": [
+        "bin",
+        "dist",
+        "spec",
+        "oclif.manifest.json"
+    ],
+    "scripts": {
+        "build": "rm -rf dist && tsc",
+        "typecheck": "tsc --noEmit",
+        "lint": "biome check src tests scripts",
+        "test": "vitest run",
+        "spec:generate": "openapi-typescript spec/openapi.json -o src/generated/api.d.ts",
+        "spec:refresh": "bash scripts/refresh-spec.sh",
+        "spec:check": "bash scripts/spec-check.sh",
+        "prepack": "npm run build && oclif manifest"
+    },
+    "oclif": {
+        "bin": "chatbase",
+        "dirname": "chatbase",
+        "commands": "./dist/commands",
+        "topicSeparator": " ",
+        "plugins": [
+            "@oclif/plugin-help",
+            "@oclif/plugin-not-found"
+        ],
+        "topics": {
+            "auth": {
+                "description": "Log in, log out, and inspect credentials"
+            },
+            "conversations": {
+                "description": "List and inspect agent conversations"
+            }
+        }
+    },
+    "dependencies": {
+        "@inquirer/prompts": "^8.5.2",
+        "@oclif/core": "^4.13.3",
+        "@oclif/plugin-help": "^6.2.58",
+        "@oclif/plugin-not-found": "^3.2.93",
+        "openapi-fetch": "^0.17.0",
+        "undici": "^7.29.0"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^2.5.7",
+        "@types/node": "^26.2.0",
+        "oclif": "^4.23.30",
+        "openapi-typescript": "^7.13.0",
+        "typescript": "^7.0.2",
+        "vitest": "^4.1.10"
+    }
+}
