@@ -1,4 +1,7 @@
 {
+    "files": {
+        "includes": ["**", "!src/generated/**", "!spec/**"]
+    },
     "formatter": { "indentStyle": "space", "indentWidth": 4 },
     "javascript": {
         "formatter": { "quoteStyle": "single", "semicolons": "asNeeded", "trailingCommas": "none" }
