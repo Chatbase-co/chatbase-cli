@@ -1,9 +1,12 @@
-import { throwIfError } from '../client/client.js'
 import { BaseCommand } from '../base/base-command.js'
+import { throwIfError } from '../client/client.js'
 
 export default class Health extends BaseCommand {
     static override description = 'Check that the Chatbase API is reachable'
-    static override examples = ['<%= config.bin %> health', '<%= config.bin %> health --json']
+    static override examples = [
+        '<%= config.bin %> health',
+        '<%= config.bin %> health --json'
+    ]
     static override flags = { ...BaseCommand.baseFlags }
 
     protected override requireAuth = false
