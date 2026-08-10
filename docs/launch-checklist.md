@@ -31,8 +31,14 @@ _Last updated: 2026-08-09_
 ## GitHub
 
 - [x] Create `github.com/Chatbase-co/chatbase-cli` — **private** ✓ (created 2026-08-09)
-- [ ] Before flipping public: LICENSE file, SECURITY.md, issue templates,
-      branch protection on main, CODEOWNERS
+- [ ] Before flipping public: LICENSE file (✓ committed 2026-08-10), SECURITY.md,
+      issue templates, branch protection on main, CODEOWNERS
+- [ ] **Public history strategy**: internal planning docs (docs/superpowers/,
+      this checklist) live in git history and would be exposed by flipping the
+      repo public. At launch, start the public history fresh: squash to a clean
+      initial commit (or re-root the tree) WITHOUT docs/superpowers/ and
+      launch-checklist.md, and keep those docs private-side from then on.
+      gitignoring them beforehand does NOT scrub history — only this does.
 
 ## Decisions still open
 
