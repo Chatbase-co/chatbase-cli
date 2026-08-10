@@ -1,3 +1,6 @@
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import { MockAgent, setGlobalDispatcher } from 'undici'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ConversationsList from '../../src/commands/conversations/list.js'
@@ -10,10 +13,10 @@ const page1 = {
         {
             id: 'c_1',
             title: 'Refunds',
-            createdAt: '2026-08-01T00:00:00Z',
-            updatedAt: '2026-08-02T00:00:00Z',
+            createdAt: 1785542400,
+            updatedAt: 1785628800,
             userId: 'u1',
-            status: 'open'
+            status: 'ongoing'
         }
     ],
     pagination: { cursor: 'cur_2', hasMore: true, total: 2 }
@@ -23,10 +26,10 @@ const page2 = {
         {
             id: 'c_2',
             title: 'Hello',
-            createdAt: '2026-08-03T00:00:00Z',
-            updatedAt: '2026-08-03T01:00:00Z',
+            createdAt: 1785715200,
+            updatedAt: 1785718800,
             userId: 'u2',
-            status: 'closed'
+            status: 'ended'
         }
     ],
     pagination: { hasMore: false, total: 2 }
@@ -37,6 +40,10 @@ beforeEach(() => {
     mock.disableNetConnect()
     setGlobalDispatcher(mock)
     vi.stubEnv('CHATBASE_API_KEY', 'sk-test')
+    vi.stubEnv(
+        'XDG_CONFIG_HOME',
+        fs.mkdtempSync(path.join(os.tmpdir(), 'cb-conv-'))
+    )
 })
 
 afterEach(async () => {
@@ -58,7 +65,7 @@ describe('chatbase conversations list', () => {
         await ConversationsList.run(['-a', 'agt_1', '--plain'], process.cwd())
         const printed = out.mock.calls.map((c) => String(c[0])).join('')
         expect(printed).toContain(
-            'c_1\tRefunds\topen\t2026-08-01T00:00:00Z\t2026-08-02T00:00:00Z'
+            'c_1\tRefunds\tongoing\t1785542400\t1785628800'
         )
         // Next-page hint goes to stderr, never stdout:
         expect(printed).not.toContain('cur_2')
@@ -102,6 +109,30 @@ describe('chatbase conversations list', () => {
         expect(
             JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
         ).toEqual(page1)
+    })
+
+    it('renders pretty/table mode with aligned headers and numeric timestamps', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, page1)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        // Force pretty mode by stubbing stdout.isTTY
+        Object.defineProperty(process.stdout, 'isTTY', {
+            value: true,
+            configurable: true
+        })
+        await ConversationsList.run(['-a', 'agt_1'], process.cwd())
+        const printed = out.mock.calls.map((c) => String(c[0])).join('')
+        expect(printed).toContain('ID')
+        expect(printed).toContain('TITLE')
+        expect(printed).toContain('STATUS')
+        expect(printed).toContain('c_1')
+        expect(printed).toContain('Refunds')
+        expect(printed).toContain('ongoing')
     })
 
     it('fails with a usage error when no agent is resolvable', async () => {

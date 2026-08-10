@@ -54,11 +54,11 @@ export default class ConversationsList extends ListCommand {
 
         const rows = pages.flatMap((p) =>
             p.data.map((c) => ({
-                id: c.id ?? '',
-                title: c.title ?? '',
-                status: c.status ?? '',
-                createdAt: c.createdAt ?? '',
-                updatedAt: c.updatedAt ?? ''
+                id: String(c.id ?? ''),
+                title: String(c.title ?? ''),
+                status: String(c.status ?? ''),
+                createdAt: String(c.createdAt ?? ''),
+                updatedAt: String(c.updatedAt ?? '')
             }))
         )
         const last = pages.at(-1)
