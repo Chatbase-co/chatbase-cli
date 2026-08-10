@@ -709,3 +709,13 @@ git add -A && git commit -m "feat: api escape hatch, config get/set/list, docs c
 - **Coverage:** all 25 paths / 33 operations now have commands (agents 9, sources 8 incl. files host, conversations 5, messages 2, tools 1, tickets 6, helpdesk 2, health/auth/api/config/docs from Plan 1 + here). Spec §3 command tree fully realized except `chat`/`sync`/`mcp` (Plans 3–4 by design).
 - **Placeholders:** Tasks 4, 5, 7, 8, 9 compress repeated command shapes by naming the exact task whose code shape they copy (Task 2/3/6 contain the full reference implementations in this same plan) — acceptable because the reference code is in THIS document; body field names deferred to generated types are explicitly marked "generated type is the authority."
 - **Type consistency:** `readBodyData` (Task 3) consumed by Tasks 4, 8, 9, 10; `uploadFileSource` (Task 6) consumed by Task 7 and Plan 3; `listAllSources` (Task 5) consumed by Plan 3. Columns declared append-only per resource.
+
+## Carried forward from Plan 1's final review (deferred with rulings)
+
+Address opportunistically in the tasks that touch these areas:
+- `client.ts` spread-order hazard + per-request `signal` discarded — revisit in Task 10 (`api` command introduces caller-supplied request options)
+- Unbounded `--all` pagination loop (no page cap) — harden in the ListCommand pattern when stamping out list commands
+- `catch()` reads `--json`/`--no-color` via argv sniff — replace with real flag threading if/when oclif exposes parsed flags in catch
+- Test gaps (brief-inherited): interactive masked-prompt path, logout rest-preservation, status 200/401 branches, status-fallback remediations, signals.ts child-process test
+- `readUserConfig` swallows corrupted-config errors (needs UX decision: warn vs fail)
+- `spec-check.sh` /tmp → mktemp (Plan 4 release hardening); npm audit js-yaml transitive (dev-only) — re-check at release
