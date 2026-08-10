@@ -33,6 +33,7 @@
         "dirname": "chatbase",
         "commands": "./dist/commands",
         "topicSeparator": " ",
+        "additionalHelpFlags": ["-h"],
         "plugins": [
             "@oclif/plugin-help",
             "@oclif/plugin-not-found"
