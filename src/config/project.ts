@@ -23,9 +23,15 @@ export function findProjectConfig(
     for (;;) {
         const candidate = path.join(dir, 'chatbase.json')
         if (fs.existsSync(candidate)) {
-            const raw = JSON.parse(
-                fs.readFileSync(candidate, 'utf8')
-            ) as Record<string, unknown>
+            let raw: Record<string, unknown>
+            try {
+                raw = JSON.parse(fs.readFileSync(candidate, 'utf8')) as Record<
+                    string,
+                    unknown
+                >
+            } catch {
+                throw new UsageError(`${candidate} is not valid JSON`)
+            }
             const offending = Object.keys(raw).find((k) =>
                 SECRET_KEYS.includes(k.toLowerCase())
             )

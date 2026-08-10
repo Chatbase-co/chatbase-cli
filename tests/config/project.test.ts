@@ -31,4 +31,11 @@ describe('findProjectConfig', () => {
         expect(() => findProjectConfig(deep)).toThrow(UsageError)
         expect(() => findProjectConfig(deep)).toThrow(/never store secrets/i)
     })
+
+    it('throws a UsageError when chatbase.json is malformed JSON', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cb-badjson-'))
+        fs.writeFileSync(path.join(root, 'chatbase.json'), '{ not valid json')
+        expect(() => findProjectConfig(root)).toThrow(UsageError)
+        expect(() => findProjectConfig(root)).toThrow(/not valid JSON/)
+    })
 })

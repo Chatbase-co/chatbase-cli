@@ -3,10 +3,11 @@ set -euo pipefail
 # Refresh the vendored OpenAPI spec, then regenerate TypeScript types.
 #
 # Source resolution:
-#   $1 if given, else the docs-repo copy (currently the only runnable source:
-#   the private repo generator (npm run generate:openapi in ../chatbase)
-#   cannot run standalone yet — it imports Next-only modules. Once the
-#   private repo ships its routes-only generator, pass its output here.)
+#   $1 if given, else the sibling private checkout's routes-only generator
+#   (../chatbase, run via `bun scripts/generate-openapi-routes-only.ts`) is
+#   used by default and produces ../chatbase/openapi.json.
+#   The docs-repo copy is a separate, independently-maintained artifact and
+#   is known to drift from the API — never vendor it as a spec source.
 SRC="${1:-}"
 if [ -z "$SRC" ]; then
     # Default: regenerate from the sibling private checkout (routes-only generator).

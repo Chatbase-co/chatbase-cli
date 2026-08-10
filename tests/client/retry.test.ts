@@ -30,6 +30,40 @@ describe('computeRetryDelayMs', () => {
         )
     })
 
+    it('treats a value >1e11 as unix ms even when unusually large', () => {
+        const now = 1_700_000_000_000
+        // Comfortably above the 1e11 seconds/ms threshold, so it must be
+        // read as an absolute ms timestamp, not seconds.
+        const resetMs = now + 30_000
+        expect(resetMs).toBeGreaterThan(1e11)
+        expect(computeRetryDelayMs(1, String(resetMs), now)).toBe(30_000)
+    })
+
+    it('treats a value under 1e11 as unix seconds', () => {
+        const now = 1_700_000_000_000
+        const resetSeconds = Math.floor((now + 5000) / 1000)
+        expect(resetSeconds).toBeLessThan(1e11)
+        const delay = computeRetryDelayMs(1, String(resetSeconds), now)
+        // Flooring to whole seconds can lose up to ~1s of precision either
+        // way; tolerate that rounding instead of asserting an exact value.
+        expect(delay).toBeGreaterThan(3500)
+        expect(delay).toBeLessThanOrEqual(5000)
+    })
+
+    it('caps the delay at 60s even for a far-future seconds-based reset', () => {
+        const now = 1_700_000_000_000
+        const resetSeconds = Math.floor((now + 500_000) / 1000)
+        expect(computeRetryDelayMs(1, String(resetSeconds), now)).toBe(60_000)
+    })
+
+    it('falls back to a positive backoff when the reset is in the past', () => {
+        const now = 1_700_000_000_000
+        const pastSeconds = Math.floor((now - 5000) / 1000)
+        expect(
+            computeRetryDelayMs(1, String(pastSeconds), now)
+        ).toBeGreaterThan(0)
+    })
+
     it('falls back to exponential backoff without the header', () => {
         const d1 = computeRetryDelayMs(1, null, 0)
         const d2 = computeRetryDelayMs(2, null, 0)

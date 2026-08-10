@@ -1,11 +1,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { Command, Flags } from '@oclif/core'
+import { Command, Errors, Flags } from '@oclif/core'
 import type { Client } from 'openapi-fetch'
 import { createApiClient } from '../client/client.js'
-import { installSigintHandler } from '../client/signals.js'
+import { installSigintHandler, wasInterrupted } from '../client/signals.js'
 import { logsDir } from '../config/paths.js'
-import { resolveApiKey } from '../config/resolve.js'
+import { resolveApiKey, resolveTimeoutMs } from '../config/resolve.js'
 import { ApiError, formatApiError, UsageError } from '../errors/errors.js'
 import type { paths } from '../generated/api.js'
 import { colorEnabled, type Palette, paint } from '../output/color.js'
@@ -13,6 +13,51 @@ import { type OutputMode, selectMode } from '../output/mode.js'
 import { type Column, renderPlain, renderTable } from '../output/render.js'
 
 const ISSUES_URL = 'https://github.com/Chatbase-co/chatbase-cli/issues/new'
+
+type CliError = Error & { oclif?: { exit?: number } }
+
+/** True for parser/validation errors oclif itself raises (unknown flag, bad --limit, etc). */
+function isCliError(err: unknown): err is CliError {
+    if (err instanceof Errors.CLIError) return true
+    const withOclif = err as { oclif?: { exit?: number } } | null | undefined
+    return typeof withOclif?.oclif?.exit === 'number'
+}
+
+/** True for fetch's AbortSignal.timeout() firing (a TimeoutError DOMException). */
+function isTimeoutError(err: unknown): boolean {
+    const e = err as { name?: string; message?: string } | null | undefined
+    if (e?.name === 'TimeoutError') return true
+    if (typeof DOMException !== 'undefined' && err instanceof DOMException) {
+        return /timeout/i.test(e?.message ?? '')
+    }
+    return false
+}
+
+export type ClassifiedError =
+    | { kind: 'usage'; error: UsageError }
+    | { kind: 'api'; error: ApiError }
+    | { kind: 'cli'; error: CliError }
+    | { kind: 'interrupted' }
+    | { kind: 'timeout' }
+    | { kind: 'unexpected'; error: unknown }
+
+/**
+ * Sorts a caught error into how BaseCommand#catch should present it. Kept
+ * separate from catch() so the classification logic — which error types get
+ * which exit code and message shape — can be unit-tested without going
+ * through oclif's Command lifecycle.
+ */
+export function classifyError(err: unknown): ClassifiedError {
+    if (err instanceof UsageError) return { kind: 'usage', error: err }
+    if (err instanceof ApiError) return { kind: 'api', error: err }
+    if (isCliError(err)) return { kind: 'cli', error: err }
+    if (isTimeoutError(err)) return { kind: 'timeout' }
+    const name = (err as { name?: string } | null | undefined)?.name
+    if (name === 'AbortError') {
+        return wasInterrupted() ? { kind: 'interrupted' } : { kind: 'timeout' }
+    }
+    return { kind: 'unexpected', error: err }
+}
 
 type BaseFlags = {
     json?: boolean
@@ -100,21 +145,51 @@ export abstract class BaseCommand extends Command {
     }
 
     override async catch(err: unknown): Promise<never> {
-        const flags = {} as BaseFlags
-        if (err instanceof UsageError) {
-            process.stderr.write(`${err.message}\n`)
+        // catch() runs before flags are parsed (or parsing itself is what
+        // failed), so there's no `flags` object yet — sniff argv directly,
+        // same trick already used for --json below.
+        const flags = {
+            'no-color': process.argv.includes('--no-color')
+        } as BaseFlags
+        const classified = classifyError(err)
+
+        if (classified.kind === 'usage') {
+            process.stderr.write(`${classified.error.message}\n`)
             this.exit(2)
         }
-        if (err instanceof ApiError) {
+        if (classified.kind === 'api') {
             if (process.argv.includes('--json')) {
                 process.stderr.write(
-                    `${JSON.stringify({ error: { code: err.code, message: err.message, details: err.details } }, null, 2)}\n`
+                    `${JSON.stringify({ error: { code: classified.error.code, message: classified.error.message, details: classified.error.details } }, null, 2)}\n`
                 )
             } else {
                 process.stderr.write(
-                    `${formatApiError(err, this.palette(flags))}\n`
+                    `${formatApiError(classified.error, this.palette(flags))}\n`
                 )
             }
+            this.exit(1)
+        }
+        if (classified.kind === 'cli') {
+            // An oclif parser/validation error (unknown flag, bad value,
+            // etc). Let oclif's own handling print and exit — it already
+            // knows the right exit code (usage errors are 2) and message;
+            // treating it as "unexpected" would be misleading and would
+            // send the user to file a bug report for their own typo.
+            await super.catch(classified.error)
+            // super.catch() always throws when err.message is set (true for
+            // every CLIError), so this is unreachable in practice — kept as
+            // a defensive fallback that still honors the error's exit code.
+            this.exit(classified.error.oclif?.exit ?? 2)
+        }
+        if (classified.kind === 'interrupted') {
+            // installSigintHandler() already printed "Interrupted" — say
+            // nothing further, just exit 130 as the signal convention expects.
+            this.exit(130)
+        }
+        if (classified.kind === 'timeout') {
+            process.stderr.write(
+                `✗ Request timed out after ${resolveTimeoutMs()}ms (set CHATBASE_TIMEOUT to change)\n`
+            )
             this.exit(1)
         }
         // Unexpected: short message + full detail to a log file + pre-filled issue URL.

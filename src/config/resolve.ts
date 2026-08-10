@@ -1,4 +1,5 @@
 import fs from 'node:fs'
+import { UsageError } from '../errors/errors.js'
 import { findProjectConfig } from './project.js'
 import { readUserConfig } from './store.js'
 
@@ -12,7 +13,14 @@ export function resolveApiKey(): Resolved | undefined {
     const file = process.env.CHATBASE_API_KEY_FILE
     const env = process.env.CHATBASE_API_KEY
     if (file && file.length > 0) {
-        const value = fs.readFileSync(file, 'utf8').trim()
+        let value: string
+        try {
+            value = fs.readFileSync(file, 'utf8').trim()
+        } catch {
+            throw new UsageError(
+                `CHATBASE_API_KEY_FILE points to an unreadable file: ${file}`
+            )
+        }
         return {
             value,
             source: 'CHATBASE_API_KEY_FILE',

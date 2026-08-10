@@ -1,7 +1,17 @@
 import { Flags } from '@oclif/core'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { BaseCommand } from '../../src/base/base-command.js'
+import { BaseCommand, classifyError } from '../../src/base/base-command.js'
 import { ApiError, UsageError } from '../../src/errors/errors.js'
+
+// classifyError() delegates to wasInterrupted() to tell an interrupted abort
+// apart from a genuine timeout abort. Mock the module so tests can flip that
+// without actually sending SIGINT to the test process.
+let interrupted = false
+vi.mock('../../src/client/signals.js', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('../../src/client/signals.js')>()
+    return { ...actual, wasInterrupted: () => interrupted }
+})
 
 class Probe extends BaseCommand {
     static override flags = { ...BaseCommand.baseFlags, boom: Flags.string() }
@@ -59,5 +69,68 @@ describe('BaseCommand', () => {
         await Probe.run(['--quiet', '--plain'], process.cwd())
         expect(out.mock.calls.length).toBeGreaterThan(0)
         expect(err.mock.calls.map((c) => String(c[0])).join('')).toBe('')
+    })
+
+    it('rejects an unknown flag with oclif exit 2 and no bug-report URL', async () => {
+        const errWrite = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            Probe.run(['--totally-not-a-flag'], process.cwd())
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        const stderr = errWrite.mock.calls.map((c) => String(c[0])).join('')
+        // A typo'd flag is the user's mistake, not ours — it must not be
+        // routed through the "unexpected error" path that invites a bug report.
+        expect(stderr).not.toContain('issues/new')
+    })
+})
+
+describe('classifyError', () => {
+    afterEach(() => {
+        interrupted = false
+        vi.restoreAllMocks()
+    })
+
+    it('classifies UsageError as kind "usage"', () => {
+        const err = new UsageError('bad usage')
+        expect(classifyError(err)).toEqual({ kind: 'usage', error: err })
+    })
+
+    it('classifies ApiError as kind "api"', () => {
+        const err = new ApiError({
+            code: 'SERVER_ERROR',
+            message: 'boom',
+            status: 500
+        })
+        expect(classifyError(err)).toEqual({ kind: 'api', error: err })
+    })
+
+    it('classifies a fetch timeout (AbortSignal.timeout) as kind "timeout"', () => {
+        const err = {
+            name: 'TimeoutError',
+            message: 'The operation timed out.'
+        }
+        expect(classifyError(err)).toEqual({ kind: 'timeout' })
+    })
+
+    it('classifies an AbortError as "interrupted" when SIGINT fired', () => {
+        interrupted = true
+        const err = {
+            name: 'AbortError',
+            message: 'This operation was aborted'
+        }
+        expect(classifyError(err)).toEqual({ kind: 'interrupted' })
+    })
+
+    it('classifies an AbortError as "timeout" when no SIGINT fired', () => {
+        interrupted = false
+        const err = {
+            name: 'AbortError',
+            message: 'This operation was aborted'
+        }
+        expect(classifyError(err)).toEqual({ kind: 'timeout' })
+    })
+
+    it('classifies anything else as "unexpected"', () => {
+        const err = new Error('something broke')
+        expect(classifyError(err)).toEqual({ kind: 'unexpected', error: err })
     })
 })

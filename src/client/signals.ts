@@ -6,6 +6,11 @@ export function getSigintSignal(): AbortSignal {
     return controller.signal
 }
 
+/** True once SIGINT has been received at least once (see installSigintHandler). */
+export function wasInterrupted(): boolean {
+    return interrupts > 0
+}
+
 export function installSigintHandler(): void {
     if (installed) return
     installed = true

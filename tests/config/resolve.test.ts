@@ -7,9 +7,20 @@ import {
     resolveApiKey,
     resolveTimeoutMs
 } from '../../src/config/resolve.js'
+import { UsageError } from '../../src/errors/errors.js'
 
 describe('resolveApiKey', () => {
     afterEach(() => vi.unstubAllEnvs())
+
+    it('throws a UsageError naming the path when CHATBASE_API_KEY_FILE is unreadable', () => {
+        const missing = path.join(
+            fs.mkdtempSync(path.join(os.tmpdir(), 'cb-key-missing-')),
+            'does-not-exist'
+        )
+        vi.stubEnv('CHATBASE_API_KEY_FILE', missing)
+        expect(() => resolveApiKey()).toThrow(UsageError)
+        expect(() => resolveApiKey()).toThrow(missing)
+    })
 
     it('CHATBASE_API_KEY_FILE beats CHATBASE_API_KEY, with a warning', () => {
         const f = path.join(
