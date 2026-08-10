@@ -4,6 +4,8 @@
     "description": "The official command-line interface for the Chatbase API v2",
     "license": "MIT",
     "type": "module",
+    "bugs": "https://github.com/Chatbase-co/chatbase-cli/issues",
+    "homepage": "https://www.chatbase.co/docs",
     "engines": {
         "node": ">=20"
     },

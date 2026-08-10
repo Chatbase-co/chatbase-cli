@@ -13,4 +13,23 @@ describe('scaffold', () => {
         const out = execFileSync('node', ['bin/run.js'], { encoding: 'utf8' })
         expect(out).toMatch(/USAGE|COMMANDS|TOPICS/)
     })
+
+    it('command help shows examples and docs link', () => {
+        const out = execFileSync(
+            'node',
+            ['bin/run.js', 'auth', 'login', '--help'],
+            { encoding: 'utf8' }
+        )
+        expect(out).toContain('EXAMPLES')
+        expect(out).toContain('auth login')
+    })
+
+    it('trailing -h anywhere shows help', () => {
+        const out = execFileSync(
+            'node',
+            ['bin/run.js', 'conversations', 'list', '-h'],
+            { encoding: 'utf8' }
+        )
+        expect(out).toContain('USAGE')
+    })
 })
