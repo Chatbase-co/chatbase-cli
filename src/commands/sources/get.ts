@@ -1,7 +1,7 @@
 import { Args } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
+import { SOURCE_COLUMNS, toSourceRow } from '../../base/sources.js'
 import { throwIfError } from '../../client/client.js'
-import { SOURCE_COLUMNS, toSourceRow } from './shared.js'
 
 export default class SourcesGet extends AgentCommand {
     static override description = 'Show one source'

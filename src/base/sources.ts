@@ -1,8 +1,8 @@
 import type { Client } from 'openapi-fetch'
-import { throwIfError } from '../../client/client.js'
-import type { paths } from '../../generated/api.js'
-import type { OutputMode } from '../../output/mode.js'
-import type { Column } from '../../output/render.js'
+import { throwIfError } from '../client/client.js'
+import type { paths } from '../generated/api.js'
+import type { OutputMode } from '../output/mode.js'
+import type { Column } from '../output/render.js'
 
 /**
  * Stable shape a source is reduced to for display and for other commands

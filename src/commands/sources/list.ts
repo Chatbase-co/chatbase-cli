@@ -1,6 +1,6 @@
 import { ListCommand } from '../../base/list-command.js'
+import { SOURCE_COLUMNS, toSourceRow } from '../../base/sources.js'
 import { throwIfError } from '../../client/client.js'
-import { SOURCE_COLUMNS, toSourceRow } from './shared.js'
 
 export default class SourcesList extends ListCommand {
     static override description = 'List sources for an agent'
