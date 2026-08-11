@@ -24,6 +24,12 @@ export class ApiError extends Error {
     }
 }
 
+/**
+ * Remediation advice appended to API errors, resolved in two tiers:
+ * exact error code first (this map), HTTP status fallback second
+ * (STATUS_REMEDIATIONS). The server's own message always prints; these
+ * only add "here's what to do about it".
+ */
 const REMEDIATIONS: Record<string, string> = {
     AUTH_MISSING_API_KEY:
         'Run `chatbase auth login`, or set CHATBASE_API_KEY. Keys live in chatbase.co → Workspace Settings → API Keys.',
@@ -36,6 +42,14 @@ const REMEDIATIONS: Record<string, string> = {
     VALIDATION_INVALID_BODY: 'Fix the fields above and retry.'
 }
 
+/**
+ * Fallback tier: best-guess advice for error CODES this CLI version doesn't
+ * know (e.g. the API added one after this release), keyed by HTTP status.
+ * These are bets on the most likely cause — when a counterexample appears,
+ * give its code a precise REMEDIATIONS entry instead of editing the guess
+ * here (that's how PERMISSION_DENIED got promoted; the 403 below assumes
+ * the only un-coded 403 is the subscription gate).
+ */
 const STATUS_REMEDIATIONS: Record<number, string> = {
     403: 'API access requires the Standard plan or higher — upgrade at chatbase.co.',
     404: 'Resource not found — check the ID (agent IDs live in your dashboard).',
