@@ -1,6 +1,7 @@
 /**
  * Every path the CLI touches on disk, per the XDG Base Directory spec —
- * config (worth backing up), state/logs (history), cache (disposable).
+ * config (user-created, not regenerable), state/logs (machine-generated
+ * history), cache (disposable — cleanup tools may purge it anytime).
  * These three directories are the CLI's ENTIRE disk footprint; the README's
  * uninstall instructions promise exactly them, so never write anywhere else.
  *
