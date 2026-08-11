@@ -25,3 +25,19 @@ export async function readBodyData(
         )
     }
 }
+
+/**
+ * Resolve a flag value into a raw string, honoring the same @file/@- indirection
+ * as readBodyData but without the JSON parse — for flags like --content that
+ * carry free text rather than a JSON body.
+ */
+export async function readTextInput(value: string): Promise<string> {
+    if (value === '@-') {
+        if (process.stdin.isTTY) throw new UsageError('@- expects piped stdin.')
+        let raw = ''
+        for await (const chunk of process.stdin) raw += chunk
+        return raw
+    }
+    if (value.startsWith('@')) return fs.readFileSync(value.slice(1), 'utf8')
+    return value
+}
