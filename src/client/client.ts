@@ -18,9 +18,7 @@ export const DEFAULT_BASE_URL = 'https://www.chatbase.co/api/v2'
 
 /**
  * Base-URL resolution: explicit option > CHATBASE_API_URL env > production.
- * The env override exists for developing against a local API server
- * (e.g. CHATBASE_API_URL=http://localhost:3000/api/v2); it is not
- * documented for end users.
+ * The env override exists for developing against a local API server.
  */
 export function resolveBaseUrl(explicit?: string): string {
     if (explicit) return explicit
