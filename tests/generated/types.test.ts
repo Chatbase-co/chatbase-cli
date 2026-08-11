@@ -6,6 +6,8 @@ type HealthOp = paths['/health']['get']
 type ListConvsOp = paths['/agents/{agentId}/conversations']['get']
 type ListSourcesOp = paths['/agents/{agentId}/sources']['get']
 type ListAgentsOp = paths['/agents']['get']
+type CreateAgentOp = paths['/agents']['post']
+type TicketsOp = paths['/agents/{agentId}/helpdesk/tickets']['get']
 
 const healthHas200: HealthOp extends { responses: { 200: unknown } }
     ? true
@@ -21,6 +23,12 @@ const sourcesPresent: ListSourcesOp extends { responses: { 200: unknown } }
 const agentsPresent: ListAgentsOp extends { responses: { 200: unknown } }
     ? true
     : false = true
+const agentsCreatable: CreateAgentOp extends { requestBody?: unknown }
+    ? true
+    : false = true
+const ticketsPresent: TicketsOp extends { responses: { 200: unknown } }
+    ? true
+    : false = true
 
 describe('generated types', () => {
     it('cover the endpoints this plan builds on', () => {
@@ -28,5 +36,7 @@ describe('generated types', () => {
         expect(listTakesCursor).toBe(true)
         expect(sourcesPresent).toBe(true)
         expect(agentsPresent).toBe(true)
+        expect(agentsCreatable).toBe(true)
+        expect(ticketsPresent).toBe(true)
     })
 })
