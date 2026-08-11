@@ -58,14 +58,16 @@ export default class AgentsList extends BaseCommand {
             }))
         )
         const last = pages.at(-1)
-        this.printData(
-            flags,
+        // --json must stay the raw API shape even when --all merges pages
+        const raw =
             pages.length === 1
                 ? pages[0]
-                : { data: rows, pagination: last?.pagination },
-            rows,
-            COLUMNS
-        )
+                : {
+                      data: pages.flatMap((p) => p.data),
+                      pagination: last?.pagination
+                  }
+
+        this.printData(flags, raw, rows, COLUMNS)
         if (!flags.all && last?.pagination.hasMore && last.pagination.cursor) {
             this.note(
                 flags,

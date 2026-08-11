@@ -17,9 +17,22 @@ const agent = {
     autoRetrain: false
 }
 
+const agent2 = {
+    id: 'agt_2',
+    name: 'Sales Bot',
+    model: 'gpt-4o',
+    visibility: 'public',
+    autoRetrain: true
+}
+
 const listPage1 = {
     data: [agent],
-    pagination: { cursor: null, hasMore: false, total: 1 }
+    pagination: { cursor: 'cur_2', hasMore: true, total: 2 }
+}
+
+const listPage2 = {
+    data: [agent2],
+    pagination: { cursor: null, hasMore: false, total: 2 }
 }
 
 beforeEach(() => {
@@ -58,6 +71,47 @@ describe('chatbase agents list', () => {
         const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
         await AgentsList.run(['--json'], process.cwd())
         expect(JSON.parse(out.mock.calls.join(''))).toEqual(listPage1)
+    })
+
+    it('--all follows pagination to the end', async () => {
+        const pool = mock.get(BASE)
+        pool.intercept({ path: '/api/v2/agents', method: 'GET' }).reply(
+            200,
+            listPage1
+        )
+        pool.intercept({
+            path: '/api/v2/agents',
+            method: 'GET',
+            query: { cursor: 'cur_2' }
+        }).reply(200, listPage2)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await AgentsList.run(['--plain', '--all'], process.cwd())
+        const printed = out.mock.calls.map((c) => String(c[0])).join('')
+        expect(printed).toContain('agt_1')
+        expect(printed).toContain('agt_2')
+    })
+
+    it('--all --json emits raw items from every page, not display rows', async () => {
+        const pool = mock.get(BASE)
+        pool.intercept({ path: '/api/v2/agents', method: 'GET' }).reply(
+            200,
+            listPage1
+        )
+        pool.intercept({
+            path: '/api/v2/agents',
+            method: 'GET',
+            query: { cursor: 'cur_2' }
+        }).reply(200, listPage2)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await AgentsList.run(['--json', '--all'], process.cwd())
+        expect(
+            JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
+        ).toEqual({
+            data: [agent, agent2],
+            pagination: listPage2.pagination
+        })
     })
 })
 
