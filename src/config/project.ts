@@ -1,3 +1,18 @@
+/**
+ * Reader for `chatbase.json` — a file OUR USERS commit to THEIR project
+ * repos to share settings with teammates and CI ("this repo talks to agent
+ * X"), the way package.json pins a project's dependencies. Discovered by
+ * walking up from the working directory, git-style, so commands work from
+ * any subdirectory; absence is normal, not an error.
+ *
+ * Sits third in the precedence chain: flag > env > this file > user config.
+ *
+ * Because this file is designed to be committed, secret-shaped keys in it
+ * mean a credential is about to enter git history — we refuse to run
+ * rather than merely warn. The SECRET_KEYS match is deliberately broad
+ * ('key' catches innocents): a false refusal costs a rename, a leaked
+ * credential costs a rotation.
+ */
 import fs from 'node:fs'
 import path from 'node:path'
 import { UsageError } from '../errors/errors.js'
