@@ -84,6 +84,21 @@ describe('auth login --with-token', () => {
         expect(readUserConfig().apiKey).toBeUndefined()
     })
 
+    it('errors instead of hanging when stdin is a TTY', {
+        timeout: 2000
+    }, async () => {
+        // A TTY stdin that never ends: the command must not block on it
+        const stdin = new Readable({
+            read() {}
+        }) as unknown as NodeJS.ReadStream & { fd: 0 }
+        Object.defineProperty(stdin, 'isTTY', { value: true })
+        vi.spyOn(process, 'stdin', 'get').mockReturnValue(stdin)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            Login.run(['--with-token'], process.cwd())
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+    })
+
     it('refuses to prompt with --no-input and no token', async () => {
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await expect(

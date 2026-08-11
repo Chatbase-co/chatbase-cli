@@ -111,6 +111,31 @@ describe('chatbase conversations list', () => {
         ).toEqual(page1)
     })
 
+    it('--all --json emits raw items from every page, not display rows', async () => {
+        const pool = mock.get(BASE)
+        pool.intercept({
+            path: '/api/v2/agents/agt_1/conversations',
+            method: 'GET'
+        }).reply(200, page1)
+        pool.intercept({
+            path: '/api/v2/agents/agt_1/conversations',
+            method: 'GET',
+            query: { cursor: 'cur_2' }
+        }).reply(200, page2)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run(
+            ['-a', 'agt_1', '--json', '--all'],
+            process.cwd()
+        )
+        expect(
+            JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
+        ).toEqual({
+            data: [...page1.data, ...page2.data],
+            pagination: page2.pagination
+        })
+    })
+
     it('renders pretty/table mode with aligned headers and numeric timestamps', async () => {
         mock.get(BASE)
             .intercept({

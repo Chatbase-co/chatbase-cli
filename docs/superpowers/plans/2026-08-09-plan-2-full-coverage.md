@@ -730,3 +730,10 @@ Address opportunistically in the tasks that touch these areas:
 - Test gaps (brief-inherited): interactive masked-prompt path, logout rest-preservation, status 200/401 branches, status-fallback remediations, signals.ts child-process test
 - `readUserConfig` swallows corrupted-config errors (needs UX decision: warn vs fail)
 - `spec-check.sh` /tmp → mktemp (Plan 4 release hardening); npm audit js-yaml transitive (dev-only) — re-check at release
+
+Minor items from the 2026-08-11 pre-merge review (Important findings were fixed on the branch):
+- `--json` API errors emit only the raw envelope; spec §7 says errors always surface `x-request-id` — consider adding `requestId` (and `status`) alongside the envelope in `base-command.ts` when Task 10 touches error output
+- `client.ts` retry path drops 429/5xx responses without `body.cancel()` — add one line before the retry sleep; also note the `toPlainRequestInit` spread lets a future `requestInitExt.headers` clobber merged Authorization/User-Agent headers (fold into the existing Task 10 spread-order item)
+- `conversations-list.test.ts` hygiene: pretty-mode test redefines `process.stdout.isTTY` without restoring; no-agent test passes `'/tmp'` as oclif root believing it sets cwd (passes only while no `chatbase.json` exists above the repo) — fix when stamping out list-command tests
+- `auth status` key masking: `slice(-4)` on a key ≤4 chars prints the whole key — only show the tail when length > 8
+- CI workflow: add a `permissions:` block and a `concurrency` group before the repo goes public
