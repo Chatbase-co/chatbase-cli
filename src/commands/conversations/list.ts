@@ -62,10 +62,14 @@ export default class ConversationsList extends ListCommand {
             }))
         )
         const last = pages.at(-1)
+        // --json must stay the raw API shape even when --all merges pages
         const raw =
             pages.length === 1
                 ? pages[0]
-                : { data: rows, pagination: last?.pagination }
+                : {
+                      data: pages.flatMap((p) => p.data),
+                      pagination: last?.pagination
+                  }
 
         this.printData(flags, raw, rows, COLUMNS)
         if (!flags.all && last?.pagination.hasMore && last.pagination.cursor) {

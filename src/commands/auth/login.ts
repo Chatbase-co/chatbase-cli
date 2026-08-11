@@ -32,6 +32,10 @@ export default class AuthLogin extends BaseCommand {
 
         let key: string
         if (flags['with-token']) {
+            if (process.stdin.isTTY)
+                throw new UsageError(
+                    '--with-token reads the key from stdin. Pipe it: chatbase auth login --with-token < key.txt'
+                )
             key = await readStdinToEnd()
             if (!key) throw new UsageError('No token received on stdin.')
         } else if (process.stdin.isTTY && !flags['no-input']) {

@@ -212,6 +212,17 @@ git add -A && git commit -m "feat: agents list/get"
 
 ---
 
+### Task 2b: Agent name resolution (added 2026-08-11, user decision)
+
+**Files:**
+- Create: `src/base/agent-ref.ts` — `resolveAgentRef(client, ref: string): Promise<string>`
+- Modify: `src/base/agent-command.ts` (`agentId()` uses it for the FLAG value only), Task 10's `config set agent` (interactive picker)
+- Test: `tests/base/agent-ref.test.ts`
+
+**Contract (Option A from review discussion):** the `-a` flag accepts an agent ID or an exact display name. IDs pass through untouched (zero extra requests — match against a fetched list only when the value fails an ID-shaped fast path or the direct use 404s… simplest deterministic rule: fetch `GET /agents` pages once, match `id` first, then exact `name`). Name matched once → proceed, echoing `→ <id>` via note() so users learn the ID to pin in scripts; multiple matches → UsageError listing candidates with IDs; none → UsageError suggesting `chatbase agents list`. Env var, `chatbase.json`, and user config remain **ID-only** (names are for fingers, IDs are for scripts — renames must never silently retarget durable config). Scoped keys lacking `agents:read` will surface PERMISSION_DENIED from the list call — acceptable, remediation already exists. Task 10 addition: `config set agent` with no value presents a numbered picker over the same list.
+
+---
+
 ### Task 3: `agents create` / `update` / `delete` / `clone`
 
 **Files:**
