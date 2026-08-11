@@ -56,14 +56,16 @@ const STATUS_REMEDIATIONS: Record<number, string> = {
     429: 'Rate limited — the CLI already retried; wait for the reset and try again.'
 }
 
-type Envelope = { error: { code: string; message: string; details?: unknown } }
+type ErrorEnvelope = {
+    error: { code: string; message: string; details?: unknown }
+}
 
-function isEnvelope(body: unknown): body is Envelope {
+function isErrorEnvelope(body: unknown): body is ErrorEnvelope {
     return (
         typeof body === 'object' &&
         body !== null &&
-        typeof (body as Envelope).error === 'object' &&
-        typeof (body as Envelope).error?.code === 'string'
+        typeof (body as ErrorEnvelope).error === 'object' &&
+        typeof (body as ErrorEnvelope).error?.code === 'string'
     )
 }
 
@@ -72,7 +74,7 @@ export function parseErrorResponse(
     body: unknown,
     requestId?: string
 ): ApiError {
-    if (isEnvelope(body)) {
+    if (isErrorEnvelope(body)) {
         const { code, message, details } = body.error
         return new ApiError({
             code,
