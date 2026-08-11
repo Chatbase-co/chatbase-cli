@@ -23,7 +23,9 @@ three audiences with equal priority:
   25 paths as of 2026-08-06 — including the agents CRUD and helpdesk groups
   added that week).
 - Interactive **chat REPL** with SSE streaming (`chatbase chat`).
-- **MCP server mode** (`chatbase mcp`) exposing API operations as typed tools.
+- ~~**MCP server mode** (`chatbase mcp`)~~ — **descoped from v1 (2026-08-11,
+  user decision); deferred to a future release.** §12 remains the design for
+  when it's greenlit. Agent-driven usage in v1 is served by the CLI itself.
 - **Raw API escape hatch** (`chatbase api <method> <path>`) for endpoints that
   ship before the CLI updates.
 - **`sources sync <dir>`** — converge an agent's file sources to a local folder.

@@ -2,6 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **SCOPE CHANGE (2026-08-11, user decision):** the MCP server is DEFERRED
+> past v1.0 — "probably no MCP server this time, maybe in the future."
+> **Skip Tasks 1–3** (tool defs, server, `mcp` command) and the
+> `@modelcontextprotocol/sdk` dependency. Execute Tasks 4–7 only (release
+> pipeline, Windows CI, e2e smoke, launch). Tasks 1–3 remain below as the
+> ready-made plan for whenever MCP is greenlit; their tool-name interface
+> freeze only takes effect if/when they ship. Agent-driven usage in v1 is
+> served by the CLI itself (--json, exit codes, uniform help).
+
 **Goal:** `chatbase mcp` — a stdio MCP server exposing every API operation as a typed tool — plus the full release machinery: release-please, npm publish with provenance, auto-generated README reference, Windows CI, and a gated e2e smoke suite. Ends with the CLI ready for its public v1.0.0.
 
 **Architecture:** MCP tools are *derived from the vendored OpenAPI spec at build time* — the same contract that feeds the typed client — via a small builder that walks `spec/openapi.json` operations and emits tool definitions (name, description, JSON-Schema input, annotations). A dispatcher maps tool calls onto `rawApiFetch`. Release automation is configuration on top of Plan 1's CI.
