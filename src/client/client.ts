@@ -58,14 +58,17 @@ function dispatcher() {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 /**
- * openapi-fetch invokes its custom `fetch` as `fetch(request, requestInitExt)`,
- * where `request` is built from the platform's global `Request` class. That is a
- * different realm/module instance than the standalone `undici` package's own
- * `Request` class, so `undici`'s internal brand-check fails to recognize it,
- * silently stringifies it, and then fails to parse a URL from "[object Request]".
- * `rawApiFetch` below calls this same function with a plain URL string instead.
- * Normalize both shapes into plain fetch args so the foreign `Request` object
- * never has to survive undici's identity check.
+ * Node's global `Request` and the undici package's `Request` are two copies
+ * of the same class — and undici rejects objects made by the other copy
+ * (it stringifies them and tries to use "[object Request]" as the URL).
+ * openapi-fetch hands us Node-flavored Request objects, so we unpack them
+ * into plain values (url, method, headers, body) that can't fail any
+ * identity check. Also accepts plain URL strings (the rawApiFetch path),
+ * normalizing both shapes into one.
+ *
+ * When touching this: url, METHOD, headers, and body must ALL survive the
+ * unpacking — method was once dropped here, silently turning every request
+ * into a GET (caught by review; wire-level tests now pin it).
  */
 async function toPlainRequestInit(
     input: string | URL | Request,
