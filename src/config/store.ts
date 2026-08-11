@@ -16,6 +16,17 @@ export function readUserConfig(): UserConfig {
     }
 }
 
+/**
+ * Atomic write: full JSON into a temp file, then rename over config.json.
+ * A crash/Ctrl-C at any line leaves either the complete old file or the
+ * complete new one — never a truncated config holding half an API key.
+ *
+ * Load-bearing details: the temp file MUST live in the destination
+ * directory (rename is only atomic within one filesystem — /tmp may be
+ * another); the PID suffix keeps concurrent CLI processes from clobbering
+ * each other's in-flight writes. Modes: dir 0700 / file 0600, since this
+ * file stores the credential.
+ */
 export function writeUserConfig(config: UserConfig): void {
     fs.mkdirSync(configDir(), { recursive: true, mode: 0o700 })
     const tmp = path.join(configDir(), `.config.json.tmp-${process.pid}`)
