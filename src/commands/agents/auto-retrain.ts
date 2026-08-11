@@ -19,20 +19,16 @@ export default class AgentsAutoRetrain extends BaseCommand {
         ...BaseCommand.baseFlags,
         enabled: Flags.boolean({
             description: 'Enable automatic retraining',
-            exclusive: ['disabled']
+            exactlyOne: ['enabled', 'disabled']
         }),
         disabled: Flags.boolean({
             description: 'Disable automatic retraining',
-            exclusive: ['enabled']
+            exactlyOne: ['enabled', 'disabled']
         })
     }
 
     async run(): Promise<void> {
         const { args, flags } = await this.parse(AgentsAutoRetrain)
-
-        if (!flags.enabled && !flags.disabled) {
-            this.error('Specify either --enabled or --disabled')
-        }
 
         const client = this.apiClient(flags)
         const { error, response } = await client.PUT(

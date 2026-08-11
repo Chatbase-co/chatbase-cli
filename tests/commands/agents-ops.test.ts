@@ -38,7 +38,7 @@ describe('chatbase agents train', () => {
     it('agents train posts and reports', async () => {
         mock.get(BASE)
             .intercept({ path: '/api/v2/agents/agt_1/train', method: 'POST' })
-            .reply(200, { data: { status: 'queued' } })
+            .reply(200, { success: true })
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await AgentsTrain.run(['agt_1'], process.cwd())
         expect(err.mock.calls.join('')).toContain('Training started')
@@ -76,6 +76,25 @@ describe('chatbase agents auto-retrain', () => {
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await AgentsAutoRetrain.run(['agt_1', '--disabled'], process.cwd())
         expect(JSON.parse(sent)).toMatchObject({ enabled: false })
+    })
+
+    it('agents auto-retrain without flags rejects with oclif exit 2', async () => {
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            AgentsAutoRetrain.run(['agt_1'], process.cwd())
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        expect(err.mock.calls.join('')).not.toContain('issues/new')
+    })
+
+    it('agents auto-retrain with both flags rejects with oclif exit 2', async () => {
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            AgentsAutoRetrain.run(
+                ['agt_1', '--enabled', '--disabled'],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        expect(err.mock.calls.join('')).not.toContain('issues/new')
     })
 })
 
