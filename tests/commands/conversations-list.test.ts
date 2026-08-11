@@ -35,6 +35,19 @@ const page2 = {
     pagination: { hasMore: false, total: 2 }
 }
 
+// Single-page GET /agents response used whenever a test resolves the -a
+// flag through resolveAgentRef() (i.e. whenever -a is passed at all).
+const agentsPage = {
+    data: [{ id: 'agt_1', name: 'Support Bot' }],
+    pagination: { cursor: null, hasMore: false, total: 1 }
+}
+
+function mockAgentsList() {
+    mock.get(BASE)
+        .intercept({ path: '/api/v2/agents', method: 'GET' })
+        .reply(200, agentsPage)
+}
+
 beforeEach(() => {
     mock = new MockAgent()
     mock.disableNetConnect()
@@ -54,6 +67,7 @@ afterEach(async () => {
 
 describe('chatbase conversations list', () => {
     it('renders a plain TSV row per conversation with stable column order', async () => {
+        mockAgentsList()
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/conversations',
@@ -75,6 +89,7 @@ describe('chatbase conversations list', () => {
     })
 
     it('--all follows pagination to the end', async () => {
+        mockAgentsList()
         const pool = mock.get(BASE)
         pool.intercept({
             path: '/api/v2/agents/agt_1/conversations',
@@ -97,6 +112,7 @@ describe('chatbase conversations list', () => {
     })
 
     it('--json emits the raw API envelope', async () => {
+        mockAgentsList()
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/conversations',
@@ -112,6 +128,7 @@ describe('chatbase conversations list', () => {
     })
 
     it('--all --json emits raw items from every page, not display rows', async () => {
+        mockAgentsList()
         const pool = mock.get(BASE)
         pool.intercept({
             path: '/api/v2/agents/agt_1/conversations',
@@ -137,6 +154,7 @@ describe('chatbase conversations list', () => {
     })
 
     it('renders pretty/table mode with aligned headers and numeric timestamps', async () => {
+        mockAgentsList()
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/conversations',
@@ -166,5 +184,100 @@ describe('chatbase conversations list', () => {
         await expect(
             ConversationsList.run(['--plain'], '/tmp') // /tmp: no chatbase.json above it
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
+    })
+
+    it('-a accepts a plain agent id: one GET /agents lookup, no resolution note', async () => {
+        mockAgentsList()
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, page1)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run(['-a', 'agt_1', '--plain'], process.cwd())
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'c_1'
+        )
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).not.toContain(
+            '→'
+        )
+    })
+
+    it('-a accepts an exact agent name, resolves it, and notes the resolved id', async () => {
+        mockAgentsList()
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, page1)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run(
+            ['-a', 'Support Bot', '--plain'],
+            process.cwd()
+        )
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            '→ agt_1'
+        )
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'c_1'
+        )
+    })
+
+    it('-a rejects an ambiguous name with a usage error listing candidates', async () => {
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/agents', method: 'GET' })
+            .reply(200, {
+                data: [
+                    { id: 'agt_1', name: 'Support Bot' },
+                    { id: 'agt_3', name: 'Support Bot' }
+                ],
+                pagination: { cursor: null, hasMore: false, total: 2 }
+            })
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            ConversationsList.run(
+                ['-a', 'Support Bot', '--plain'],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        const stderr = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(stderr).toContain('agt_1')
+        expect(stderr).toContain('agt_3')
+    })
+
+    it('-a rejects an unknown name with a usage error suggesting agents list', async () => {
+        mockAgentsList()
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            ConversationsList.run(['-a', 'Nope Bot', '--plain'], process.cwd())
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'chatbase agents list'
+        )
+    })
+
+    it('CHATBASE_AGENT_ID is used as-is: no GET /agents lookup happens', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', 'agt_1')
+        // No mockAgentsList() call: MockAgent.disableNetConnect() means any
+        // stray GET /agents request would throw and fail this test, which
+        // is exactly how we assert only the conversations endpoint was hit.
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, page1)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run(['--plain'], process.cwd())
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'c_1'
+        )
     })
 })

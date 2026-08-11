@@ -59,7 +59,7 @@ export function classifyError(err: unknown): ClassifiedError {
     return { kind: 'unexpected', error: err }
 }
 
-type BaseFlags = {
+export type BaseFlags = {
     json?: boolean
     plain?: boolean
     quiet?: boolean

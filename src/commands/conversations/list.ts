@@ -20,8 +20,8 @@ export default class ConversationsList extends ListCommand {
 
     async run(): Promise<void> {
         const { flags } = await this.parse(ConversationsList)
-        const agentId = this.agentId(flags)
         const client = this.apiClient(flags)
+        const agentId = await this.agentId(flags, client)
 
         type Page = {
             data: Array<Record<string, string>>
