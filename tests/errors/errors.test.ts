@@ -26,6 +26,25 @@ describe('parseErrorResponse', () => {
         expect(err.remediation).toContain('chatbase auth login')
     })
 
+    it('scoped-key permission denial guides to scopes, never to a plan upsell', () => {
+        const err = parseErrorResponse(403, {
+            error: {
+                code: 'PERMISSION_DENIED',
+                message: 'Missing permission: sources:write'
+            }
+        })
+        expect(err.remediation).toContain('auth status')
+        expect(err.remediation).not.toContain('plan')
+    })
+
+    it('expired keys point at re-login, distinct from invalid keys', () => {
+        const err = parseErrorResponse(401, {
+            error: { code: 'API_KEY_EXPIRED', message: 'API key expired' }
+        })
+        expect(err.remediation).toContain('chatbase auth login')
+        expect(err.remediation).toContain('expired')
+    })
+
     it('keeps field-level details for validation errors', () => {
         const err = parseErrorResponse(400, {
             error: {
