@@ -7,11 +7,9 @@
  *
  * Sits third in the precedence chain: flag > env > this file > user config.
  *
- * Because this file is designed to be committed, secret-shaped keys in it
- * mean a credential is about to enter git history — we refuse to run
- * rather than merely warn. The SECRET_KEYS match is deliberately broad
- * ('key' catches innocents): a false refusal costs a rename, a leaked
- * credential costs a rotation.
+ * Because this file is designed to be committed, a credential typed into
+ * it enters git history — effectively public forever. SECRET_KEYS below
+ * turns that silent leak into a loud refusal at the moment of the mistake.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -22,6 +20,18 @@ export type ProjectConfig = {
     path: string
 }
 
+/**
+ * Property names people reach for when about to commit a credential:
+ * apikey/api_key = our credential's obvious name; apikeyfile = mirroring
+ * the CHATBASE_API_KEY_FILE env var into JSON; key/token/secret = the
+ * generic names across ecosystems.
+ *
+ * This is a tripwire, not a scanner: it checks top-level key NAMES only —
+ * nested objects or key-shaped VALUES under innocent names pass through.
+ * Accepted trade: catches the overwhelmingly common form of the mistake
+ * in ~10 lines. 'key' is deliberately over-broad — a false refusal costs
+ * the user a rename; a leaked credential costs a rotation.
+ */
 const SECRET_KEYS = [
     'apikey',
     'api_key',
