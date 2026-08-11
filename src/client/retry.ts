@@ -1,3 +1,9 @@
+/**
+ * Retry policy: 429 (rate limit) retries up to 3 times for ANY method —
+ * a rate-limited request was never executed, so repeating it is safe.
+ * 5xx retries once, GETs only: reads are safe to repeat, writes are not
+ * (the server may have half-done the work before failing).
+ */
 export function shouldRetry(
     status: number,
     method: string,
@@ -8,12 +14,23 @@ export function shouldRetry(
     return false
 }
 
-// Below this, a value is unambiguously epoch seconds: 1e11 seconds is year
-// 5138, while 1e11 ms is 1973 — no real "reset at" timestamp is ms-sized and
-// under 1e11. The API spec documents X-RateLimit-Reset as epoch seconds; this
-// heuristic also tolerates a ms-based value if a future revision sends one.
+// Epoch timestamps come in seconds (~1.7e9 today) or milliseconds (~1.7e12);
+// the number's size reveals its unit. Anything under 1e11 can only be
+// seconds (1e11 seconds = year 5138; 1e11 ms = 1973, long past). Our API
+// sends seconds — this tolerates ms too in case that ever changes.
 const SECONDS_MS_THRESHOLD = 1e11
 
+/**
+ * How long to sleep before a retry.
+ *
+ * Preferred: the X-RateLimit-Reset header says exactly when the rate window
+ * reopens — wait precisely until then (capped at 60s so a bad header can't
+ * stall the CLI; a past timestamp means the window is already open).
+ *
+ * Fallback (no usable header): exponential backoff — 500ms, 1s, 2s — plus
+ * 0-250ms random jitter so many clients rate-limited together don't all
+ * retry at the same instant and collide again.
+ */
 export function computeRetryDelayMs(
     attempt: number,
     resetHeader: string | null,
