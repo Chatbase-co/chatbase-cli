@@ -42,6 +42,13 @@ _Last updated: 2026-08-09_
 
 ## Decisions still open
 
+- [ ] **`CHATBASE_API_URL` documentation stance**: the env override exists for
+      local-server development and is visible in public source (Hyrum's law —
+      users WILL find it). Before launch, either document it in a README
+      "advanced" section with an explicit no-stability disclaimer, or leave it
+      code-only knowing it's discoverable. `auth status` already warns whenever
+      it's active.
+
 - [ ] **License:** MIT recommended (what `gh`/oclif use); Apache-2.0 if legal
       wants the explicit patent grant. Confirm with legal before going public.
 - [ ] **Launch timing vs unreleased endpoints:** the CLI's vendored spec and

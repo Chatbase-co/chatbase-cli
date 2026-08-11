@@ -1,5 +1,5 @@
 import { MockAgent, setGlobalDispatcher } from 'undici'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
     buildUserAgent,
     createApiClient,
@@ -109,6 +109,32 @@ describe('createApiClient', () => {
         expect(data?.id).toBe('agent_test')
         expect(seenMethod).toBe('POST')
         expect(JSON.parse(seenBody)).toEqual({ name: 'Test Agent' })
+    })
+})
+
+describe('CHATBASE_API_URL override', () => {
+    it('points the client at a local server for development', async () => {
+        vi.stubEnv('CHATBASE_API_URL', 'http://localhost:3000/api/v2')
+        mock.get('http://localhost:3000')
+            .intercept({ path: '/api/v2/health', method: 'GET' })
+            .reply(200, { status: 'ok', timestamp: 1 })
+        const client = createApiClient({ apiKey: 'sk-test' })
+        const { data, response } = await client.GET('/health')
+        expect(response.status).toBe(200)
+        expect(data?.status).toBe('ok')
+    })
+
+    it('explicit baseUrl option beats the env var', async () => {
+        vi.stubEnv('CHATBASE_API_URL', 'http://localhost:3000/api/v2')
+        mock.get('http://other.test')
+            .intercept({ path: '/api/v2/health', method: 'GET' })
+            .reply(200, { status: 'ok', timestamp: 2 })
+        const client = createApiClient({
+            apiKey: 'sk-test',
+            baseUrl: 'http://other.test/api/v2'
+        })
+        const { response } = await client.GET('/health')
+        expect(response.status).toBe(200)
     })
 })
 

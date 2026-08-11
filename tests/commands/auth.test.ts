@@ -107,6 +107,21 @@ describe('auth login --with-token', () => {
     })
 })
 
+describe('auth status with CHATBASE_API_URL override', () => {
+    it('warns loudly when the API base is not production', async () => {
+        vi.stubEnv('CHATBASE_API_URL', 'http://localhost:3000/api/v2')
+        vi.stubEnv('CHATBASE_API_KEY', 'sk-env-abcd')
+        mock.get('http://localhost:3000')
+            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .reply(404, {})
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await Status.run([], process.cwd())
+        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(text).toContain('API base overridden')
+        expect(text).toContain('http://localhost:3000/api/v2')
+    })
+})
+
 describe('auth logout / status', () => {
     it('logout removes the stored key', async () => {
         const { writeUserConfig } = await import('../../src/config/store.js')

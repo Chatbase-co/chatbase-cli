@@ -16,6 +16,19 @@ import { getSigintSignal } from './signals.js'
 
 export const DEFAULT_BASE_URL = 'https://www.chatbase.co/api/v2'
 
+/**
+ * Base-URL resolution: explicit option > CHATBASE_API_URL env > production.
+ * The env override exists for developing against a local API server
+ * (e.g. CHATBASE_API_URL=http://localhost:3000/api/v2); it is not
+ * documented for end users.
+ */
+export function resolveBaseUrl(explicit?: string): string {
+    if (explicit) return explicit
+    const env = process.env.CHATBASE_API_URL
+    if (env && env.length > 0) return env
+    return DEFAULT_BASE_URL
+}
+
 export type ApiClientOptions = {
     apiKey?: string
     timeoutMs?: number
@@ -109,7 +122,7 @@ function makeFetch(opts: ApiClientOptions) {
 
 export function createApiClient(opts: ApiClientOptions = {}): Client<paths> {
     const client = createClient<paths>({
-        baseUrl: opts.baseUrl ?? DEFAULT_BASE_URL,
+        baseUrl: resolveBaseUrl(opts.baseUrl),
         fetch: makeFetch(opts) as unknown as typeof globalThis.fetch
     })
     client.use({
@@ -139,7 +152,7 @@ export async function rawApiFetch(
     opts: ApiClientOptions = {}
 ): Promise<{ status: number; requestId?: string; body: unknown }> {
     const response = await makeFetch(opts)(
-        `${opts.baseUrl ?? DEFAULT_BASE_URL}${path}`,
+        `${resolveBaseUrl(opts.baseUrl)}${path}`,
         {
             method,
             headers: {

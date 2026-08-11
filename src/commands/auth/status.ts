@@ -1,5 +1,9 @@
 import { BaseCommand } from '../../base/base-command.js'
-import { rawApiFetch } from '../../client/client.js'
+import {
+    DEFAULT_BASE_URL,
+    rawApiFetch,
+    resolveBaseUrl
+} from '../../client/client.js'
 import { resolveApiKey } from '../../config/resolve.js'
 
 export default class AuthStatus extends BaseCommand {
@@ -12,6 +16,17 @@ export default class AuthStatus extends BaseCommand {
 
     async run(): Promise<void> {
         const { flags } = await this.parse(AuthStatus)
+        // A silently overridden base URL would send the key elsewhere —
+        // always surface it when active.
+        const baseUrl = resolveBaseUrl()
+        if (baseUrl !== DEFAULT_BASE_URL) {
+            this.note(
+                flags,
+                this.palette(flags).yellow(
+                    `! API base overridden: ${baseUrl} (CHATBASE_API_URL)`
+                )
+            )
+        }
         const resolved = resolveApiKey()
         if (!resolved) {
             this.note(flags, 'Not authenticated. Run `chatbase auth login`.')
