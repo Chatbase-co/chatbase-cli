@@ -62,12 +62,12 @@ function parseProjectConfig(contents: string, filePath: string): ProjectConfig {
     } catch {
         throw new UsageError(`${filePath} is not valid JSON`)
     }
-    const offending = Object.keys(raw).find((k) =>
+    const secretLikeKey = Object.keys(raw).find((k) =>
         SECRET_KEYS.has(k.toLowerCase())
     )
-    if (offending) {
+    if (secretLikeKey) {
         throw new UsageError(
-            `${filePath} contains "${offending}" — never store secrets in project config. ` +
+            `${filePath} contains "${secretLikeKey}" — never store secrets in project config. ` +
                 'chatbase.json is designed to be committed; use `chatbase auth login` or CHATBASE_API_KEY instead.'
         )
     }
