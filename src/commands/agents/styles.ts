@@ -1,0 +1,42 @@
+import { Args, Flags } from '@oclif/core'
+import { BaseCommand } from '../../base/base-command.js'
+import { readBodyData } from '../../base/body-input.js'
+import { throwIfError } from '../../client/client.js'
+
+export default class AgentsStyles extends BaseCommand {
+    static override description = 'Update visual styles for an agent'
+    static override examples = [
+        '<%= config.bin %> agents styles agt_123 --data \'{"chat":{"theme":"dark"}}\'',
+        '<%= config.bin %> agents styles agt_123 --data @styles.json'
+    ]
+    static override args = {
+        agentId: Args.string({
+            required: true,
+            description: 'Agent ID'
+        })
+    }
+    static override flags = {
+        ...BaseCommand.baseFlags,
+        data: Flags.string({
+            required: true,
+            description: 'Styles JSON (@file, @-, or inline)'
+        })
+    }
+
+    async run(): Promise<void> {
+        const { args, flags } = await this.parse(AgentsStyles)
+        const stylesData = await readBodyData(flags.data)
+        const client = this.apiClient(flags)
+        const { error, response } = await client.PUT(
+            '/agents/{agentId}/styles',
+            {
+                params: { path: { agentId: args.agentId } },
+                body: {
+                    styles: stylesData
+                } as never
+            }
+        )
+        throwIfError(response, error)
+        this.success(flags, `Updated styles for ${args.agentId}`)
+    }
+}
