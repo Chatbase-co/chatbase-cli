@@ -20,8 +20,10 @@ describe('user config store', () => {
         writeUserConfig({ apiKey: 'sk-test', agent: 'agt_1' })
         expect(readUserConfig()).toEqual({ apiKey: 'sk-test', agent: 'agt_1' })
         const file = path.join(dir, 'chatbase', 'config.json')
-        const mode = fs.statSync(file).mode & 0o777
-        expect(mode).toBe(0o600)
+        if (process.platform !== 'win32') {
+            const mode = fs.statSync(file).mode & 0o777
+            expect(mode).toBe(0o600)
+        }
     })
 
     it('returns {} when no config exists', async () => {
