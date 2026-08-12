@@ -38,4 +38,41 @@ describe('findProjectConfig', () => {
         expect(() => findProjectConfig(root)).toThrow(UsageError)
         expect(() => findProjectConfig(root)).toThrow(/not valid JSON/)
     })
+
+    it('parses sync.dir/include/exclude when present', () => {
+        const { deep } = tempProject({
+            agent: 'agt_proj',
+            sync: {
+                dir: 'kb',
+                include: ['**/*.md'],
+                exclude: ['**/drafts/**']
+            }
+        })
+        const found = findProjectConfig(deep)
+        expect(found?.sync).toEqual({
+            dir: 'kb',
+            include: ['**/*.md'],
+            exclude: ['**/drafts/**']
+        })
+    })
+
+    it('leaves sync undefined when absent', () => {
+        const { deep } = tempProject({ agent: 'agt_proj' })
+        expect(findProjectConfig(deep)?.sync).toBeUndefined()
+    })
+
+    it('ignores a sync block whose fields are the wrong type, rather than throwing', () => {
+        const { deep } = tempProject({
+            sync: { dir: 123, include: 'not-an-array', exclude: ['ok', 5] }
+        })
+        const found = findProjectConfig(deep)
+        expect(found?.sync?.dir).toBeUndefined()
+        expect(found?.sync?.include).toBeUndefined()
+        expect(found?.sync?.exclude).toEqual(['ok'])
+    })
+
+    it('leaves sync undefined when the sync key is present but not an object', () => {
+        const { deep } = tempProject({ agent: 'agt_proj', sync: 'nope' })
+        expect(findProjectConfig(deep)?.sync).toBeUndefined()
+    })
 })

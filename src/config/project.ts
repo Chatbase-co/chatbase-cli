@@ -18,6 +18,7 @@ import { UsageError } from '../errors/errors.js'
 export type ProjectConfig = {
     agent?: string
     path: string
+    sync?: { dir?: string; include?: string[]; exclude?: string[] }
 }
 
 /**
@@ -54,6 +55,33 @@ function tryReadFile(filePath: string): string | undefined {
     }
 }
 
+/** Narrows an array to just its string elements — used for `sync.include`/
+ * `sync.exclude`, which are silently filtered rather than rejected when a
+ * project file has a stray non-string entry (a typo shouldn't be a hard
+ * failure for a glob list). */
+function stringArray(value: unknown): string[] | undefined {
+    if (!Array.isArray(value)) return undefined
+    return value.filter((v): v is string => typeof v === 'string')
+}
+
+/**
+ * Parses the optional `sync` block. Malformed fields (wrong type) are
+ * dropped rather than thrown — `chatbase.json` is a committed, shared file,
+ * and a typo in `sync.dir` shouldn't block every other command that reads
+ * this file (e.g. agent resolution) from working.
+ */
+function parseSyncConfig(value: unknown): ProjectConfig['sync'] {
+    if (typeof value !== 'object' || value === null) return undefined
+    const raw = value as Record<string, unknown>
+    const dir = typeof raw.dir === 'string' ? raw.dir : undefined
+    const include = stringArray(raw.include)
+    const exclude = stringArray(raw.exclude)
+    if (dir === undefined && include === undefined && exclude === undefined) {
+        return undefined
+    }
+    return { dir, include, exclude }
+}
+
 /** Parse + validate one chatbase.json whose contents are already in hand. */
 function parseProjectConfig(contents: string, filePath: string): ProjectConfig {
     let raw: Record<string, unknown>
@@ -73,7 +101,8 @@ function parseProjectConfig(contents: string, filePath: string): ProjectConfig {
     }
     return {
         agent: typeof raw.agent === 'string' ? raw.agent : undefined,
-        path: filePath
+        path: filePath,
+        sync: parseSyncConfig(raw.sync)
     }
 }
 
