@@ -3,69 +3,87 @@
 Living checklist of the non-code items around shipping the CLI. Nothing here
 blocks development; revisit before the public v1.0 launch.
 
-_Last updated: 2026-08-09_
+_Last updated: 2026-08-12_
+
+## Release readiness (verified 2026-08-12)
+
+- [x] 258 unit/integration tests green (35 files)
+- [x] 5 e2e smoke tests written (skip cleanly when secrets absent; need
+      one live `workflow_dispatch` run with real secrets before trusting)
+- [x] CI: ubuntu/macos/windows × node 20/22 matrix with permissions +
+      concurrency; build before test; spec:check; README drift check;
+      startup budget (99ms vs 1000ms CI / 300ms product target)
+- [x] Release pipeline: release-please config + publish workflow with
+      provenance (needs NPM_TOKEN secret configured on GitHub)
+- [x] README auto-generated command reference (39 commands via oclif readme)
+- [x] LICENSE file committed (MIT)
+- [x] Tarball: 73 files, 77KB; docs/superpowers NOT included (only
+      bin/dist/spec/manifest ship); spec/openapi.json included (25 paths,
+      no /internal routes, no real credentials in examples)
+- [x] `repository` field in package.json set for provenance verification
 
 ## npm — done
 
-- [x] Package name `chatbase` claimed (placeholder 0.0.1 published by `dev-chatbase`, 2026-08-09)
+- [x] Package name `chatbase` claimed (placeholder 0.0.1 published by
+      `dev-chatbase`, 2026-08-09)
 
-## npm — backlog
+## npm — backlog (before launch)
 
 - [ ] **Ask internally** whether anyone at Chatbase owns the dormant npm user
       `chatbase` (npmjs.com/~chatbase — display name "Chatbase", 0 packages).
       If yes, recover it via password reset on the old email.
 - [ ] **File npm trademark ticket** (npmjs.com/support → user name dispute) to
       claim the dormant `chatbase` username/scope. Takes weeks; do it early.
-      Draft text: we own the Chatbase trademark + the `chatbase` package
-      (account `dev-chatbase`); the `chatbase` username is dormant with zero
-      packages; request transfer.
 - [ ] **Create the `chatbase-co` npm org** (free) — matches the GitHub org,
       gives an official scope, and is where the package should eventually live.
 - [ ] **Add a second package owner** (`npm owner add <user> chatbase`) —
       lockout insurance before launch.
-- [ ] **At Plan 4 (release pipeline):** transfer the package to the org
-      (npmjs.com/package/chatbase → Settings → Transfer), manage access via
-      teams, publish from GitHub Actions with trusted publishing (OIDC) +
-      provenance.
+- [ ] **Configure NPM_TOKEN** (or trusted publishing) on the GitHub repo so
+      the release workflow can publish. Transfer the package to the org once
+      created.
 
-## GitHub
+## GitHub — before going public
 
-- [x] Create `github.com/Chatbase-co/chatbase-cli` — **private** ✓ (created 2026-08-09)
-- [ ] Before flipping public: LICENSE file (✓ committed 2026-08-10), SECURITY.md,
-      issue templates, branch protection on main, CODEOWNERS
+- [x] Create `github.com/Chatbase-co/chatbase-cli` — **private** ✓ (2026-08-09)
+- [ ] SECURITY.md (vulnerability reporting instructions)
+- [ ] Issue templates (matching the pre-filled bug URL in base-command.ts)
+- [ ] Branch protection on main (require CI, require review)
+- [ ] CODEOWNERS
 - [ ] **Public history strategy**: internal planning docs (docs/superpowers/,
-      this checklist) live in git history and would be exposed by flipping the
-      repo public. At launch, start the public history fresh: squash to a clean
-      initial commit (or re-root the tree) WITHOUT docs/superpowers/ and
-      launch-checklist.md, and keep those docs private-side from then on.
-      gitignoring them beforehand does NOT scrub history — only this does.
+      this checklist) live in git history. At launch, start the public history
+      fresh: squash to a clean initial commit (or re-root the tree) WITHOUT
+      docs/superpowers/ and launch-checklist.md. gitignoring them beforehand
+      does NOT scrub history — only this does.
 
 ## Decisions still open
 
-- [ ] **`CHATBASE_API_URL` documentation stance**: the env override exists for
-      local-server development and is visible in public source (Hyrum's law —
-      users WILL find it). Before launch, either document it in a README
-      "advanced" section with an explicit no-stability disclaimer, or leave it
-      code-only knowing it's discoverable. `auth status` already warns whenever
-      it's active.
-
-- [ ] **License:** MIT recommended (what `gh`/oclif use); Apache-2.0 if legal
-      wants the explicit patent grant. Confirm with legal before going public.
-- [ ] **Launch timing vs unreleased endpoints:** the CLI's vendored spec and
-      commands expose the agents + helpdesk endpoint groups, which are not yet
-      customer-released. Go public only after those ship publicly, or strip
-      them from the launch build.
+- [ ] **`CHATBASE_API_URL` documentation stance**: exists for local dev, visible
+      in public source. Document in a README "advanced" section with a
+      no-stability disclaimer, or leave code-only. `auth status` warns
+      whenever it's active.
+- [ ] **License:** MIT committed; Apache-2.0 if legal wants the patent grant.
+      Confirm with legal before going public.
+- [ ] **Launch timing vs unreleased endpoints:** the vendored spec + commands
+      expose agents + helpdesk, which are not yet customer-released. Go public
+      only after those ship, or strip them from the launch build.
 - [ ] **Public docs gap:** chatbase.co/docs documents 10 of 25 API paths.
       Partly intentional (unreleased features) — decide what to publish when
-      the API groups go GA, and whether to automate the private→docs spec sync.
+      those go GA.
 
 ## Private-repo work items (parallel track)
 
-- [x] Routes-only OpenAPI generator — built 2026-08-06
-      (`scripts/generate-openapi-routes-only.ts` + `openapi-generator-stubs.ts`
-      in the `chatbase` repo; **still uncommitted there — commit them**)
-- [ ] `GET /api/v2/me` endpoint (upgrades `auth login` verification; shape in
-      the pairing-login design doc §3)
-- [ ] Pairing login (design done: `chatbase` repo,
-      `docs/superpowers/specs/2026-08-05-cli-pairing-login-design.md`; ~2–3
-      days server-side)
+- [x] Routes-only OpenAPI generator — built 2026-08-06 (uncommitted in the
+      chatbase repo — commit them there)
+- [ ] `GET /api/v2/me` endpoint (upgrades `auth login` verification)
+- [ ] Pairing login (design done + being implemented in another session;
+      scoped RBAC keys + 90-day expiry; CLI follow-up when it merges:
+      spec refresh 25→28 paths + browser-login path + scopes/expiry in
+      auth status)
+
+## Post-v1 backlog
+
+- [ ] MCP server mode (`chatbase mcp`) — descoped from v1 (2026-08-11);
+      design + plan written and ready in Plan 4 Tasks 1-3
+- [ ] Homebrew distribution via `oclif pack`
+- [ ] `--all` pagination loop cap (harden against cycling cursors)
+- [ ] Man pages (revisit on user demand)
