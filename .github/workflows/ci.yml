@@ -2,6 +2,11 @@ name: CI
 on:
     push: { branches: [main] }
     pull_request:
+permissions:
+    contents: read
+concurrency:
+    group: ci-${{ github.ref }}
+    cancel-in-progress: true
 jobs:
     test:
         strategy:
@@ -18,5 +23,6 @@ jobs:
             - run: npm run typecheck
             - run: npm run spec:check
             - run: npm run build
+            - run: npx oclif readme && git diff --exit-code README.md
             - run: npm test
             - run: node scripts/check-startup.mjs
