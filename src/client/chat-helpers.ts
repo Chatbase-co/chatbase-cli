@@ -38,6 +38,11 @@ export async function sendChat(opts: {
     conversationId?: string
     stream: boolean
     onText: (text: string) => void
+    /** Aborts just this call — e.g. the chat REPL's per-response Ctrl-C
+     * cancel, distinct from the process-wide interrupt signal. Forwarded to
+     * openapi-fetch's call options; see client.ts's `toPlainRequestInit`
+     * for how it's folded into the underlying fetch's combined signal. */
+    signal?: AbortSignal
 }): Promise<{ conversationId?: string; raw?: unknown }> {
     const { data, error, response } = await opts.client.POST(
         '/agents/{agentId}/chat',
@@ -48,7 +53,8 @@ export async function sendChat(opts: {
                 conversationId: opts.conversationId,
                 stream: opts.stream
             },
-            parseAs: opts.stream ? 'stream' : 'json'
+            parseAs: opts.stream ? 'stream' : 'json',
+            signal: opts.signal
         }
     )
 

@@ -1,11 +1,15 @@
 import { Flags } from '@oclif/core'
 import { AgentCommand } from '../base/agent-command.js'
+import type { BaseFlags } from '../base/base-command.js'
 import {
     type ChatResponseEnvelope,
     extractText,
     sendChat
 } from '../client/chat-helpers.js'
 import { UsageError } from '../errors/errors.js'
+import { runChatRepl } from '../repl/chat-repl.js'
+
+type ChatFlags = BaseFlags & { agent?: string; conversation?: string }
 
 async function readStdinToEnd(): Promise<string> {
     let data = ''
@@ -41,21 +45,25 @@ export default class Chat extends AgentCommand {
 
     private async resolveMessage(flags: { message?: string }): Promise<string> {
         if (flags.message) return flags.message
-        if (!process.stdin.isTTY) {
-            const piped = await readStdinToEnd()
-            if (piped) return piped
-            throw new UsageError('No message received on stdin.')
-        }
-        throw new UsageError(
-            'REPL arrives in the next task — use -m or pipe a message'
-        )
+        // A TTY with no -m is handled by run() before this is ever called
+        // (it goes to the interactive REPL instead), so reaching here with
+        // no message means stdin is a pipe that turned out to be empty.
+        const piped = await readStdinToEnd()
+        if (piped) return piped
+        throw new UsageError('No message received on stdin.')
     }
 
     async run(): Promise<void> {
         const { flags } = await this.parse(Chat)
-        // Resolve the message first: it's local (no network), so a
-        // TTY-with-no-message failure doesn't first need working credentials
-        // or an agent lookup round trip to fail fast.
+
+        if (!flags.message && process.stdin.isTTY) {
+            await this.runInteractive(flags)
+            return
+        }
+
+        // Resolve the message first: it's local (no network), so a failure
+        // here doesn't first need working credentials or an agent lookup
+        // round trip to fail fast.
         const message = await this.resolveMessage(flags)
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
@@ -93,6 +101,70 @@ export default class Chat extends AgentCommand {
             return
         }
         process.stdout.write(`${extractText(raw as ChatResponseEnvelope)}\n`)
+        this.printConversationHint(flags, agentId, conversationId)
+    }
+
+    /**
+     * The interactive REPL path: a TTY with no -m and no piped stdin. Builds
+     * the `send`/`retry` deps runChatRepl needs — each wraps `sendChat` with
+     * streaming to stdout and forwards the per-call `signal` the REPL
+     * creates fresh per turn, so Ctrl-C cancels just that one call instead
+     * of the process-wide interrupt signal (which would also poison every
+     * later request in the session — see client/signals.ts).
+     */
+    private async runInteractive(flags: ChatFlags): Promise<void> {
+        const client = this.apiClient(flags)
+        const agentId = await this.agentId(flags, client)
+
+        const send = async (
+            message: string,
+            conversationId?: string,
+            signal?: AbortSignal
+        ): Promise<{ conversationId?: string }> => {
+            const { conversationId: nextId } = await sendChat({
+                client,
+                agentId,
+                message,
+                conversationId,
+                stream: true,
+                signal,
+                onText: (text) => process.stdout.write(text)
+            })
+            process.stdout.write('\n')
+            return { conversationId: nextId }
+        }
+
+        // Stubbed for now, per the task brief: re-sends an empty message on
+        // the same conversation, just enough for /retry to do something in
+        // the REPL. The real retry endpoint — POST
+        // .../conversations/{conversationId}/retry — needs the target
+        // messageId, which the REPL doesn't track yet; Task 4 formalizes
+        // this into a proper `retryChat` helper against that endpoint.
+        const retry = async (
+            conversationId: string,
+            signal?: AbortSignal
+        ): Promise<void> => {
+            await sendChat({
+                client,
+                agentId,
+                message: '',
+                conversationId,
+                stream: true,
+                signal,
+                onText: (text) => process.stdout.write(text)
+            })
+            process.stdout.write('\n')
+        }
+
+        const { conversationId } = await runChatRepl({
+            send,
+            retry,
+            input: process.stdin,
+            output: process.stdout,
+            info: (msg) => this.note(flags, msg),
+            initialConversationId: flags.conversation
+        })
+
         this.printConversationHint(flags, agentId, conversationId)
     }
 

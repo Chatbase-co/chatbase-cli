@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { Readable } from 'node:stream'
+import { PassThrough, Readable } from 'node:stream'
 import { MockAgent, setGlobalDispatcher } from 'undici'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import Chat from '../../src/commands/chat.js'
@@ -66,15 +66,15 @@ function stubPipedStdin(text: string) {
     vi.spyOn(process, 'stdin', 'get').mockReturnValue(stdin)
 }
 
-/** A TTY stdin that never ends — the command must not block reading it. */
-function stubTTY() {
-    const stdin = new Readable({
-        read() {}
-    }) as unknown as NodeJS.ReadStream & {
-        fd: 0
-    }
+/** A TTY stdin the test can write scripted lines/bytes to, for driving the
+ * interactive REPL that a TTY-with-no-message triggers in chat.ts. */
+function stubInteractiveTTY(): PassThrough {
+    const stdin = new PassThrough()
     Object.defineProperty(stdin, 'isTTY', { value: true })
-    vi.spyOn(process, 'stdin', 'get').mockReturnValue(stdin)
+    vi.spyOn(process, 'stdin', 'get').mockReturnValue(
+        stdin as unknown as NodeJS.ReadStream & { fd: 0 }
+    )
+    return stdin
 }
 
 describe('chatbase chat (one-shot)', () => {
@@ -191,14 +191,36 @@ describe('chatbase chat (one-shot)', () => {
         )
     })
 
-    it('rejects with a REPL-not-yet UsageError when stdin is a TTY and no -m is given', async () => {
-        stubTTY()
+    it('enters the interactive REPL when stdin is a TTY and no -m is given, and prints the resume hint on exit', async () => {
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/agents/agt_1/chat', method: 'POST' })
+            .reply(200, sse, {
+                headers: { 'content-type': 'text/event-stream' }
+            })
+        const stdin = stubInteractiveTTY()
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
-        await expect(Chat.run([], process.cwd())).rejects.toMatchObject({
-            oclif: { exit: 2 }
+        setImmediate(() => {
+            stdin.write('hello\n')
+            setTimeout(() => stdin.write('/exit\n'), 20)
         })
-        expect(err.mock.calls.map((c) => String(c[0])).join('')).toMatch(
-            /REPL arrives in the next task/i
+        await Chat.run([], process.cwd())
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'Hi there'
         )
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'Type /exit or press Ctrl-D to quit'
+        )
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'chatbase chat -a agt_1 --conversation c_77'
+        )
+    })
+
+    it('the REPL never receives the -m flag path and closes cleanly on Ctrl-D (input end) with no messages sent', async () => {
+        const stdin = stubInteractiveTTY()
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        setImmediate(() => stdin.end())
+        await expect(Chat.run([], process.cwd())).resolves.toBeUndefined()
     })
 })

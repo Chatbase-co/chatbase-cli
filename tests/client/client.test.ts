@@ -138,6 +138,34 @@ describe('CHATBASE_API_URL override', () => {
     })
 })
 
+describe('per-call AbortSignal', () => {
+    it('honors a signal passed to client.GET, rejecting without touching the network', async () => {
+        // No interceptor registered — if the abort didn't short-circuit
+        // before dispatch, MockAgent's own "no matching interceptor" error
+        // would fail this just as loudly, so this also pins that the abort
+        // happens pre-dispatch rather than merely being ignored.
+        const client = createApiClient({ apiKey: 'sk-test' })
+        const controller = new AbortController()
+        controller.abort()
+        await expect(
+            client.GET('/health', { signal: controller.signal })
+        ).rejects.toMatchObject({ name: 'AbortError' })
+    })
+
+    it('an unaborted signal has no effect on an otherwise-normal request', async () => {
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/health', method: 'GET' })
+            .reply(200, { status: 'ok', timestamp: 1 })
+        const client = createApiClient({ apiKey: 'sk-test' })
+        const controller = new AbortController()
+        const { data, response } = await client.GET('/health', {
+            signal: controller.signal
+        })
+        expect(response.status).toBe(200)
+        expect(data?.status).toBe('ok')
+    })
+})
+
 describe('rawApiFetch', () => {
     it('returns status, parsed body, and x-request-id', async () => {
         mock.get(BASE)

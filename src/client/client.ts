@@ -73,10 +73,20 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 async function toPlainRequestInit(
     input: string | URL | Request,
     init: UndiciRequestInit | undefined
-): Promise<{ url: string; method: string; requestInit: UndiciRequestInit }> {
+): Promise<{
+    url: string
+    method: string
+    requestInit: UndiciRequestInit
+    signal?: AbortSignal
+}> {
     if (typeof input === 'string' || input instanceof URL) {
         const method = (init?.method ?? 'GET').toUpperCase()
-        return { url: String(input), method, requestInit: { ...init, method } }
+        return {
+            url: String(input),
+            method,
+            requestInit: { ...init, method },
+            signal: init?.signal as AbortSignal | undefined
+        }
     }
     const method = (init?.method ?? input.method ?? 'GET').toUpperCase()
     const headers: Record<string, string> = {}
@@ -85,7 +95,15 @@ async function toPlainRequestInit(
     return {
         url: input.url,
         method,
-        requestInit: { headers, body, ...init, method }
+        requestInit: { headers, body, ...init, method },
+        // Request.prototype.signal is always a real AbortSignal — never
+        // undefined — defaulting to an inert, never-aborting one when the
+        // caller didn't pass one explicitly. Folding it into the
+        // AbortSignal.any() chain below is therefore a no-op in that case,
+        // and a real per-request cancel hook (e.g. the chat REPL's
+        // per-response Ctrl-C) when a caller did pass one via openapi-fetch
+        // call options (`client.POST(path, { signal })`).
+        signal: input.signal
     }
 }
 
@@ -95,7 +113,7 @@ export function makeFetch(opts: ApiClientOptions) {
         input: string | URL | Request,
         init?: UndiciRequestInit
     ): Promise<UndiciResponse> => {
-        const { url, method, requestInit } = await toPlainRequestInit(
+        const { url, method, requestInit, signal } = await toPlainRequestInit(
             input,
             init
         )
@@ -105,7 +123,8 @@ export function makeFetch(opts: ApiClientOptions) {
                 dispatcher: dispatcher(),
                 signal: AbortSignal.any([
                     AbortSignal.timeout(timeoutMs),
-                    getSigintSignal()
+                    getSigintSignal(),
+                    ...(signal ? [signal] : [])
                 ]) as AbortSignal
             })
             if (response.ok || !shouldRetry(response.status, method, attempt))
