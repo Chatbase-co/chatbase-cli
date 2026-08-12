@@ -16,8 +16,6 @@ export default class AuthStatus extends BaseCommand {
 
     async run(): Promise<void> {
         const { flags } = await this.parse(AuthStatus)
-        // A silently overridden base URL would send the key elsewhere —
-        // always surface it when active.
         const baseUrl = resolveBaseUrl()
         if (baseUrl !== DEFAULT_BASE_URL) {
             this.note(
@@ -32,20 +30,61 @@ export default class AuthStatus extends BaseCommand {
             this.note(flags, 'Not authenticated. Run `chatbase auth login`.')
             return
         }
-        this.note(
-            flags,
-            `Credential: …${resolved.value.slice(-4)} (from ${resolved.source})`
-        )
-        const res = await rawApiFetch('GET', '/me', { apiKey: resolved.value })
+        const tail =
+            resolved.value.length > 8 ? `…${resolved.value.slice(-4)}` : '…****'
+        this.note(flags, `Credential: ${tail} (from ${resolved.source})`)
+
+        const res = await rawApiFetch('GET', '/me', {
+            apiKey: resolved.value
+        })
         if (res.status === 200) {
             const body = res.body as {
-                workspace?: { name?: string }
+                workspace?: { id?: string; name?: string }
                 plan?: string
+                credential?: {
+                    source?: string | null
+                    expiresAt?: string | null
+                    permissions?: string[] | null
+                }
             }
             this.note(
                 flags,
                 `Workspace: ${body.workspace?.name ?? 'unknown'} (plan: ${body.plan ?? 'unknown'})`
             )
+            const cred = body.credential
+            if (cred?.source === 'cli') {
+                this.note(flags, `Key type: CLI-paired device`)
+            }
+            if (cred?.expiresAt) {
+                const remaining = Math.max(
+                    0,
+                    Math.ceil(
+                        (new Date(cred.expiresAt).getTime() - Date.now()) /
+                            (1000 * 60 * 60 * 24)
+                    )
+                )
+                if (remaining <= 7) {
+                    this.note(
+                        flags,
+                        this.palette(flags).yellow(
+                            `! Expires in ${remaining} day${remaining !== 1 ? 's' : ''} — re-pair with \`chatbase auth login --browser\``
+                        )
+                    )
+                } else {
+                    this.note(
+                        flags,
+                        `Expires in ${remaining} day${remaining !== 1 ? 's' : ''}`
+                    )
+                }
+            }
+            if (cred?.permissions) {
+                this.note(
+                    flags,
+                    `Scopes: ${cred.permissions.join(', ') || 'none'}`
+                )
+            } else if (cred?.permissions === null) {
+                this.note(flags, 'Scopes: full access')
+            }
         } else if (res.status === 401 || res.status === 403) {
             this.note(
                 flags,

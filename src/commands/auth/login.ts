@@ -1,6 +1,8 @@
+import { spawn } from 'node:child_process'
 import { Flags } from '@oclif/core'
 import { BaseCommand } from '../../base/base-command.js'
 import { rawApiFetch } from '../../client/client.js'
+import { pollExchange, startPairing } from '../../client/pairing.js'
 import { configFile } from '../../config/paths.js'
 import { readUserConfig, writeUserConfig } from '../../config/store.js'
 import { parseErrorResponse, UsageError } from '../../errors/errors.js'
@@ -11,17 +13,36 @@ async function readStdinToEnd(): Promise<string> {
     return data.trim()
 }
 
+function tryOpenBrowser(url: string): void {
+    const cmd =
+        process.platform === 'darwin'
+            ? 'open'
+            : process.platform === 'win32'
+              ? 'start'
+              : 'xdg-open'
+    try {
+        spawn(cmd, [url], { detached: true, stdio: 'ignore' }).unref()
+    } catch {
+        // Browser open is best-effort — the URL is printed to stderr anyway.
+    }
+}
+
 export default class AuthLogin extends BaseCommand {
     static override description =
-        'Authenticate with a Chatbase workspace API key'
+        'Authenticate with Chatbase — paste an API key or log in via browser'
     static override examples = [
         '<%= config.bin %> auth login',
+        '<%= config.bin %> auth login --browser',
         'cat key.txt | <%= config.bin %> auth login --with-token'
     ]
     static override flags = {
         ...BaseCommand.baseFlags,
         'with-token': Flags.boolean({
             description: 'Read the API key from stdin'
+        }),
+        browser: Flags.boolean({
+            description:
+                'Log in via browser — approve a code at chatbase.co/activate'
         })
     }
 
@@ -30,33 +51,91 @@ export default class AuthLogin extends BaseCommand {
     async run(): Promise<void> {
         const { flags } = await this.parse(AuthLogin)
 
-        let key: string
         if (flags['with-token']) {
             if (process.stdin.isTTY)
                 throw new UsageError(
                     '--with-token reads the key from stdin. Pipe it: chatbase auth login --with-token < key.txt'
                 )
-            key = await readStdinToEnd()
+            const key = await readStdinToEnd()
             if (!key) throw new UsageError('No token received on stdin.')
-        } else if (process.stdin.isTTY && !flags['no-input']) {
-            this.note(
-                flags,
-                'Paste your API key (chatbase.co → Workspace Settings → API Keys)'
-            )
-            const { password } = await import('@inquirer/prompts')
-            key = (await password({ message: 'Key:', mask: '●' })).trim()
-            if (!key) throw new UsageError('No key entered.')
-        } else {
-            throw new UsageError(
-                'Cannot prompt (no TTY or --no-input). Use: chatbase auth login --with-token < key.txt'
-            )
+            return this.verifyAndStore(flags, key)
         }
 
+        if (flags.browser) {
+            return this.browserLogin(flags)
+        }
+
+        if (process.stdin.isTTY && !flags['no-input']) {
+            const { select } = await import('@inquirer/prompts')
+            const method = await select({
+                message: 'How do you want to authenticate?',
+                choices: [
+                    {
+                        value: 'browser',
+                        name: 'Log in with browser (recommended)'
+                    },
+                    { value: 'paste', name: 'Paste an API key' }
+                ]
+            })
+            if (method === 'browser') {
+                return this.browserLogin(flags)
+            }
+            const { password } = await import('@inquirer/prompts')
+            const key = (await password({ message: 'Key:', mask: '●' })).trim()
+            if (!key) throw new UsageError('No key entered.')
+            return this.verifyAndStore(flags, key)
+        }
+
+        throw new UsageError(
+            'Cannot prompt (no TTY or --no-input). Use: chatbase auth login --with-token < key.txt'
+        )
+    }
+
+    private async browserLogin(flags: Record<string, unknown>): Promise<void> {
+        const pairing = await startPairing()
+
+        this.note(
+            flags,
+            `\nYour code: ${this.palette(flags).green(pairing.userCode)}\n`
+        )
+        this.note(
+            flags,
+            `Open ${pairing.verificationUriComplete} and approve the request.`
+        )
+
+        if (process.stdout.isTTY && !flags['no-input']) {
+            tryOpenBrowser(pairing.verificationUriComplete)
+            this.note(flags, 'Waiting for approval...')
+        }
+
+        const result = await pollExchange(pairing.deviceCode, {
+            intervalMs: pairing.interval * 1000,
+            timeoutMs: pairing.expiresIn * 1000,
+            onPoll: () => {
+                if (!flags.quiet) {
+                    process.stderr.write('.')
+                }
+            }
+        })
+
+        if (!flags.quiet) process.stderr.write('\n')
+
+        writeUserConfig({
+            ...readUserConfig(),
+            apiKey: result.apiKey
+        })
+        this.success(flags, `Logged in to workspace ${result.workspace.name}`)
+        this.note(flags, `Saved to ${configFile()}`)
+    }
+
+    private async verifyAndStore(
+        flags: Record<string, unknown>,
+        key: string
+    ): Promise<void> {
         const res = await rawApiFetch('GET', '/me', { apiKey: key })
         if (res.status === 200) {
             const body = res.body as {
                 workspace?: { name?: string }
-                plan?: string
             }
             writeUserConfig({ ...readUserConfig(), apiKey: key })
             this.success(

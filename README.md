@@ -76,7 +76,6 @@ calls you invoke.
 * [`chatbase tickets messages`](#chatbase-tickets-messages)
 * [`chatbase tickets reply`](#chatbase-tickets-reply)
 * [`chatbase tickets update TICKETNUMBER`](#chatbase-tickets-update-ticketnumber)
-* [`chatbase tools submit-result`](#chatbase-tools-submit-result)
 
 ## `chatbase agents auto-retrain AGENTID`
 
@@ -413,14 +412,15 @@ _See code: [src/commands/api.ts](https://github.com/Chatbase-co/chatbase-cli/blo
 
 ## `chatbase auth login`
 
-Authenticate with a Chatbase workspace API key
+Authenticate with Chatbase — paste an API key or log in via browser
 
 ```
 USAGE
-  $ chatbase auth login [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--with-token]
+  $ chatbase auth login [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--with-token] [--browser]
 
 FLAGS
   -q, --quiet       Suppress non-essential output
+      --browser     Log in via browser — approve a code at chatbase.co/activate
       --no-color    Disable colored output
       --no-input    Never prompt; fail instead
       --verbose     Verbose diagnostics
@@ -431,10 +431,12 @@ OUTPUT FLAGS
   --plain  Tab-separated output for scripts
 
 DESCRIPTION
-  Authenticate with a Chatbase workspace API key
+  Authenticate with Chatbase — paste an API key or log in via browser
 
 EXAMPLES
   $ chatbase auth login
+
+  $ chatbase auth login --browser
 
   cat key.txt | chatbase auth login --with-token
 ```
@@ -1439,35 +1441,4 @@ EXAMPLES
 ```
 
 _See code: [src/commands/tickets/update.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/tickets/update.ts)_
-
-## `chatbase tools submit-result`
-
-Submit the result of a client-side tool call
-
-```
-USAGE
-  $ chatbase tools submit-result --conversation <value> --data <value> [--json] [--plain] [-q] [--verbose] [--no-input]
-    [--no-color] [-a <value>]
-
-FLAGS
-  -a, --agent=<value>         Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet                 Suppress non-essential output
-      --conversation=<value>  (required) Conversation ID
-      --data=<value>          (required) Tool result JSON body: { toolCallId, output } (@file, @-, or inline)
-      --no-color              Disable colored output
-      --no-input              Never prompt; fail instead
-      --verbose               Verbose diagnostics
-
-OUTPUT FLAGS
-  --json   Output raw API JSON
-  --plain  Tab-separated output for scripts
-
-DESCRIPTION
-  Submit the result of a client-side tool call
-
-EXAMPLES
-  $ chatbase tools submit-result --conversation conv_123 --data '{"toolCallId":"tc_1","output":{"ok":true}}' -a agt_123
-```
-
-_See code: [src/commands/tools/submit-result.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/tools/submit-result.ts)_
 <!-- commandsstop -->
