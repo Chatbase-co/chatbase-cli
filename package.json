@@ -56,6 +56,9 @@
             },
             "helpdesk": {
                 "description": "Look up helpdesk teams and ticket statuses"
+            },
+            "config": {
+                "description": "Manage CLI configuration (agent, timeout)"
             }
         }
     },

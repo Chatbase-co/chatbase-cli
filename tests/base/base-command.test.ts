@@ -63,6 +63,34 @@ describe('BaseCommand', () => {
         expect(stderr).toContain('request id: r1')
     })
 
+    it('--json ApiError rendering includes requestId and status alongside the error envelope', async () => {
+        // catch() sniffs the real process.argv for --json (it runs before
+        // flags are parsed) rather than the argv passed to Probe.run(), so
+        // the flag has to be on the actual process argv to take that branch.
+        const originalArgv = process.argv
+        process.argv = [...originalArgv, '--json']
+        try {
+            const errWrite = vi
+                .spyOn(process.stderr, 'write')
+                .mockReturnValue(true)
+            await expect(
+                Probe.run(['--boom', 'api'], process.cwd())
+            ).rejects.toMatchObject({ oclif: { exit: 1 } })
+            const stderr = errWrite.mock.calls.map((c) => String(c[0])).join('')
+            expect(JSON.parse(stderr)).toEqual({
+                error: {
+                    code: 'AUTH_INVALID_API_KEY',
+                    message: 'Invalid API key',
+                    details: undefined
+                },
+                requestId: 'r1',
+                status: 401
+            })
+        } finally {
+            process.argv = originalArgv
+        }
+    })
+
     it('--quiet suppresses notes but not data', async () => {
         const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)

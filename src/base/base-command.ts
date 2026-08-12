@@ -159,8 +159,10 @@ export abstract class BaseCommand extends Command {
         }
         if (classified.kind === 'api') {
             if (process.argv.includes('--json')) {
+                const { code, message, details, requestId, status } =
+                    classified.error
                 process.stderr.write(
-                    `${JSON.stringify({ error: { code: classified.error.code, message: classified.error.message, details: classified.error.details } }, null, 2)}\n`
+                    `${JSON.stringify({ error: { code, message, details }, requestId, status }, null, 2)}\n`
                 )
             } else {
                 process.stderr.write(

@@ -110,6 +110,9 @@ function makeFetch(opts: ApiClientOptions) {
             })
             if (response.ok || !shouldRetry(response.status, method, attempt))
                 return response
+            // Draining before the retry avoids leaking the unread response
+            // body's underlying connection while we sleep and loop.
+            await response.body?.cancel()
             await sleep(
                 computeRetryDelayMs(
                     attempt,
@@ -146,24 +149,35 @@ export function throwIfError(response: Response, errorBody: unknown): void {
     )
 }
 
+export type RawFetchOptions = ApiClientOptions & {
+    /** Appended as URL search params — used by `chatbase api --field k=v`. */
+    query?: Record<string, string>
+    /** JSON-stringified and sent as the request body when present. `undefined`
+     * (the default) sends no body at all, so existing callers (auth login/status,
+     * which never pass this) are unaffected. */
+    body?: unknown
+}
+
 /** Untyped escape hatch — used for endpoints not yet in the vendored spec (/me) and later `chatbase api`. */
 export async function rawApiFetch(
     method: string,
     path: string,
-    opts: ApiClientOptions = {}
+    opts: RawFetchOptions = {}
 ): Promise<{ status: number; requestId?: string; body: unknown }> {
-    const response = await makeFetch(opts)(
-        `${resolveBaseUrl(opts.baseUrl)}${path}`,
-        {
-            method,
-            headers: {
-                'User-Agent': buildUserAgent(),
-                ...(opts.apiKey
-                    ? { Authorization: `Bearer ${opts.apiKey}` }
-                    : {})
-            }
-        }
-    )
+    const url = new URL(`${resolveBaseUrl(opts.baseUrl)}${path}`)
+    for (const [key, value] of Object.entries(opts.query ?? {})) {
+        url.searchParams.set(key, value)
+    }
+    const hasBody = opts.body !== undefined
+    const response = await makeFetch(opts)(url.toString(), {
+        method,
+        headers: {
+            'User-Agent': buildUserAgent(),
+            ...(opts.apiKey ? { Authorization: `Bearer ${opts.apiKey}` } : {}),
+            ...(hasBody ? { 'Content-Type': 'application/json' } : {})
+        },
+        ...(hasBody ? { body: JSON.stringify(opts.body) } : {})
+    })
     let body: unknown
     try {
         body = await response.json()
