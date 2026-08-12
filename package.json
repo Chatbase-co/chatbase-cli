@@ -44,6 +44,12 @@
             },
             "conversations": {
                 "description": "List and inspect agent conversations"
+            },
+            "messages": {
+                "description": "List conversation messages and set feedback"
+            },
+            "tools": {
+                "description": "Submit results for client-side tool calls"
             }
         }
     },
