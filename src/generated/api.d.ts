@@ -4,55 +4,6 @@
  */
 
 export interface paths {
-    "/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Health check
-         * @description Returns the API health status. No authentication required.
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description API is healthy */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "status": "ok",
-                         *       "timestamp": 1770681600
-                         *     }
-                         */
-                        "application/json": {
-                            /** @enum {string} */
-                            status: "ok";
-                            timestamp: components["schemas"]["UnixTimestamp"];
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/agents/{agentId}/clone": {
         parameters: {
             query?: never;
@@ -5240,6 +5191,393 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/cli/pairing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a CLI pairing request
+         * @description Creates a new device pairing request for CLI login (RFC 8628-style device authorization flow). Public endpoint — no authentication required. Rate-limited by IP.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CliPairingCreateBody"];
+                };
+            };
+            responses: {
+                /** @description Pairing request created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CliPairingCreateResponse"];
+                    };
+                };
+                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "VALIDATION_INVALID_BODY",
+                         *         "message": "Invalid request"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                         *         "message": "Too many requests, please try again later"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "INTERNAL_SERVER_ERROR",
+                         *         "message": "Something went wrong, please try again"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient — retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "SERVICE_UNDER_MAINTENANCE",
+                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cli/pairing/exchange": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Poll / exchange a pairing device code
+         * @description Polled by the CLI while the user approves the request. Returns 400 with a PAIRING_* code while pending/throttled/expired/denied/invalid, and 200 with the minted API key exactly once the request has been approved. Public endpoint — no authentication required. Rate-limited by device_code.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CliPairingExchangeBody"];
+                };
+            };
+            responses: {
+                /** @description Pairing approved — API key issued */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CliPairingExchangeResponse"];
+                    };
+                };
+                /** @description Pairing not ready or not usable */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                         *         "message": "Too many requests, please try again later"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "INTERNAL_SERVER_ERROR",
+                         *         "message": "Something went wrong, please try again"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient — retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "SERVICE_UNDER_MAINTENANCE",
+                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Health check
+         * @description Returns the API health status. No authentication required.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description API is healthy */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "status": "ok",
+                         *       "timestamp": 1770681600
+                         *     }
+                         */
+                        "application/json": {
+                            /** @enum {string} */
+                            status: "ok";
+                            timestamp: components["schemas"]["UnixTimestamp"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current credential info
+         * @description Returns the workspace, plan, and API key metadata for the authenticated credential. Used by the CLI to verify a pasted API key.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Credential info */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MeResponse"];
+                    };
+                };
+                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "AUTH_MISSING_API_KEY",
+                         *         "message": "Authentication required"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                         *         "message": "A Standard plan or higher is required to access the API"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                         *         "message": "Too many requests, please try again later"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "INTERNAL_SERVER_ERROR",
+                         *         "message": "Something went wrong, please try again"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient — retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "SERVICE_UNDER_MAINTENANCE",
+                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5256,7 +5594,6 @@ export interface components {
                 };
             };
         };
-        UnixTimestamp: number;
         AgentCreatedResponse: {
             /**
              * @description The agent ID
@@ -5424,6 +5761,11 @@ export interface components {
             initialMessages: string[];
             /** @description Per-agent credit limit (null = no limit) */
             creditLimit: number | null;
+            /**
+             * @description Credits consumed by this agent since the start of the current calendar month (UTC). Resets to 0 on the 1st of each month.
+             * @example 1284
+             */
+            creditsUsed: number;
             /** @description Email notification settings including recipient addresses */
             notificationsSettings: {
                 dailyLeadsCollected: {
@@ -6956,6 +7298,88 @@ export interface components {
             excludePaths?: string[];
             includeOnlyPaths?: string[];
             slowScraping?: boolean;
+        };
+        CliPairingCreateResponse: {
+            /** @description Opaque secret the CLI polls the exchange endpoint with. Never displayed to the user. */
+            device_code: string;
+            /**
+             * @description Short code the user enters at `verification_uri` to approve this device.
+             * @example BCDF-GHJK
+             */
+            user_code: string;
+            /**
+             * @description URL the user visits to approve the pairing request.
+             * @example https://www.chatbase.co/activate
+             */
+            verification_uri: string;
+            /**
+             * @description `verification_uri` with `user_code` pre-filled, for a clickable link or QR code.
+             * @example https://www.chatbase.co/activate?code=BCDF-GHJK
+             */
+            verification_uri_complete: string;
+            /**
+             * @description Seconds until this pairing request expires.
+             * @example 900
+             */
+            expires_in: number;
+            /**
+             * @description Minimum seconds the CLI should wait between exchange polls.
+             * @example 5
+             */
+            interval: number;
+        };
+        CliPairingCreateBody: {
+            /**
+             * @description Human-readable name for the device initiating the CLI login, shown to the user approving the request.
+             * @example Aly's MacBook Pro
+             */
+            device_name?: string;
+        };
+        CliPairingExchangeResponse: {
+            /** @description Newly minted API key for the CLI. Shown only in this response — store it now, it cannot be retrieved again. */
+            api_key: string;
+            workspace: {
+                /** @description Account ID */
+                id: string;
+                /** @description Workspace/account name */
+                name: string;
+            };
+        };
+        CliPairingExchangeBody: {
+            /** @description The device_code returned by POST /cli/pairing. Opaque — never displayed to the user. */
+            device_code: string;
+        };
+        UnixTimestamp: number;
+        MeResponse: {
+            workspace: {
+                /** @description Account ID */
+                id: string;
+                /** @description Workspace/account name */
+                name: string;
+            };
+            /**
+             * @description Current subscription plan name
+             * @example Standard
+             */
+            plan: string;
+            credential: {
+                /**
+                 * @description The type of credential used to authenticate
+                 * @enum {string}
+                 */
+                type: "api_key";
+                /**
+                 * @description How the key was issued, e.g. "cli" for CLI-issued keys. null for keys created before this field existed.
+                 * @example cli
+                 */
+                source: string | null;
+                /** @description ISO 8601 creation timestamp of the API key */
+                createdAt: string | null;
+                /** @description ISO 8601 expiry timestamp of the API key. null = never expires */
+                expiresAt: string | null;
+                /** @description Scopes granted to this key. null = full account access */
+                permissions: string[] | null;
+            };
         };
     };
     responses: never;

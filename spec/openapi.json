@@ -52,9 +52,6 @@
           "error"
         ]
       },
-      "UnixTimestamp": {
-        "type": "number"
-      },
       "AgentCreatedResponse": {
         "type": "object",
         "properties": {
@@ -687,6 +684,11 @@
             ],
             "description": "Per-agent credit limit (null = no limit)"
           },
+          "creditsUsed": {
+            "type": "integer",
+            "description": "Credits consumed by this agent since the start of the current calendar month (UTC). Resets to 0 on the 1st of each month.",
+            "example": 1284
+          },
           "notificationsSettings": {
             "type": [
               "object",
@@ -970,6 +972,7 @@
           "suggestedMessages",
           "initialMessages",
           "creditLimit",
+          "creditsUsed",
           "notificationsSettings",
           "ipRateLimits",
           "voiceSettings",
@@ -5286,51 +5289,193 @@
             }
           }
         ]
+      },
+      "CliPairingCreateResponse": {
+        "type": "object",
+        "properties": {
+          "device_code": {
+            "type": "string",
+            "description": "Opaque secret the CLI polls the exchange endpoint with. Never displayed to the user."
+          },
+          "user_code": {
+            "type": "string",
+            "description": "Short code the user enters at `verification_uri` to approve this device.",
+            "example": "BCDF-GHJK"
+          },
+          "verification_uri": {
+            "type": "string",
+            "description": "URL the user visits to approve the pairing request.",
+            "example": "https://www.chatbase.co/activate"
+          },
+          "verification_uri_complete": {
+            "type": "string",
+            "description": "`verification_uri` with `user_code` pre-filled, for a clickable link or QR code.",
+            "example": "https://www.chatbase.co/activate?code=BCDF-GHJK"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Seconds until this pairing request expires.",
+            "example": 900
+          },
+          "interval": {
+            "type": "integer",
+            "description": "Minimum seconds the CLI should wait between exchange polls.",
+            "example": 5
+          }
+        },
+        "required": [
+          "device_code",
+          "user_code",
+          "verification_uri",
+          "verification_uri_complete",
+          "expires_in",
+          "interval"
+        ]
+      },
+      "CliPairingCreateBody": {
+        "type": "object",
+        "properties": {
+          "device_name": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Human-readable name for the device initiating the CLI login, shown to the user approving the request.",
+            "example": "Aly's MacBook Pro"
+          }
+        }
+      },
+      "CliPairingExchangeResponse": {
+        "type": "object",
+        "properties": {
+          "api_key": {
+            "type": "string",
+            "description": "Newly minted API key for the CLI. Shown only in this response — store it now, it cannot be retrieved again."
+          },
+          "workspace": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Account ID"
+              },
+              "name": {
+                "type": "string",
+                "description": "Workspace/account name"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          }
+        },
+        "required": [
+          "api_key",
+          "workspace"
+        ]
+      },
+      "CliPairingExchangeBody": {
+        "type": "object",
+        "properties": {
+          "device_code": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The device_code returned by POST /cli/pairing. Opaque — never displayed to the user."
+          }
+        },
+        "required": [
+          "device_code"
+        ]
+      },
+      "UnixTimestamp": {
+        "type": "number"
+      },
+      "MeResponse": {
+        "type": "object",
+        "properties": {
+          "workspace": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Account ID"
+              },
+              "name": {
+                "type": "string",
+                "description": "Workspace/account name"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "plan": {
+            "type": "string",
+            "description": "Current subscription plan name",
+            "example": "Standard"
+          },
+          "credential": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "api_key"
+                ],
+                "description": "The type of credential used to authenticate"
+              },
+              "source": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "How the key was issued, e.g. \"cli\" for CLI-issued keys. null for keys created before this field existed.",
+                "example": "cli"
+              },
+              "createdAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "ISO 8601 creation timestamp of the API key"
+              },
+              "expiresAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "ISO 8601 expiry timestamp of the API key. null = never expires"
+              },
+              "permissions": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string"
+                },
+                "description": "Scopes granted to this key. null = full account access"
+              }
+            },
+            "required": [
+              "type",
+              "source",
+              "createdAt",
+              "expiresAt",
+              "permissions"
+            ]
+          }
+        },
+        "required": [
+          "workspace",
+          "plan",
+          "credential"
+        ]
       }
     },
     "parameters": {}
   },
   "paths": {
-    "/health": {
-      "get": {
-        "tags": [
-          "Health"
-        ],
-        "summary": "Health check",
-        "description": "Returns the API health status. No authentication required.",
-        "responses": {
-          "200": {
-            "description": "API is healthy",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "ok"
-                      ]
-                    },
-                    "timestamp": {
-                      "$ref": "#/components/schemas/UnixTimestamp"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "timestamp"
-                  ]
-                },
-                "example": {
-                  "status": "ok",
-                  "timestamp": 1770681600
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/agents/{agentId}/clone": {
       "post": {
         "tags": [
@@ -10939,6 +11084,383 @@
                   "error": {
                     "code": "SOURCE_LINK_LIMIT_EXCEEDED",
                     "message": "Crawl/sitemap link limit reached"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient — retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cli/pairing": {
+      "post": {
+        "tags": [
+          "CLI Pairing"
+        ],
+        "summary": "Start a CLI pairing request",
+        "description": "Creates a new device pairing request for CLI login (RFC 8628-style device authorization flow). Public endpoint — no authentication required. Rate-limited by IP.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CliPairingCreateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pairing request created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliPairingCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient — retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cli/pairing/exchange": {
+      "post": {
+        "tags": [
+          "CLI Pairing"
+        ],
+        "summary": "Poll / exchange a pairing device code",
+        "description": "Polled by the CLI while the user approves the request. Returns 400 with a PAIRING_* code while pending/throttled/expired/denied/invalid, and 200 with the minted API key exactly once the request has been approved. Public endpoint — no authentication required. Rate-limited by device_code.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CliPairingExchangeBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pairing approved — API key issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliPairingExchangeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pairing not ready or not usable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "PAIRING_PENDING": {
+                    "summary": "Authorization pending. Continue polling at the given interval.",
+                    "value": {
+                      "error": {
+                        "code": "PAIRING_PENDING",
+                        "message": "Authorization pending. Continue polling at the given interval."
+                      }
+                    }
+                  },
+                  "PAIRING_SLOW_DOWN": {
+                    "summary": "Polling too fast. Respect the interval.",
+                    "value": {
+                      "error": {
+                        "code": "PAIRING_SLOW_DOWN",
+                        "message": "Polling too fast. Respect the interval."
+                      }
+                    }
+                  },
+                  "PAIRING_EXPIRED": {
+                    "summary": "This pairing request has expired. Start a new login.",
+                    "value": {
+                      "error": {
+                        "code": "PAIRING_EXPIRED",
+                        "message": "This pairing request has expired. Start a new login."
+                      }
+                    }
+                  },
+                  "PAIRING_DENIED": {
+                    "summary": "This pairing request was denied.",
+                    "value": {
+                      "error": {
+                        "code": "PAIRING_DENIED",
+                        "message": "This pairing request was denied."
+                      }
+                    }
+                  },
+                  "PAIRING_INVALID": {
+                    "summary": "Invalid or already-used device code.",
+                    "value": {
+                      "error": {
+                        "code": "PAIRING_INVALID",
+                        "message": "Invalid or already-used device code."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient — retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health check",
+        "description": "Returns the API health status. No authentication required.",
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "timestamp": {
+                      "$ref": "#/components/schemas/UnixTimestamp"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "timestamp"
+                  ]
+                },
+                "example": {
+                  "status": "ok",
+                  "timestamp": 1770681600
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Get current credential info",
+        "description": "Returns the workspace, plan, and API key metadata for the authenticated credential. Used by the CLI to verify a pasted API key.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Credential info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "A Standard plan or higher is required to access the API"
                   }
                 }
               }
