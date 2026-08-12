@@ -70,6 +70,13 @@ _Last updated: 2026-08-12_
       Partly intentional (unreleased features) — decide what to publish when
       those go GA.
 
+## Database / server-side (before launch)
+
+- [ ] **RLS on new tables** — `cli_pairing_requests` and any other tables
+      added by the pairing work must have Row-Level Security enabled and
+      policies scoped to `account_id`. Supabase tables default to no RLS;
+      a missing policy = publicly queryable via the PostgREST API.
+
 ## Private-repo work items (parallel track)
 
 - [x] Routes-only OpenAPI generator — built 2026-08-06 (uncommitted in the
