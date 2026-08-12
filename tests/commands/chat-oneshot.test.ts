@@ -4,7 +4,7 @@ import path from 'node:path'
 import { PassThrough, Readable } from 'node:stream'
 import { MockAgent, setGlobalDispatcher } from 'undici'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import Chat from '../../src/commands/chat.js'
+import Chat from '../../src/commands/chat/index.js'
 
 const BASE = 'https://www.chatbase.co'
 let mock: MockAgent

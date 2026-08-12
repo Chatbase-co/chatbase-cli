@@ -1,13 +1,14 @@
 import { Flags } from '@oclif/core'
-import { AgentCommand } from '../base/agent-command.js'
-import type { BaseFlags } from '../base/base-command.js'
+import { AgentCommand } from '../../base/agent-command.js'
+import type { BaseFlags } from '../../base/base-command.js'
 import {
     type ChatResponseEnvelope,
     extractText,
+    retryChat,
     sendChat
-} from '../client/chat-helpers.js'
-import { UsageError } from '../errors/errors.js'
-import { runChatRepl } from '../repl/chat-repl.js'
+} from '../../client/chat-helpers.js'
+import { UsageError } from '../../errors/errors.js'
+import { runChatRepl } from '../../repl/chat-repl.js'
 
 type ChatFlags = BaseFlags & { agent?: string; conversation?: string }
 
@@ -134,21 +135,18 @@ export default class Chat extends AgentCommand {
             return { conversationId: nextId }
         }
 
-        // Stubbed for now, per the task brief: re-sends an empty message on
-        // the same conversation, just enough for /retry to do something in
-        // the REPL. The real retry endpoint — POST
-        // .../conversations/{conversationId}/retry — needs the target
-        // messageId, which the REPL doesn't track yet; Task 4 formalizes
-        // this into a proper `retryChat` helper against that endpoint.
+        // Retries the last message in the conversation. Since the REPL doesn't
+        // track individual message IDs, we use "last" as a placeholder that
+        // the server interprets as the last message in the conversation.
         const retry = async (
             conversationId: string,
             signal?: AbortSignal
         ): Promise<void> => {
-            await sendChat({
+            await retryChat({
                 client,
                 agentId,
-                message: '',
                 conversationId,
+                messageId: 'last',
                 stream: true,
                 signal,
                 onText: (text) => process.stdout.write(text)
