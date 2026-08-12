@@ -393,6 +393,24 @@ describe('chatbase sources sync — case collisions', () => {
     })
 })
 
+describe('chatbase sources sync — --include flag', () => {
+    it('overrides the default include globs, scoping the scan to matching files only', async () => {
+        const dir = mkDir({ 'keep.txt': 'hello', 'skip.md': 'world' })
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'GET' })
+            .reply(200, sourcesPage([]))
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await SourcesSync.run(
+            [dir, '--dry-run', '--include', '**/*.txt'],
+            process.cwd()
+        )
+        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(text).toContain('keep.txt')
+        expect(text).not.toContain('skip.md')
+        expect(text).toContain('+1 created')
+    })
+})
+
 describe('chatbase sources sync — no-op plan', () => {
     it('does not prompt when the plan has no changes, even without --force on a non-TTY', async () => {
         const content = 'stable content'
