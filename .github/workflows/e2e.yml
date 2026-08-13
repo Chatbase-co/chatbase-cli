@@ -15,5 +15,6 @@ jobs:
             - run: npm run build
             - run: npm run test:e2e
               env:
+                  CHATBASE_API_URL: ${{ secrets.CHATBASE_E2E_API_URL }}
                   CHATBASE_E2E_API_KEY: ${{ secrets.CHATBASE_E2E_API_KEY }}
                   CHATBASE_E2E_AGENT_ID: ${{ secrets.CHATBASE_E2E_AGENT_ID }}

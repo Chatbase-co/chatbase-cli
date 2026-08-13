@@ -42,6 +42,17 @@ _Last updated: 2026-08-12_
       the release workflow can publish. Transfer the package to the org once
       created.
 
+## GitHub secrets (Settings → Secrets → Actions)
+
+- [ ] **NPM_TOKEN** — npmjs.com → Access Tokens → Granular → Read+Write on
+      `chatbase` package. Used by release.yml to publish.
+- [ ] **CHATBASE_E2E_API_URL** — staging API base URL (e.g.
+      `https://staging.chatbase.co/api/v2`). E2E tests run against staging,
+      not production.
+- [ ] **CHATBASE_E2E_API_KEY** — API key for the staging workspace.
+- [ ] **CHATBASE_E2E_AGENT_ID** — a test agent in the staging workspace
+      (create a dedicated one; don't use a customer agent).
+
 ## GitHub — before going public
 
 - [x] Create `github.com/Chatbase-co/chatbase-cli` — **private** ✓ (2026-08-09)
