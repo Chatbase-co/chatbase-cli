@@ -35,7 +35,7 @@ export default class AuthStatus extends BaseCommand {
         this.note(flags, `Credential: ${tail} (from ${resolved.source})`)
 
         const client = createApiClient({ apiKey: resolved.value })
-        const { data, response } = await client.GET('/me')
+        const { data, error, response } = await client.GET('/me')
         if (response.ok) {
             const body = data as {
                 workspace?: { id?: string; name?: string }
@@ -89,12 +89,32 @@ export default class AuthStatus extends BaseCommand {
                 this.note(flags, 'Scopes: full access')
             }
         } else if (response.status === 401 || response.status === 403) {
-            this.note(
-                flags,
-                this.palette(flags).yellow(
-                    '! Key appears invalid or lacks API access.'
+            const errBody = error as {
+                error?: { code?: string }
+            } | null
+            const code = errBody?.error?.code
+            if (code === 'API_KEY_EXPIRED') {
+                this.note(
+                    flags,
+                    this.palette(flags).yellow(
+                        '! Key has expired — re-pair with `chatbase auth login --browser`'
+                    )
                 )
-            )
+            } else if (code === 'PERMISSION_DENIED') {
+                this.note(
+                    flags,
+                    this.palette(flags).yellow(
+                        '! Key lacks permission for this operation. Check scopes with your workspace admin.'
+                    )
+                )
+            } else {
+                this.note(
+                    flags,
+                    this.palette(flags).yellow(
+                        '! Key appears invalid or lacks API access.'
+                    )
+                )
+            }
         } else if (!response.ok) {
             this.note(
                 flags,
