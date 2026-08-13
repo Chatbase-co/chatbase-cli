@@ -39,34 +39,25 @@ export default class ChatRetry extends AgentCommand {
         // plain-text output. Otherwise stream tokens as they arrive.
         const stream = !flags.json && !flags['no-stream']
 
-        if (stream) {
-            const { conversationId } = await retryChat({
-                client,
-                agentId,
-                conversationId: flags.conversation as string,
-                messageId: flags['message-id'] as string,
-                stream: true,
-                onText: (text) => process.stdout.write(text)
-            })
-            process.stdout.write('\n')
-            this.printConversationHint(flags, agentId, conversationId)
-            return
-        }
-
         const { raw, conversationId } = await retryChat({
             client,
             agentId,
             conversationId: flags.conversation as string,
             messageId: flags['message-id'] as string,
-            stream: false,
-            onText: () => {}
+            stream,
+            onText: stream ? (text) => process.stdout.write(text) : () => {}
         })
 
-        if (flags.json) {
+        if (stream) {
+            process.stdout.write('\n')
+        } else if (flags.json) {
             process.stdout.write(`${JSON.stringify(raw, null, 2)}\n`)
             return
+        } else {
+            process.stdout.write(
+                `${extractText(raw as ChatResponseEnvelope)}\n`
+            )
         }
-        process.stdout.write(`${extractText(raw as ChatResponseEnvelope)}\n`)
         this.printConversationHint(flags, agentId, conversationId)
     }
 
