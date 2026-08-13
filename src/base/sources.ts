@@ -22,7 +22,7 @@ export const SOURCE_COLUMNS: Column[] = [
 ]
 
 const READY = new Set(['trained'])
-const PENDING = new Set(['untrained', 'updated'])
+const PENDING = new Set(['untrained', 'updated', 'toBeDeleted'])
 
 /** Pretty-mode glyph: ✓ trained, … untrained/updated, raw text for everything else. */
 export function renderStatus(status: string, mode: OutputMode): string {
