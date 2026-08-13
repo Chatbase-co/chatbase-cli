@@ -156,7 +156,7 @@ export type RawFetchOptions = ApiClientOptions & {
     body?: unknown
 }
 
-/** Untyped escape hatch — used for endpoints not yet in the vendored spec (/me) and later `chatbase api`. */
+/** Untyped fetch — used by `chatbase api`, auth login/status, and the pairing flow. */
 export async function rawApiFetch(
     method: string,
     path: string,
