@@ -11,10 +11,7 @@ import { buildUserAgent, dispatcher } from './client.js'
 import { computeRetryDelayMs, shouldRetry } from './retry.js'
 import { getSigintSignal } from './signals.js'
 
-/**
- * "File sources require a dedicated endpoint" (API docs). Text/qna/link go
- * through the main API; file uploads go here, as multipart POST/PUT.
- */
+/** File upload host — documented at chatbase.co/docs/api-v2/sources/create-file-source */
 export const FILES_BASE_URL = 'https://files.chatbase.co/api/v2'
 
 /**

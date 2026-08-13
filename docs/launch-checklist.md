@@ -58,11 +58,6 @@ _Last updated: 2026-08-09_
 - [ ] **Public docs gap:** chatbase.co/docs documents 10 of 25 API paths.
       Partly intentional (unreleased features) — decide what to publish when
       the API groups go GA, and whether to automate the private→docs spec sync.
-- [ ] **File upload host undocumented:** `files.chatbase.co/api/v2` (the
-      separate service for file-type source uploads) is not in the public
-      docs or the OpenAPI spec. The CLI uses it for `sources create --file`
-      and `sources sync`. Document it before launch, or customers have no
-      way to upload files via the API.
 
 ## Private-repo work items (parallel track)
 
