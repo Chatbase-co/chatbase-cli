@@ -65,10 +65,12 @@ function stringArray(value: unknown): string[] | undefined {
 }
 
 /**
- * Parses the optional `sync` block. Malformed fields (wrong type) are
- * dropped rather than thrown — `chatbase.json` is a committed, shared file,
- * and a typo in `sync.dir` shouldn't block every other command that reads
- * this file (e.g. agent resolution) from working.
+ * Parses the optional `sync` block from chatbase.json:
+ *
+ *   { "agent": "agt_1", "sync": { "dir": "./docs", "include": ["**\/*.pdf", "**\/*.md"], "exclude": ["**/ drafts /**"] } }
+ *
+ * Malformed fields are dropped, not thrown — a typo in sync.dir shouldn't
+ * block agent resolution or other commands that read this file.
  */
 function parseSyncConfig(value: unknown): ProjectConfig['sync'] {
     if (typeof value !== 'object' || value === null) return undefined
