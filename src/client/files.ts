@@ -38,13 +38,8 @@ export async function uploadFileSource(opts: {
     /** Overrides resolveTimeoutMs() — mainly for tests exercising the abort path. */
     timeoutMs?: number
 }): Promise<{ id: string }> {
-    // undici's fetch() only recognizes ITS OWN FormData class as a
-    // multipart-capable body. Node's ambient global FormData is a distinct
-    // class (same cross-realm trap as the Request-normalization comment in
-    // client.ts) — handing fetch() a global FormData silently degrades to a
-    // stringified "[object FormData]" text/plain body instead of real
-    // multipart, with no error. Confirmed empirically against undici 7.29;
-    // must import FormData from 'undici', not rely on the ambient global.
+    // Must use undici's FormData, not the global — global silently sends
+    // "[object FormData]" as plain text instead of real multipart. No error.
     const form = new UndiciFormData()
     const buffer = fs.readFileSync(opts.filePath)
     const filename = path.basename(opts.filePath)
