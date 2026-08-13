@@ -17,20 +17,9 @@ export abstract class AgentCommand extends BaseCommand {
     }
 
     /**
-     * Resolves the effective agent id.
-     *
-     * Only the -a/--agent FLAG value is allowed to be a display name: it's
-     * the one surface a human actually types, so it's worth one GET /agents
-     * round trip (via resolveAgentRef) to let names resolve. Values coming
-     * from CHATBASE_AGENT_ID, chatbase.json, or the user config are used
-     * AS-IS, with no lookup — those are durable, script/CI-facing surfaces,
-     * and letting a name resolve there would mean a later workspace rename
-     * could silently retarget a saved script to a different agent. We call
-     * resolveAgentRef for every flag value, even ones that are already
-     * ids — there's no reliable way to tell "looks like an id" from "is an
-     * id" without asking the API, and one extra request is a fine trade for
-     * interactive use. Env/config paths skip the call entirely, so
-     * non-interactive scripts and CI pay nothing extra.
+     * Only the -a flag resolves names (one GET /agents call). Env vars and
+     * config values are used as-is — a workspace rename must never silently
+     * retarget a saved script.
      */
     protected async agentId(
         flags: BaseFlags & { agent?: string },
