@@ -50,12 +50,10 @@ const REGEXP_SPECIALS = new Set([
 ])
 
 /**
- * Converts one glob pattern to an anchored RegExp. Supports `*` (any run of
- * non-slash characters, i.e. within one path segment), `**` (any run of
- * characters, including slashes, i.e. across segments), and `?` (exactly one
- * character). A leading `**` segment (followed by a slash) collapses into
- * "zero or more whole directories", so a pattern like `**` + `/*.md` matches
- * both `a.md` and `docs/a.md`. Everything else is matched literally.
+ * Glob → regex. Three wildcards:
+ *   **​/  → any depth of directories (e.g. **​/*.md matches docs/a.md)
+ *   *    → any chars within one directory (no slashes)
+ *   ?    → exactly one character
  */
 function globToRegExp(pattern: string): RegExp {
     let re = ''
