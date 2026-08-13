@@ -1,3 +1,10 @@
+/**
+ * Hand-rolled SSE parser (~50 lines) instead of a library (e.g. eventsource-parser)
+ * because SSE is trivial (`data: <json>\n\n`) and the real work is Chatbase-specific:
+ * idle-timeout racing and mapping our event types (text-delta, message-metadata, tool-*).
+ * A library would replace ~15 lines of string splitting and add a dependency to maintain.
+ */
+
 export type StreamEvent =
     | { type: 'text'; text: string }
     | { type: 'tool'; name: string }
