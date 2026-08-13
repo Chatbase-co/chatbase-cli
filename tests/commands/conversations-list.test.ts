@@ -35,8 +35,7 @@ const page2 = {
     pagination: { hasMore: false, total: 2 }
 }
 
-// Single-page GET /agents response used whenever a test resolves the -a
-// flag through resolveAgentRef() (i.e. whenever -a is passed at all).
+// GET /agents response used by --agent-name resolution tests only.
 const agentsPage = {
     data: [{ id: 'agt_1', name: 'Support Bot' }],
     pagination: { cursor: null, hasMore: false, total: 1 }
@@ -67,7 +66,6 @@ afterEach(async () => {
 
 describe('chatbase conversations list', () => {
     it('renders a plain TSV row per conversation with stable column order', async () => {
-        mockAgentsList()
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/conversations',
@@ -89,7 +87,6 @@ describe('chatbase conversations list', () => {
     })
 
     it('--all follows pagination to the end', async () => {
-        mockAgentsList()
         const pool = mock.get(BASE)
         pool.intercept({
             path: '/api/v2/agents/agt_1/conversations',
@@ -112,7 +109,6 @@ describe('chatbase conversations list', () => {
     })
 
     it('--json emits the raw API envelope', async () => {
-        mockAgentsList()
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/conversations',
@@ -128,7 +124,6 @@ describe('chatbase conversations list', () => {
     })
 
     it('--all --json emits raw items from every page, not display rows', async () => {
-        mockAgentsList()
         const pool = mock.get(BASE)
         pool.intercept({
             path: '/api/v2/agents/agt_1/conversations',
@@ -154,7 +149,6 @@ describe('chatbase conversations list', () => {
     })
 
     it('renders pretty/table mode with aligned headers and numeric timestamps', async () => {
-        mockAgentsList()
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/conversations',
@@ -186,8 +180,9 @@ describe('chatbase conversations list', () => {
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
     })
 
-    it('-a accepts a plain agent id: one GET /agents lookup, no resolution note', async () => {
-        mockAgentsList()
+    it('-a with an ID makes no GET /agents call (no name resolution)', async () => {
+        // No mockAgentsList() — disableNetConnect means any stray GET /agents
+        // request would throw, proving -a stays ID-only.
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/conversations',
@@ -195,17 +190,14 @@ describe('chatbase conversations list', () => {
             })
             .reply(200, page1)
         const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
-        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await ConversationsList.run(['-a', 'agt_1', '--plain'], process.cwd())
         expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
             'c_1'
         )
-        expect(err.mock.calls.map((c) => String(c[0])).join('')).not.toContain(
-            '→'
-        )
     })
 
-    it('-a accepts an exact agent name, resolves it, and notes the resolved id', async () => {
+    it('--agent-name resolves a name and notes the resolved id', async () => {
         mockAgentsList()
         mock.get(BASE)
             .intercept({
@@ -216,7 +208,7 @@ describe('chatbase conversations list', () => {
         const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await ConversationsList.run(
-            ['-a', 'Support Bot', '--plain'],
+            ['--agent-name', 'Support Bot', '--plain'],
             process.cwd()
         )
         expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
@@ -227,7 +219,7 @@ describe('chatbase conversations list', () => {
         )
     })
 
-    it('-a rejects an ambiguous name with a usage error listing candidates', async () => {
+    it('--agent-name rejects an ambiguous name with candidates', async () => {
         mock.get(BASE)
             .intercept({ path: '/api/v2/agents', method: 'GET' })
             .reply(200, {
@@ -241,7 +233,7 @@ describe('chatbase conversations list', () => {
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await expect(
             ConversationsList.run(
-                ['-a', 'Support Bot', '--plain'],
+                ['--agent-name', 'Support Bot', '--plain'],
                 process.cwd()
             )
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
@@ -250,12 +242,15 @@ describe('chatbase conversations list', () => {
         expect(stderr).toContain('agt_3')
     })
 
-    it('-a rejects an unknown name with a usage error suggesting agents list', async () => {
+    it('--agent-name rejects an unknown name suggesting agents list', async () => {
         mockAgentsList()
         vi.spyOn(process.stdout, 'write').mockReturnValue(true)
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await expect(
-            ConversationsList.run(['-a', 'Nope Bot', '--plain'], process.cwd())
+            ConversationsList.run(
+                ['--agent-name', 'Nope Bot', '--plain'],
+                process.cwd()
+            )
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
         expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
             'chatbase agents list'

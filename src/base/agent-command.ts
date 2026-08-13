@@ -11,29 +11,34 @@ export abstract class AgentCommand extends BaseCommand {
         ...BaseCommand.baseFlags,
         agent: Flags.string({
             char: 'a',
+            description: 'Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)'
+        }),
+        'agent-name': Flags.string({
             description:
-                'Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)'
+                'Agent display name — resolves to an ID via GET /agents',
+            exclusive: ['agent']
         })
     }
 
     /**
-     * Only the -a flag resolves names (one GET /agents call). Env vars and
-     * config values are used as-is — a workspace rename must never silently
-     * retarget a saved script.
+     * -a is always an ID (no API call). --agent-name resolves via the
+     * agents list. The two flags are mutually exclusive.
      */
     protected async agentId(
-        flags: BaseFlags & { agent?: string },
+        flags: BaseFlags & { agent?: string; 'agent-name'?: string },
         client: Client<paths>
     ): Promise<string> {
+        if (flags['agent-name']) {
+            const ref = await resolveAgentRef(client, flags['agent-name'])
+            this.note(flags, `→ ${ref.id}`)
+            return ref.id
+        }
         const resolved = resolveAgent(flags.agent)
         if (!resolved) {
             throw new UsageError(
-                'No agent specified. Pass -a <agentId>, set CHATBASE_AGENT_ID, or add "agent" to chatbase.json.'
+                'No agent specified. Pass -a <agentId>, --agent-name <name>, set CHATBASE_AGENT_ID, or add "agent" to chatbase.json.'
             )
         }
-        if (resolved.source !== 'flag') return resolved.value
-        const ref = await resolveAgentRef(client, resolved.value)
-        if (ref.resolvedFromName) this.note(flags, `→ ${ref.id}`)
-        return ref.id
+        return resolved.value
     }
 }
