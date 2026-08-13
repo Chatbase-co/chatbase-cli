@@ -48,9 +48,6 @@
             "messages": {
                 "description": "List conversation messages and set feedback"
             },
-            "tools": {
-                "description": "Submit results for client-side tool calls"
-            },
             "tickets": {
                 "description": "Manage helpdesk tickets and their message threads"
             },

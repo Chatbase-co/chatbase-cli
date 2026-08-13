@@ -73,7 +73,6 @@ calls you invoke.
 * [`chatbase tickets messages`](#chatbase-tickets-messages)
 * [`chatbase tickets reply`](#chatbase-tickets-reply)
 * [`chatbase tickets update TICKETNUMBER`](#chatbase-tickets-update-ticketnumber)
-* [`chatbase tools submit-result`](#chatbase-tools-submit-result)
 
 ## `chatbase agents auto-retrain AGENTID`
 
@@ -1272,35 +1271,5 @@ DESCRIPTION
 
 EXAMPLES
   $ chatbase tickets update 42 --data '{"statusCategory":"closed"}' -a agt_123
-```
-
-## `chatbase tools submit-result`
-
-Submit the result of a client-side tool call
-
-```
-USAGE
-  $ chatbase tools submit-result --conversation <value> --data <value> [--json] [--plain] [-q] [--verbose] [--no-input]
-    [--no-color] [--agent-name <value> | -a <value>]
-
-FLAGS
-  -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet                 Suppress non-essential output
-      --agent-name=<value>    Agent display name — resolves to an ID via GET /agents
-      --conversation=<value>  (required) Conversation ID
-      --data=<value>          (required) Tool result JSON body: { toolCallId, output } (@file, @-, or inline)
-      --no-color              Disable colored output
-      --no-input              Never prompt; fail instead
-      --verbose               Verbose diagnostics
-
-OUTPUT FLAGS
-  --json   Output raw API JSON
-  --plain  Tab-separated output for scripts
-
-DESCRIPTION
-  Submit the result of a client-side tool call
-
-EXAMPLES
-  $ chatbase tools submit-result --conversation conv_123 --data '{"toolCallId":"tc_1","output":{"ok":true}}' -a agt_123
 ```
 <!-- commandsstop -->

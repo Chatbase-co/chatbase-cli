@@ -7,7 +7,6 @@ import ConversationsExport from '../../src/commands/conversations/export.js'
 import ConversationsGet from '../../src/commands/conversations/get.js'
 import MessagesFeedback from '../../src/commands/messages/feedback.js'
 import MessagesList from '../../src/commands/messages/list.js'
-import ToolsSubmitResult from '../../src/commands/tools/submit-result.js'
 
 const BASE = 'https://www.chatbase.co'
 let mock: MockAgent
@@ -338,39 +337,3 @@ describe('chatbase messages feedback', () => {
     })
 })
 
-describe('chatbase tools submit-result', () => {
-    it('posts --data JSON verbatim as the request body', async () => {
-        let sentBody = ''
-        mock.get(BASE)
-            .intercept({
-                path: '/api/v2/agents/agt_1/conversations/conv_1/tool-result',
-                method: 'POST'
-            })
-            .reply(200, (opts) => {
-                sentBody = bodyText(opts.body)
-                return { data: { success: true } }
-            })
-        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
-        await ToolsSubmitResult.run(
-            [
-                '--conversation',
-                'conv_1',
-                '--data',
-                '{"toolCallId":"tc_1","output":{"ok":true}}'
-            ],
-            process.cwd()
-        )
-        expect(JSON.parse(sentBody)).toEqual({
-            toolCallId: 'tc_1',
-            output: { ok: true }
-        })
-        expect(err.mock.calls.join('')).toContain('conv_1')
-    })
-
-    it('rejects a missing --data flag', async () => {
-        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
-        await expect(
-            ToolsSubmitResult.run(['--conversation', 'conv_1'], process.cwd())
-        ).rejects.toMatchObject({ oclif: { exit: 2 } })
-    })
-})
