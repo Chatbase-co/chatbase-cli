@@ -1,32 +1,40 @@
 import fs from 'node:fs'
 import { UsageError } from '../errors/errors.js'
 
-/** Resolve --data into an object: @file.json, @- (stdin), or inline JSON. */
-export async function readBodyData(
-    data?: string
-): Promise<Record<string, unknown>> {
-    if (!data) return {}
-    let raw: string
-    if (data === '@-') {
+/**
+ * Resolve @file, @- (stdin), or a literal string into its text content.
+ * Shared core for both readBodyData (JSON) and readTextInput (free text).
+ */
+async function resolveInput(value: string, flagName: string): Promise<string> {
+    if (value === '@-') {
         if (process.stdin.isTTY)
-            throw new UsageError('--data @- expects piped stdin.')
-        raw = ''
+            throw new UsageError(`${flagName} @- expects piped stdin.`)
+        let raw = ''
         // setEncoding before iterating makes Node decode UTF-8 across chunk
         // boundaries; without it each Buffer chunk is coerced to a string
         // independently, corrupting multi-byte characters split mid-chunk.
         process.stdin.setEncoding('utf8')
         for await (const chunk of process.stdin) raw += chunk
-    } else if (data.startsWith('@')) {
-        const filePath = data.slice(1)
+        return raw
+    }
+    if (value.startsWith('@')) {
+        const filePath = value.slice(1)
         if (!filePath) {
             throw new UsageError(
-                '--data @ requires a filename: --data @path/to/file.json'
+                `${flagName} @ requires a filename: ${flagName} @path/to/file`
             )
         }
-        raw = fs.readFileSync(filePath, 'utf8')
-    } else {
-        raw = data
+        return fs.readFileSync(filePath, 'utf8')
     }
+    return value
+}
+
+/** Resolve --data into an object: @file.json, @- (stdin), or inline JSON. */
+export async function readBodyData(
+    data?: string
+): Promise<Record<string, unknown>> {
+    if (!data) return {}
+    const raw = await resolveInput(data, '--data')
     try {
         return JSON.parse(raw) as Record<string, unknown>
     } catch {
@@ -36,27 +44,7 @@ export async function readBodyData(
     }
 }
 
-/**
- * Resolve a flag value into a raw string, honoring the same @file/@- indirection
- * as readBodyData but without the JSON parse — for flags like --content that
- * carry free text rather than a JSON body.
- */
+/** Resolve a flag value via the same @file/@- indirection, without JSON parsing. */
 export async function readTextInput(value: string): Promise<string> {
-    if (value === '@-') {
-        if (process.stdin.isTTY) throw new UsageError('@- expects piped stdin.')
-        let raw = ''
-        process.stdin.setEncoding('utf8')
-        for await (const chunk of process.stdin) raw += chunk
-        return raw
-    }
-    if (value.startsWith('@')) {
-        const filePath = value.slice(1)
-        if (!filePath) {
-            throw new UsageError(
-                '--content @ requires a filename: --content @path/to/file'
-            )
-        }
-        return fs.readFileSync(filePath, 'utf8')
-    }
-    return value
+    return resolveInput(value, '--content')
 }
