@@ -96,13 +96,8 @@ async function toPlainRequestInit(
         url: input.url,
         method,
         requestInit: { headers, body, ...init, method },
-        // Request.prototype.signal is always a real AbortSignal — never
-        // undefined — defaulting to an inert, never-aborting one when the
-        // caller didn't pass one explicitly. Folding it into the
-        // AbortSignal.any() chain below is therefore a no-op in that case,
-        // and a real per-request cancel hook (e.g. the chat REPL's
-        // per-response Ctrl-C) when a caller did pass one via openapi-fetch
-        // call options (`client.POST(path, { signal })`).
+        // Per-request cancel (e.g. Ctrl-C cancels one chat response without
+        // killing the interactive session). Always defined, inert when unused.
         signal: input.signal
     }
 }
