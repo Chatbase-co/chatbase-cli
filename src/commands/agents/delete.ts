@@ -16,7 +16,7 @@ export default class AgentsDelete extends BaseCommand {
         ...BaseCommand.baseFlags,
         confirm: Flags.string({
             description:
-                'Confirm by repeating the agent ID (required when not interactive)'
+                'Confirm by repeating the agent ID (required in scripts and CI)'
         })
     }
 

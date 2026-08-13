@@ -81,7 +81,7 @@ export default class ConfigSet extends BaseCommand {
     private async pickAgent(flags: BaseFlags): Promise<string> {
         if (!process.stdin.isTTY || flags['no-input']) {
             throw new UsageError(
-                'config set agent requires a value when not interactive. Usage: chatbase config set agent <agentId>'
+                'config set agent requires a value in scripts and CI. Usage: chatbase config set agent <agentId>'
             )
         }
         const resolved = resolveApiKey()
