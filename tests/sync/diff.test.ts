@@ -58,6 +58,21 @@ describe('computeSyncPlan', () => {
         expect(plan.unchanged).toBe(0)
     })
 
+    it('does not let a toBeDeleted/deleted remote source suppress the create of a same-named local file', () => {
+        const toBeDeleted: SourceItem = {
+            ...rf('a.md', 10),
+            status: 'toBeDeleted'
+        }
+        const deleted: SourceItem = { ...rf('b.md', 20), status: 'deleted' }
+        const plan = computeSyncPlan(
+            [lf('a.md', 10), lf('b.md', 20)],
+            [toBeDeleted, deleted]
+        )
+        expect(plan.create.map((f) => f.relPath)).toEqual(['a.md', 'b.md'])
+        expect(plan.unchanged).toBe(0)
+        expect(plan.del).toEqual([])
+    })
+
     it('flags case-insensitive collisions among local files', () => {
         const plan = computeSyncPlan(
             [lf('Readme.md', 1), lf('readme.md', 2)],
@@ -153,5 +168,13 @@ describe('scanDir', () => {
     it('returns an empty array for a directory with no matching files', () => {
         const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cb-sync-empty-'))
         expect(scanDir(dir)).toEqual([])
+    })
+
+    it('treats "?" as exactly one character, not a regex quantifier', () => {
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cb-sync-glob-'))
+        fs.writeFileSync(path.join(dir, 'file.docx'), 'x')
+        fs.writeFileSync(path.join(dir, 'file.doc'), 'x')
+        const files = scanDir(dir, { include: ['*.doc?'] })
+        expect(files.map((f) => f.relPath)).toEqual(['file.docx'])
     })
 })

@@ -55,14 +55,18 @@ export default class AuthStatus extends BaseCommand {
                 this.note(flags, 'Key type: CLI-paired device')
             }
             if (cred?.expiresAt) {
-                const remaining = Math.max(
-                    0,
-                    Math.ceil(
-                        (new Date(cred.expiresAt).getTime() - Date.now()) /
-                            (1000 * 60 * 60 * 24)
-                    )
+                const remaining = Math.ceil(
+                    (new Date(cred.expiresAt).getTime() - Date.now()) /
+                        (1000 * 60 * 60 * 24)
                 )
-                if (remaining <= 7) {
+                if (remaining <= 0) {
+                    this.note(
+                        flags,
+                        this.palette(flags).yellow(
+                            '! Already expired — re-pair with `chatbase auth login --browser`'
+                        )
+                    )
+                } else if (remaining <= 7) {
                     this.note(
                         flags,
                         this.palette(flags).yellow(
@@ -89,6 +93,13 @@ export default class AuthStatus extends BaseCommand {
                 flags,
                 this.palette(flags).yellow(
                     '! Key appears invalid or lacks API access.'
+                )
+            )
+        } else if (!response.ok) {
+            this.note(
+                flags,
+                this.palette(flags).yellow(
+                    `! Could not verify key (server returned ${response.status})`
                 )
             )
         }

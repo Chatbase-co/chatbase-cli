@@ -11,6 +11,29 @@ function streamOf(chunks: string[]): ReadableStream<Uint8Array> {
     })
 }
 
+/** Wraps `stream.getReader` so every reader it hands out reports how many
+ * times `.cancel()` was called — used to verify parseSseStream releases the
+ * reader instead of leaking it. */
+function trackReaderCancels(stream: ReadableStream<Uint8Array>): {
+    count: number
+} {
+    const state = { count: 0 }
+    const target = stream as unknown as {
+        getReader: () => ReadableStreamDefaultReader<Uint8Array>
+    }
+    const originalGetReader = target.getReader.bind(stream)
+    target.getReader = () => {
+        const reader = originalGetReader()
+        const originalCancel = reader.cancel.bind(reader)
+        reader.cancel = (reason?: unknown) => {
+            state.count++
+            return originalCancel(reason)
+        }
+        return reader
+    }
+    return state
+}
+
 it('emits text deltas, metadata, and done', async () => {
     const events: StreamEvent[] = []
     await parseSseStream(
@@ -56,4 +79,36 @@ it('rejects on idle timeout', async () => {
     await expect(
         parseSseStream(never, () => {}, { idleTimeoutMs: 50 })
     ).rejects.toThrow(/idle/i)
+})
+
+it('includes the actual configured idle timeout in the error message', {
+    timeout: 3000
+}, async () => {
+    const never = new ReadableStream<Uint8Array>({ start() {} })
+    await expect(
+        parseSseStream(never, () => {}, { idleTimeoutMs: 1500 })
+    ).rejects.toThrow(/no data for 2s/)
+})
+
+it('releases the reader after [DONE]', async () => {
+    const stream = streamOf(['data: [DONE]\n\n'])
+    const cancels = trackReaderCancels(stream)
+    await parseSseStream(stream, () => {})
+    expect(cancels.count).toBe(1)
+})
+
+it('releases the reader when the stream ends without [DONE]', async () => {
+    const stream = streamOf(['data: {"type":"text-delta","delta":"x"}\n\n'])
+    const cancels = trackReaderCancels(stream)
+    await parseSseStream(stream, () => {})
+    expect(cancels.count).toBe(1)
+})
+
+it('releases the reader when the idle timeout rejects', async () => {
+    const never = new ReadableStream<Uint8Array>({ start() {} })
+    const cancels = trackReaderCancels(never)
+    await expect(
+        parseSseStream(never, () => {}, { idleTimeoutMs: 20 })
+    ).rejects.toThrow()
+    expect(cancels.count).toBe(1)
 })

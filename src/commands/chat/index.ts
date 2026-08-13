@@ -14,6 +14,7 @@ type ChatFlags = BaseFlags & { agent?: string; conversation?: string }
 
 async function readStdinToEnd(): Promise<string> {
     let data = ''
+    process.stdin.setEncoding('utf8')
     for await (const chunk of process.stdin) data += chunk
     return data.trim()
 }

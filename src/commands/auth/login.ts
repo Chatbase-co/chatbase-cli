@@ -15,13 +15,19 @@ async function readStdinToEnd(): Promise<string> {
 }
 
 function tryOpenBrowser(url: string): void {
-    const cmd =
-        process.platform === 'darwin'
-            ? 'open'
-            : process.platform === 'win32'
-              ? 'start'
-              : 'xdg-open'
     try {
+        if (process.platform === 'win32') {
+            // `start` is a cmd.exe built-in, not a standalone executable —
+            // spawning it directly throws ENOENT. Run it through cmd.exe
+            // instead; the empty '' arg keeps `start` from treating the URL
+            // as the window title.
+            spawn('cmd', ['/c', 'start', '', url], {
+                detached: true,
+                stdio: 'ignore'
+            }).unref()
+            return
+        }
+        const cmd = process.platform === 'darwin' ? 'open' : 'xdg-open'
         spawn(cmd, [url], { detached: true, stdio: 'ignore' }).unref()
     } catch {
         // Browser open is best-effort — the URL is printed to stderr anyway.

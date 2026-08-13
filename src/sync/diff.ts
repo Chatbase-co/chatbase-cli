@@ -51,11 +51,11 @@ const REGEXP_SPECIALS = new Set([
 
 /**
  * Converts one glob pattern to an anchored RegExp. Supports `*` (any run of
- * non-slash characters, i.e. within one path segment) and `**` (any run of
- * characters, including slashes, i.e. across segments). A leading `**`
- * segment (followed by a slash) collapses into "zero or more whole
- * directories", so a pattern like `**` + `/*.md` matches both `a.md` and
- * `docs/a.md`. Everything else is matched literally.
+ * non-slash characters, i.e. within one path segment), `**` (any run of
+ * characters, including slashes, i.e. across segments), and `?` (exactly one
+ * character). A leading `**` segment (followed by a slash) collapses into
+ * "zero or more whole directories", so a pattern like `**` + `/*.md` matches
+ * both `a.md` and `docs/a.md`. Everything else is matched literally.
  */
 function globToRegExp(pattern: string): RegExp {
     let re = ''
@@ -71,6 +71,8 @@ function globToRegExp(pattern: string): RegExp {
             }
         } else if (c === '*') {
             re += '[^/]*'
+        } else if (c === '?') {
+            re += '.'
         } else if (REGEXP_SPECIALS.has(c)) {
             re += `\\${c}`
         } else {
@@ -127,7 +129,10 @@ export function scanDir(dir: string, opts: ScanOptions = {}): LocalFile[] {
 /**
  * Diffs a local directory scan against the agent's remote sources. Only
  * `type === 'file'` remote items participate — qna/link/text sources have
- * no local counterpart and are left untouched. Matching is by exact
+ * no local counterpart and are left untouched. Sources already marked
+ * `toBeDeleted` or `deleted` are excluded too, so a pending/completed remote
+ * deletion doesn't get mistaken for a still-live match and suppress the
+ * create of a local file with the same name. Matching is by exact
  * `name === relPath`; case-insensitive duplicates among the local files are
  * reported in `caseCollisions` (a warning, not an error — macOS's default
  * filesystem is case-insensitive so such a pair would silently clobber
@@ -137,7 +142,12 @@ export function computeSyncPlan(
     local: LocalFile[],
     remote: SourceItem[]
 ): SyncPlan {
-    const remoteFiles = remote.filter((r) => r.type === 'file')
+    const remoteFiles = remote.filter(
+        (r) =>
+            r.type === 'file' &&
+            r.status !== 'toBeDeleted' &&
+            r.status !== 'deleted'
+    )
     const remoteByName = new Map(remoteFiles.map((r) => [r.name, r]))
     const localRelPaths = new Set(local.map((l) => l.relPath))
 
