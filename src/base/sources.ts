@@ -5,10 +5,9 @@ import type { OutputMode } from '../output/mode.js'
 import type { Column } from '../output/render.js'
 
 /**
- * Stable shape a source is reduced to for display and for other commands
- * that just need "every source, minimally described" (Plan 3's `sources
- * sync` imports listAllSources() below for exactly that). Append-only:
- * existing fields must not be renamed or removed once this ships.
+ * Stable shape for display and for commands that need "every source,
+ * minimally described" (e.g. `sources sync`). Append-only: existing
+ * fields must not be renamed or removed once this ships.
  */
 export type SourceItem = {
     id: string
@@ -78,7 +77,7 @@ export function toSourceRow(
  * each item down to SourceItem. Consumers that need full API fidelity
  * (e.g. `sources list --json`) should page through the raw endpoint
  * themselves instead — this is for callers that only need the stable,
- * minimal shape (Plan 3's `sources sync` is the intended reuse).
+ * minimal shape (`sources sync` is the primary consumer).
  */
 export async function listAllSources(
     client: Client<paths>,
