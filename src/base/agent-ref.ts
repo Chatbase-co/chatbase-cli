@@ -11,17 +11,7 @@ export type AgentRefResolution = {
 
 type AgentSummary = { id: string; name: string }
 
-/**
- * Resolves a `-a/--agent` reference that may be either an agent id or an
- * exact display name. Only ever called for the FLAG value — see
- * AgentCommand.agentId() for why env/config values skip this entirely.
- *
- * Fetches every page of GET /agents (via fetchAllPages, same helper `agents
- * list --all` uses) so ambiguous names are always detected even when the
- * workspace has more agents than fit on one page. Ids are matched first and
- * win outright: an id is unambiguous by definition, so there's no reason to
- * also scan for name collisions once one is found.
- */
+/** Resolve an --agent-name value to an ID. Fetches all pages to detect ambiguity. */
 export async function resolveAgentRef(
     client: Client<paths>,
     ref: string
