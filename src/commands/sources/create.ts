@@ -17,19 +17,8 @@ type CreateFlags = {
     data?: string
 }
 
-/**
- * Builds a CreateSourceBody-shaped object for the JSON path. --data supplies
- * the full body (e.g. qna's questions[]/answer, which have no dedicated
- * flag); per-type dedicated flags are layered on top and win over --data,
- * same convention as `agents create`. `type` always comes from --type,
- * regardless of what --data contains, since --type is what selected this
- * code path in the first place.
- *
- * The link variant's excludePaths/includeOnlyPaths/slowScraping are all
- * non-optional in the generated CreateSourceBody union (despite carrying
- * @default annotations in the spec), so they're always filled in here to
- * keep the request body schema-correct.
- */
+/** Merges --data (base) with per-type flags (win). Link fields default to
+ * empty/false because the API schema marks them required despite having defaults. */
 async function buildSourceBody(
     flags: CreateFlags
 ): Promise<Record<string, unknown>> {
