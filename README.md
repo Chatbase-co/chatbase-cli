@@ -503,13 +503,14 @@ Send a message to an agent and print its response
 
 ```
 USAGE
-  $ chatbase chat [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>] [-m <value>]
-    [--conversation <value>] [--no-stream]
+  $ chatbase chat [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [-m <value>] [--conversation <value>] [--no-stream]
 
 FLAGS
-  -a, --agent=<value>         Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
+  -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
   -m, --message=<value>       Message to send (else read from piped stdin, else an interactive REPL)
   -q, --quiet                 Suppress non-essential output
+      --agent-name=<value>    Agent display name — resolves to an ID via GET /agents
       --conversation=<value>  Continue an existing conversation
       --no-color              Disable colored output
       --no-input              Never prompt; fail instead
@@ -544,11 +545,12 @@ Retry generating an assistant response
 ```
 USAGE
   $ chatbase chat retry --conversation <value> --message-id <value> [--json] [--plain] [-q] [--verbose]
-    [--no-input] [--no-color] [-a <value>] [--no-stream]
+    [--no-input] [--no-color] [--agent-name <value> | -a <value>] [--no-stream]
 
 FLAGS
-  -a, --agent=<value>         Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
+  -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
   -q, --quiet                 Suppress non-essential output
+      --agent-name=<value>    Agent display name — resolves to an ID via GET /agents
       --conversation=<value>  (required) The conversation ID to retry in
       --message-id=<value>    (required) The message ID to retry from
       --no-color              Disable colored output
@@ -671,18 +673,19 @@ Export conversations with full message history
 
 ```
 USAGE
-  $ chatbase conversations export [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>] [--cursor
-    <value>] [--limit <value>] [-o <value>]
+  $ chatbase conversations export [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--cursor <value>] [--limit <value>] [-o <value>]
 
 FLAGS
-  -a, --agent=<value>   Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -o, --output=<value>  Write export JSON to a file instead of stdout
-  -q, --quiet           Suppress non-essential output
-      --cursor=<value>  Opaque cursor from a previous response
-      --limit=<value>   Items per page (1-20, default 20)
-      --no-color        Disable colored output
-      --no-input        Never prompt; fail instead
-      --verbose         Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -o, --output=<value>      Write export JSON to a file instead of stdout
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --cursor=<value>      Opaque cursor from a previous response
+      --limit=<value>       Items per page (1-20, default 20)
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -705,12 +708,13 @@ Show one conversation
 
 ```
 USAGE
-  $ chatbase conversations get --conversation <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a
-    <value>]
+  $ chatbase conversations get --conversation <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+    [--agent-name <value> | -a <value>]
 
 FLAGS
-  -a, --agent=<value>         Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
+  -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
   -q, --quiet                 Suppress non-essential output
+      --agent-name=<value>    Agent display name — resolves to an ID via GET /agents
       --conversation=<value>  (required) Conversation ID
       --no-color              Disable colored output
       --no-input              Never prompt; fail instead
@@ -735,18 +739,19 @@ List conversations for an agent
 
 ```
 USAGE
-  $ chatbase conversations list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>] [--limit
-    <value>] [--cursor <value>] [--all]
+  $ chatbase conversations list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--limit <value>] [--cursor <value>] [--all]
 
 FLAGS
-  -a, --agent=<value>   Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet           Suppress non-essential output
-      --all             Fetch every page
-      --cursor=<value>  Pagination cursor from a previous page
-      --limit=<value>   Maximum items per page
-      --no-color        Disable colored output
-      --no-input        Never prompt; fail instead
-      --verbose         Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --all                 Fetch every page
+      --cursor=<value>      Pagination cursor from a previous page
+      --limit=<value>       Maximum items per page
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -847,14 +852,16 @@ List ticket statuses for an agent
 
 ```
 USAGE
-  $ chatbase helpdesk statuses [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>]
+  $ chatbase helpdesk statuses [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>]
 
 FLAGS
-  -a, --agent=<value>  Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet          Suppress non-essential output
-      --no-color       Disable colored output
-      --no-input       Never prompt; fail instead
-      --verbose        Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -875,14 +882,16 @@ List helpdesk teams for an agent
 
 ```
 USAGE
-  $ chatbase helpdesk teams [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>]
+  $ chatbase helpdesk teams [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>]
 
 FLAGS
-  -a, --agent=<value>  Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet          Suppress non-essential output
-      --no-color       Disable colored output
-      --no-input       Never prompt; fail instead
-      --verbose        Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -904,11 +913,12 @@ Set or clear user feedback on an assistant message
 ```
 USAGE
   $ chatbase messages feedback --conversation <value> --message <value> --rating positive|negative|clear [--json]
-    [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>]
+    [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a <value>]
 
 FLAGS
-  -a, --agent=<value>         Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
+  -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
   -q, --quiet                 Suppress non-essential output
+      --agent-name=<value>    Agent display name — resolves to an ID via GET /agents
       --conversation=<value>  (required) Conversation ID
       --message=<value>       (required) Message ID
       --no-color              Disable colored output
@@ -938,12 +948,13 @@ List messages in a conversation
 
 ```
 USAGE
-  $ chatbase messages list --conversation <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a
-    <value>] [--limit <value>] [--cursor <value>] [--all]
+  $ chatbase messages list --conversation <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+    [--agent-name <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all]
 
 FLAGS
-  -a, --agent=<value>         Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
+  -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
   -q, --quiet                 Suppress non-essential output
+      --agent-name=<value>    Agent display name — resolves to an ID via GET /agents
       --all                   Fetch every page
       --conversation=<value>  (required) Conversation ID
       --cursor=<value>        Pagination cursor from a previous page
@@ -973,13 +984,14 @@ Create a source: text/qna/link (JSON) or a file upload
 
 ```
 USAGE
-  $ chatbase sources create [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>] [--type
-    text|qna|link | --file <value>] [--name <value>] [--content <value>] [--url <value>] [--link-type
+  $ chatbase sources create [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--type text|qna|link | --file <value>] [--name <value>] [--content <value>] [--url <value>] [--link-type
     individual|sitemap|crawl] [--data <value>]
 
 FLAGS
-  -a, --agent=<value>       Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
   -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
       --content=<value>     Text content for --type text (@file, @-, or inline)
       --data=<value>        Full JSON body (@file, @-, or inline); dedicated flags override matching keys
       --file=<value>        Path to a file to upload as a source (mutually exclusive with --type)
@@ -1018,17 +1030,19 @@ Delete a source (restorable via restore command)
 
 ```
 USAGE
-  $ chatbase sources delete SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>]
+  $ chatbase sources delete SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>]
 
 ARGUMENTS
   SOURCEID  Source ID
 
 FLAGS
-  -a, --agent=<value>  Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet          Suppress non-essential output
-      --no-color       Disable colored output
-      --no-input       Never prompt; fail instead
-      --verbose        Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -1049,17 +1063,19 @@ Show one source
 
 ```
 USAGE
-  $ chatbase sources get SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>]
+  $ chatbase sources get SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>]
 
 ARGUMENTS
   SOURCEID  Source ID
 
 FLAGS
-  -a, --agent=<value>  Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet          Suppress non-essential output
-      --no-color       Disable colored output
-      --no-input       Never prompt; fail instead
-      --verbose        Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -1080,18 +1096,19 @@ List sources for an agent
 
 ```
 USAGE
-  $ chatbase sources list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>] [--limit
-    <value>] [--cursor <value>] [--all]
+  $ chatbase sources list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--limit <value>] [--cursor <value>] [--all]
 
 FLAGS
-  -a, --agent=<value>   Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet           Suppress non-essential output
-      --all             Fetch every page
-      --cursor=<value>  Pagination cursor from a previous page
-      --limit=<value>   Maximum items per page
-      --no-color        Disable colored output
-      --no-input        Never prompt; fail instead
-      --verbose         Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --all                 Fetch every page
+      --cursor=<value>      Pagination cursor from a previous page
+      --limit=<value>       Maximum items per page
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -1114,17 +1131,19 @@ Restore a deleted source
 
 ```
 USAGE
-  $ chatbase sources restore SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>]
+  $ chatbase sources restore SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>]
 
 ARGUMENTS
   SOURCEID  Source ID
 
 FLAGS
-  -a, --agent=<value>  Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet          Suppress non-essential output
-      --no-color       Disable colored output
-      --no-input       Never prompt; fail instead
-      --verbose        Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -1145,14 +1164,16 @@ Show aggregated source counts and sizes for an agent
 
 ```
 USAGE
-  $ chatbase sources summary [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>]
+  $ chatbase sources summary [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>]
 
 FLAGS
-  -a, --agent=<value>  Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet          Suppress non-essential output
-      --no-color       Disable colored output
-      --no-input       Never prompt; fail instead
-      --verbose        Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -1173,16 +1194,17 @@ Converge an agent's file sources to match a local directory (create/update/delet
 
 ```
 USAGE
-  $ chatbase sources sync [DIR] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>] [-n]
-    [--force] [--include <value>...] [--exclude <value>...]
+  $ chatbase sources sync [DIR] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>] [-n] [--force] [--include <value>...] [--exclude <value>...]
 
 ARGUMENTS
   [DIR]  Local directory to sync (else chatbase.json "sync.dir")
 
 FLAGS
-  -a, --agent=<value>       Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
   -n, --dry-run             Show the plan without applying it
   -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
       --exclude=<value>...  Glob(s) of files to exclude (repeatable); overrides defaults and chatbase.json
       --force               Apply without any confirmation prompt
       --include=<value>...  Glob(s) of files to include (repeatable); overrides defaults and chatbase.json
@@ -1213,20 +1235,21 @@ Update an existing source (text, qna, link, or file)
 
 ```
 USAGE
-  $ chatbase sources update SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>]
-    [--data <value> | --file <value>]
+  $ chatbase sources update SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>] [--data <value> | --file <value>]
 
 ARGUMENTS
   SOURCEID  Source ID
 
 FLAGS
-  -a, --agent=<value>  Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet          Suppress non-essential output
-      --data=<value>   Full JSON body for JSON sources (text/qna/link) (@file, @-, or inline)
-      --file=<value>   Path to a file to upload as a replacement (mutually exclusive with --data)
-      --no-color       Disable colored output
-      --no-input       Never prompt; fail instead
-      --verbose        Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --data=<value>        Full JSON body for JSON sources (text/qna/link) (@file, @-, or inline)
+      --file=<value>        Path to a file to upload as a replacement (mutually exclusive with --data)
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -1249,17 +1272,18 @@ Create a helpdesk ticket
 
 ```
 USAGE
-  $ chatbase tickets create [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>] [--subject
-    <value>] [--data <value>]
+  $ chatbase tickets create [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--subject <value>] [--data <value>]
 
 FLAGS
-  -a, --agent=<value>    Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet            Suppress non-essential output
-      --data=<value>     Full JSON body (@file, @-, or inline) — description/customer/etc
-      --no-color         Disable colored output
-      --no-input         Never prompt; fail instead
-      --subject=<value>  Ticket subject
-      --verbose          Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --data=<value>        Full JSON body (@file, @-, or inline) — description/customer/etc
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --subject=<value>     Ticket subject
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -1280,17 +1304,19 @@ Show one helpdesk ticket
 
 ```
 USAGE
-  $ chatbase tickets get TICKETNUMBER [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>]
+  $ chatbase tickets get TICKETNUMBER [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>]
 
 ARGUMENTS
   TICKETNUMBER  Ticket number
 
 FLAGS
-  -a, --agent=<value>  Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet          Suppress non-essential output
-      --no-color       Disable colored output
-      --no-input       Never prompt; fail instead
-      --verbose        Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -1311,18 +1337,19 @@ List helpdesk tickets for an agent
 
 ```
 USAGE
-  $ chatbase tickets list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>] [--limit
-    <value>] [--cursor <value>] [--all]
+  $ chatbase tickets list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--limit <value>] [--cursor <value>] [--all]
 
 FLAGS
-  -a, --agent=<value>   Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet           Suppress non-essential output
-      --all             Fetch every page
-      --cursor=<value>  Pagination cursor from a previous page
-      --limit=<value>   Maximum items per page
-      --no-color        Disable colored output
-      --no-input        Never prompt; fail instead
-      --verbose         Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --all                 Fetch every page
+      --cursor=<value>      Pagination cursor from a previous page
+      --limit=<value>       Maximum items per page
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -1345,19 +1372,20 @@ List a ticket's message thread
 
 ```
 USAGE
-  $ chatbase tickets messages --ticket <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a
-    <value>] [--limit <value>] [--cursor <value>] [--all]
+  $ chatbase tickets messages --ticket <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+    [--agent-name <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all]
 
 FLAGS
-  -a, --agent=<value>   Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet           Suppress non-essential output
-      --all             Fetch every page
-      --cursor=<value>  Pagination cursor from a previous page
-      --limit=<value>   Maximum items per page
-      --no-color        Disable colored output
-      --no-input        Never prompt; fail instead
-      --ticket=<value>  (required) Ticket number
-      --verbose         Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --all                 Fetch every page
+      --cursor=<value>      Pagination cursor from a previous page
+      --limit=<value>       Maximum items per page
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --ticket=<value>      (required) Ticket number
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -1381,12 +1409,13 @@ Post an agent reply to a ticket's message thread
 ```
 USAGE
   $ chatbase tickets reply --ticket <value> -m <value> [--json] [--plain] [-q] [--verbose] [--no-input]
-    [--no-color] [-a <value>] [--author-id <value>] [--author-email <value>]
+    [--no-color] [--agent-name <value> | -a <value>] [--author-id <value>] [--author-email <value>]
 
 FLAGS
-  -a, --agent=<value>         Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
+  -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
   -m, --message=<value>       (required) Reply body as GitHub-flavored Markdown
   -q, --quiet                 Suppress non-essential output
+      --agent-name=<value>    Agent display name — resolves to an ID via GET /agents
       --author-email=<value>  Email of the team member the reply is attributed to (exactly one of
                               --author-id/--author-email)
       --author-id=<value>     Platform user id of the team member the reply is attributed to (exactly one of
@@ -1415,19 +1444,20 @@ Update a ticket's status, assignee, and/or team
 
 ```
 USAGE
-  $ chatbase tickets update TICKETNUMBER [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-a <value>]
-    [--data <value>]
+  $ chatbase tickets update TICKETNUMBER [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>] [--data <value>]
 
 ARGUMENTS
   TICKETNUMBER  Ticket number
 
 FLAGS
-  -a, --agent=<value>  Agent ID or name (or set CHATBASE_AGENT_ID / chatbase.json)
-  -q, --quiet          Suppress non-essential output
-      --data=<value>   Full JSON body (@file, @-, or inline)
-      --no-color       Disable colored output
-      --no-input       Never prompt; fail instead
-      --verbose        Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --data=<value>        Full JSON body (@file, @-, or inline)
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
