@@ -64,14 +64,9 @@ function stringArray(value: unknown): string[] | undefined {
     return value.filter((v): v is string => typeof v === 'string')
 }
 
-/**
- * Parses the optional `sync` block from chatbase.json:
- *
- *   { "agent": "agt_1", "sync": { "dir": "./docs", "include": ["**\/*.pdf", "**\/*.md"], "exclude": ["**/ drafts /**"] } }
- *
- * Malformed fields are dropped, not thrown — a typo in sync.dir shouldn't
- * block agent resolution or other commands that read this file.
- */
+// Example chatbase.json sync block:
+//   { "sync": { "dir": "./docs", "include": ["**/*.pdf"], "exclude": ["**/drafts/**"] } }
+// Malformed fields are dropped — a typo shouldn't block other commands.
 function parseSyncConfig(value: unknown): ProjectConfig['sync'] {
     if (typeof value !== 'object' || value === null) return undefined
     const raw = value as Record<string, unknown>
