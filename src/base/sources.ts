@@ -21,36 +21,15 @@ export const SOURCE_COLUMNS: Column[] = [
     { key: 'size', header: 'SIZE' }
 ]
 
-// The real status enum (SourceListItem.status) is just "untrained" |
-// "trained" | "toBeDeleted" | "updated" (plus "deleted" on delete
-// responses) — narrower than the conceptual ready/pending/failed buckets
-// below. "ready"/"processing"/"training"/"error" aren't emitted by this
-// endpoint today but are kept so the same glyphs read sensibly if the API
-// grows finer-grained statuses later. "toBeDeleted"/"deleted" don't fit any
-// bucket — they're an intentional, user-triggered state, not a failure —
-// so they fall through to the raw-text default.
-const READY_STATUSES = new Set(['trained', 'ready'])
-const PENDING_STATUSES = new Set([
-    'pending',
-    'processing',
-    'training',
-    'untrained',
-    'updated'
-])
-const FAILED_STATUSES = new Set(['failed', 'error'])
+const READY = new Set(['trained'])
+const PENDING = new Set(['untrained', 'updated'])
 
-/**
- * Prefixes a status with a glyph, but only in pretty mode: ✓ for
- * trained/ready, … for pending/processing/training (and the real
- * untrained/updated statuses), ✗ for failed/error. Everything else — and
- * every other output mode — gets the raw status text back untouched.
- */
+/** Pretty-mode glyph: ✓ trained, … untrained/updated, raw text for everything else. */
 export function renderStatus(status: string, mode: OutputMode): string {
     if (mode !== 'pretty') return status
     const key = status.toLowerCase()
-    if (READY_STATUSES.has(key)) return `✓ ${status}`
-    if (PENDING_STATUSES.has(key)) return `… ${status}`
-    if (FAILED_STATUSES.has(key)) return `✗ ${status}`
+    if (READY.has(key)) return `✓ ${status}`
+    if (PENDING.has(key)) return `… ${status}`
     return status
 }
 
