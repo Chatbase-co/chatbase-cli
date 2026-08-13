@@ -56,5 +56,11 @@ export async function uploadFileSource(opts: {
             response.headers.get('x-request-id') ?? undefined
         )
     }
-    return { id: body?.data?.id ?? '' }
+    const id = body?.data?.id
+    if (!id) {
+        throw new Error(
+            'Upload succeeded but the response did not contain a source ID'
+        )
+    }
+    return { id }
 }
