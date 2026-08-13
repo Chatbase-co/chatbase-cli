@@ -1,13 +1,12 @@
 /**
  * Hand-rolled SSE parser (~50 lines) instead of a library (e.g. eventsource-parser)
  * because SSE is trivial (`data: <json>\n\n`) and the real work is Chatbase-specific:
- * idle-timeout racing and mapping our event types (text-delta, message-metadata, tool-*).
+ * idle-timeout racing and mapping our event types (text-delta, message-metadata).
  * A library would replace ~15 lines of string splitting and add a dependency to maintain.
  */
 
 export type StreamEvent =
     | { type: 'text'; text: string }
-    | { type: 'tool'; name: string }
     | { type: 'metadata'; conversationId?: string; finishReason?: string }
     | { type: 'done' }
 
@@ -75,14 +74,6 @@ export async function parseSseStream(
                             type: 'metadata',
                             conversationId: meta.conversationId,
                             finishReason: meta.finishReason
-                        })
-                    } else if (
-                        typeof part.type === 'string' &&
-                        part.type.startsWith('tool-')
-                    ) {
-                        onEvent({
-                            type: 'tool',
-                            name: String(part.toolName ?? part.type)
                         })
                     }
                 }
