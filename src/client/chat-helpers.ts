@@ -10,9 +10,7 @@ export type ChatResponseEnvelope = {
 
 /**
  * Joins every `text` part of a non-streaming ChatResponse into one string.
- * Tool-call/tool-result parts are skipped — the one-shot `--no-stream` path
- * only prints the assistant's text, matching what the streaming path prints
- * as tokens arrive.
+ * Tool-call/tool-result parts are skipped.
  */
 export function extractText(envelope: ChatResponseEnvelope): string {
     return envelope.data.parts
@@ -21,16 +19,40 @@ export function extractText(envelope: ChatResponseEnvelope): string {
         .join('')
 }
 
-/**
- * Sends one message to POST /agents/{agentId}/chat and either streams text
- * deltas to `onText` as they arrive (stream: true) or waits for the full
- * JSON response (stream: false). Shared by the one-shot `chat` command, the
- * REPL, and `chat retry` — kept free of any CLI/output concerns so all three
- * can wrap it differently.
- *
- * The real request body is `{ message, conversationId, stream }` — a single
- * string `message`, not a `messages[]` array — per generated ChatRequest.
- */
+type ChatResult = { conversationId?: string; raw?: unknown }
+
+/** Shared response handling for both sendChat and retryChat. */
+async function handleResponse(
+    data: unknown,
+    error: unknown,
+    response: Response,
+    stream: boolean,
+    onText: (text: string) => void
+): Promise<ChatResult> {
+    if (!stream) {
+        throwIfError(response, error)
+        const raw = data as unknown as ChatResponseEnvelope
+        return { raw, conversationId: raw?.data?.metadata?.conversationId }
+    }
+
+    // With parseAs: 'stream', openapi-fetch drains the body into `error`
+    // on non-2xx — re-reading response.json() would throw (already consumed).
+    if (!response.ok) throwIfError(response, error)
+
+    const body = data as unknown as ReadableStream<Uint8Array> | null
+    if (!body) throw new Error('Stream response had no body')
+
+    let conversationId: string | undefined
+    await parseSseStream(body, (event) => {
+        if (event.type === 'text') onText(event.text)
+        if (event.type === 'metadata') {
+            conversationId = event.conversationId ?? conversationId
+        }
+    })
+    return { conversationId }
+}
+
+/** Send a message. Shared by the chat command, the REPL, and chat retry. */
 export async function sendChat(opts: {
     client: Client<paths>
     agentId: string
@@ -38,12 +60,8 @@ export async function sendChat(opts: {
     conversationId?: string
     stream: boolean
     onText: (text: string) => void
-    /** Aborts just this call — e.g. the chat REPL's per-response Ctrl-C
-     * cancel, distinct from the process-wide interrupt signal. Forwarded to
-     * openapi-fetch's call options; see client.ts's `toPlainRequestInit`
-     * for how it's folded into the underlying fetch's combined signal. */
     signal?: AbortSignal
-}): Promise<{ conversationId?: string; raw?: unknown }> {
+}): Promise<ChatResult> {
     const { data, error, response } = await opts.client.POST(
         '/agents/{agentId}/chat',
         {
@@ -57,41 +75,10 @@ export async function sendChat(opts: {
             signal: opts.signal
         }
     )
-
-    if (!opts.stream) {
-        throwIfError(response, error)
-        const raw = data as unknown as ChatResponseEnvelope
-        return { raw, conversationId: raw?.data?.metadata?.conversationId }
-    }
-
-    // Even with parseAs: 'stream', openapi-fetch only takes the streaming
-    // branch when response.ok — on a non-2xx it already drained the body
-    // into `error` (text, JSON-parsed when possible), so throwIfError can
-    // use it directly. Re-reading response.json() here would throw, since
-    // the body was already consumed.
-    if (!response.ok) throwIfError(response, error)
-
-    const body = data as unknown as ReadableStream<Uint8Array> | null
-    if (!body) throw new Error('Chat stream response had no body')
-
-    let conversationId: string | undefined
-    await parseSseStream(body, (event) => {
-        if (event.type === 'text') opts.onText(event.text)
-        if (event.type === 'metadata') {
-            conversationId = event.conversationId ?? conversationId
-        }
-    })
-    return { conversationId }
+    return handleResponse(data, error, response, opts.stream, opts.onText)
 }
 
-/**
- * Retries generating an assistant response for a given message in a conversation.
- * Streams text deltas to `onText` as they arrive (stream: true) or waits for the
- * full JSON response (stream: false). Shared by the `chat retry` command and the REPL.
- *
- * The real request body is `{ messageId, stream }` — targets the message to retry
- * in the conversation — per generated RetryRequest.
- */
+/** Retry generating a response for a specific message. */
 export async function retryChat(opts: {
     client: Client<paths>
     agentId: string
@@ -99,12 +86,8 @@ export async function retryChat(opts: {
     messageId: string
     stream: boolean
     onText: (text: string) => void
-    /** Aborts just this call — e.g. the chat REPL's per-response Ctrl-C
-     * cancel, distinct from the process-wide interrupt signal. Forwarded to
-     * openapi-fetch's call options; see client.ts's `toPlainRequestInit`
-     * for how it's folded into the underlying fetch's combined signal. */
     signal?: AbortSignal
-}): Promise<{ conversationId?: string; raw?: unknown }> {
+}): Promise<ChatResult> {
     const { data, error, response } = await opts.client.POST(
         '/agents/{agentId}/conversations/{conversationId}/retry',
         {
@@ -122,29 +105,5 @@ export async function retryChat(opts: {
             signal: opts.signal
         }
     )
-
-    if (!opts.stream) {
-        throwIfError(response, error)
-        const raw = data as unknown as ChatResponseEnvelope
-        return { raw, conversationId: raw?.data?.metadata?.conversationId }
-    }
-
-    // Even with parseAs: 'stream', openapi-fetch only takes the streaming
-    // branch when response.ok — on a non-2xx it already drained the body
-    // into `error` (text, JSON-parsed when possible), so throwIfError can
-    // use it directly. Re-reading response.json() here would throw, since
-    // the body was already consumed.
-    if (!response.ok) throwIfError(response, error)
-
-    const body = data as unknown as ReadableStream<Uint8Array> | null
-    if (!body) throw new Error('Retry stream response had no body')
-
-    let conversationId: string | undefined
-    await parseSseStream(body, (event) => {
-        if (event.type === 'text') opts.onText(event.text)
-        if (event.type === 'metadata') {
-            conversationId = event.conversationId ?? conversationId
-        }
-    })
-    return { conversationId }
+    return handleResponse(data, error, response, opts.stream, opts.onText)
 }
