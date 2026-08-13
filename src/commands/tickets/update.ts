@@ -2,6 +2,9 @@ import { Args, Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
 import { readBodyData } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
+import type { components } from '../../generated/api.js'
+
+type UpdateTicketBody = components['schemas']['UpdateTicketBody']
 
 export default class TicketsUpdate extends AgentCommand {
     static override description =
@@ -34,7 +37,7 @@ export default class TicketsUpdate extends AgentCommand {
                 params: {
                     path: { agentId, ticketNumber: args.ticketNumber }
                 },
-                body: body as never
+                body: body as UpdateTicketBody
             }
         )
         throwIfError(response, error)

@@ -1,6 +1,10 @@
 import { Args, Flags } from '@oclif/core'
 import { BaseCommand } from '../../base/base-command.js'
 import { throwIfError } from '../../client/client.js'
+import type { components } from '../../generated/api.js'
+
+type UpdateAgentAutoRetrainBody =
+    components['schemas']['UpdateAgentAutoRetrainBody']
 
 export default class AgentsAutoRetrain extends BaseCommand {
     static override description =
@@ -30,14 +34,15 @@ export default class AgentsAutoRetrain extends BaseCommand {
     async run(): Promise<void> {
         const { args, flags } = await this.parse(AgentsAutoRetrain)
 
+        const body: UpdateAgentAutoRetrainBody = {
+            enabled: flags.enabled === true
+        }
         const client = this.apiClient(flags)
         const { error, response } = await client.PUT(
             '/agents/{agentId}/auto-retrain',
             {
                 params: { path: { agentId: args.agentId } },
-                body: {
-                    enabled: flags.enabled === true
-                } as never
+                body
             }
         )
         throwIfError(response, error)

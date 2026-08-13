@@ -1,6 +1,10 @@
 import { Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
 import { throwIfError } from '../../client/client.js'
+import type { components } from '../../generated/api.js'
+
+type UpdateMessageFeedbackRequest =
+    components['schemas']['UpdateMessageFeedbackRequest']
 
 export default class MessagesFeedback extends AgentCommand {
     static override description =
@@ -30,7 +34,13 @@ export default class MessagesFeedback extends AgentCommand {
         const { flags } = await this.parse(MessagesFeedback)
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
-        const feedback = flags.rating === 'clear' ? null : flags.rating
+        const feedback: UpdateMessageFeedbackRequest['feedback'] =
+            flags.rating === 'positive'
+                ? 'positive'
+                : flags.rating === 'negative'
+                  ? 'negative'
+                  : null
+        const body: UpdateMessageFeedbackRequest = { feedback }
         const { error, response } = await client.PATCH(
             '/agents/{agentId}/conversations/{conversationId}/messages/{messageId}/feedback',
             {
@@ -41,7 +51,7 @@ export default class MessagesFeedback extends AgentCommand {
                         messageId: flags.message
                     }
                 },
-                body: { feedback } as never
+                body
             }
         )
         throwIfError(response, error)

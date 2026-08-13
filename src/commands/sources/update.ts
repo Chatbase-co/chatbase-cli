@@ -6,6 +6,9 @@ import { throwIfError } from '../../client/client.js'
 import { uploadFileSource } from '../../client/files.js'
 import { resolveApiKey } from '../../config/resolve.js'
 import { UsageError } from '../../errors/errors.js'
+import type { components } from '../../generated/api.js'
+
+type UpdateSourceBody = components['schemas']['UpdateSourceBody']
 
 export default class SourcesUpdate extends AgentCommand {
     static override description =
@@ -64,7 +67,7 @@ export default class SourcesUpdate extends AgentCommand {
                 '/agents/{agentId}/sources/{sourceId}',
                 {
                     params: { path: { agentId, sourceId: args.sourceId } },
-                    body: body as never
+                    body: body as UpdateSourceBody
                 }
             )
             throwIfError(response, error)

@@ -6,6 +6,9 @@ import { throwIfError } from '../../client/client.js'
 import { uploadFileSource } from '../../client/files.js'
 import { resolveApiKey } from '../../config/resolve.js'
 import { UsageError } from '../../errors/errors.js'
+import type { components } from '../../generated/api.js'
+
+type CreateSourceBody = components['schemas']['CreateSourceBody']
 
 type CreateFlags = {
     type?: string
@@ -116,7 +119,7 @@ export default class SourcesCreate extends AgentCommand {
                 '/agents/{agentId}/sources',
                 {
                     params: { path: { agentId } },
-                    body: body as never
+                    body: body as CreateSourceBody
                 }
             )
             throwIfError(response, error)

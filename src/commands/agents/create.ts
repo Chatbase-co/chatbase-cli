@@ -2,6 +2,9 @@ import { Flags } from '@oclif/core'
 import { BaseCommand } from '../../base/base-command.js'
 import { readBodyData } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
+import type { components } from '../../generated/api.js'
+
+type CreateAgentBody = components['schemas']['CreateAgentBody']
 
 export default class AgentsCreate extends BaseCommand {
     static override description = 'Create a new agent'
@@ -30,7 +33,7 @@ export default class AgentsCreate extends BaseCommand {
         }
         const client = this.apiClient(flags)
         const { data, error, response } = await client.POST('/agents', {
-            body: body as never
+            body: body as CreateAgentBody
         })
         throwIfError(response, error)
         // Note: POST /agents returns AgentCreatedResponse directly ({ id, pendingSteps? }), not wrapped in { data: ... }

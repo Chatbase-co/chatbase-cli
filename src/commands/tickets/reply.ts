@@ -1,6 +1,9 @@
 import { Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
 import { throwIfError } from '../../client/client.js'
+import type { components } from '../../generated/api.js'
+
+type CreateTicketMessageBody = components['schemas']['CreateTicketMessageBody']
 
 export default class TicketsReply extends AgentCommand {
     static override description =
@@ -35,7 +38,7 @@ export default class TicketsReply extends AgentCommand {
         const { flags } = await this.parse(TicketsReply)
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
-        const body = {
+        const body: CreateTicketMessageBody = {
             type: 'reply',
             content: flags.message,
             ...(flags['author-id'] ? { authorId: flags['author-id'] } : {}),
@@ -49,7 +52,7 @@ export default class TicketsReply extends AgentCommand {
                 params: {
                     path: { agentId, ticketNumber: flags.ticket }
                 },
-                body: body as never
+                body
             }
         )
         throwIfError(response, error)

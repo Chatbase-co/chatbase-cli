@@ -2,6 +2,9 @@ import { Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
 import { readBodyData } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
+import type { components } from '../../generated/api.js'
+
+type CreateTicketBody = components['schemas']['CreateTicketBody']
 
 export default class TicketsCreate extends AgentCommand {
     static override description = 'Create a helpdesk ticket'
@@ -29,7 +32,7 @@ export default class TicketsCreate extends AgentCommand {
             '/agents/{agentId}/helpdesk/tickets',
             {
                 params: { path: { agentId } },
-                body: body as never
+                body: body as CreateTicketBody
             }
         )
         throwIfError(response, error)

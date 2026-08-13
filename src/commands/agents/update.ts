@@ -2,6 +2,9 @@ import { Args, Flags } from '@oclif/core'
 import { BaseCommand } from '../../base/base-command.js'
 import { readBodyData } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
+import type { components } from '../../generated/api.js'
+
+type UpdateAgentBody = components['schemas']['UpdateAgentBody']
 
 export default class AgentsUpdate extends BaseCommand {
     static override description = 'Update an existing agent'
@@ -34,7 +37,7 @@ export default class AgentsUpdate extends BaseCommand {
         const client = this.apiClient(flags)
         const { error, response } = await client.PUT('/agents/{agentId}', {
             params: { path: { agentId: args.agentId } },
-            body: body as never
+            body: body as UpdateAgentBody
         })
         throwIfError(response, error)
         this.success(flags, `Updated agent ${args.agentId}`)

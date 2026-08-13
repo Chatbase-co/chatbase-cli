@@ -2,6 +2,9 @@ import { Args, Flags } from '@oclif/core'
 import { BaseCommand } from '../../base/base-command.js'
 import { readBodyData } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
+import type { components } from '../../generated/api.js'
+
+type UpdateAgentStylesBody = components['schemas']['UpdateAgentStylesBody']
 
 export default class AgentsStyles extends BaseCommand {
     static override description = 'Update visual styles for an agent'
@@ -34,7 +37,7 @@ export default class AgentsStyles extends BaseCommand {
                 params: { path: { agentId: args.agentId } },
                 body: {
                     styles: stylesData
-                } as never
+                } as UpdateAgentStylesBody
             }
         )
         throwIfError(response, error)
