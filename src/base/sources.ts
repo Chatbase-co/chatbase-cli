@@ -47,13 +47,7 @@ export function toSourceRow(
     }
 }
 
-/**
- * Walks every page of GET /agents/{agentId}/sources to the end, mapping
- * each item down to SourceItem. Consumers that need full API fidelity
- * (e.g. `sources list --json`) should page through the raw endpoint
- * themselves instead — this is for callers that only need the stable,
- * minimal shape (`sources sync` is the primary consumer).
- */
+/** Fetch all sources for an agent, mapped to SourceItem. Used by `sources sync`. */
 export async function listAllSources(
     client: Client<paths>,
     agentId: string
