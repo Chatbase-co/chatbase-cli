@@ -1,10 +1,11 @@
 import { Args } from '@oclif/core'
 import type { BaseFlags } from '../../base/base-command.js'
 import { BaseCommand } from '../../base/base-command.js'
-import { rawApiFetch } from '../../client/client.js'
+import { createApiClient } from '../../client/client.js'
+import { fetchAllPages } from '../../client/paginate.js'
 import { resolveApiKey } from '../../config/resolve.js'
 import { readUserConfig, writeUserConfig } from '../../config/store.js'
-import { parseErrorResponse, UsageError } from '../../errors/errors.js'
+import { UsageError } from '../../errors/errors.js'
 
 /** Property names people reach for when about to store a credential —
  * config set never accepts these, no matter the casing. */
@@ -89,27 +90,16 @@ export default class ConfigSet extends BaseCommand {
                 'Not authenticated. Run `chatbase auth login`, or set CHATBASE_API_KEY.'
             )
         }
-        // Paginate through every page (same loop as resolveAgentRef in
-        // agent-ref.ts) so the picker offers every agent in the workspace,
-        // not just whatever fits on the first page.
-        const agents: Array<{ id: string; name?: string }> = []
-        let cursor: string | undefined
-        for (;;) {
-            const res = await rawApiFetch('GET', '/agents', {
-                apiKey: resolved.value,
-                query: cursor ? { cursor } : undefined
-            })
-            if (res.status >= 400) {
-                throw parseErrorResponse(res.status, res.body, res.requestId)
-            }
-            const body = res.body as {
-                data?: Array<{ id: string; name?: string }>
-                pagination?: { cursor?: string | null; hasMore?: boolean }
-            }
-            agents.push(...(body.data ?? []))
-            if (!body.pagination?.hasMore || !body.pagination?.cursor) break
-            cursor = body.pagination.cursor
-        }
+        // Paginate through every page (fetchAllPages, same helper
+        // resolveAgentRef in agent-ref.ts uses) so the picker offers every
+        // agent in the workspace, not just whatever fits on the first page.
+        const client = createApiClient({ apiKey: resolved.value })
+        const { items: agents } = await fetchAllPages<{
+            id: string
+            name?: string
+        }>((query) => client.GET('/agents', { params: { query } }), {
+            all: true
+        })
         if (agents.length === 0) {
             throw new UsageError(
                 'No agents found in this workspace — create one first with `chatbase agents create`.'

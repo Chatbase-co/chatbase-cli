@@ -1,6 +1,6 @@
 import { ListCommand } from '../../base/list-command.js'
 import { SOURCE_COLUMNS, toSourceRow } from '../../base/sources.js'
-import { throwIfError } from '../../client/client.js'
+import { fetchAllPages } from '../../client/paginate.js'
 
 export default class SourcesList extends ListCommand {
     static override description = 'List sources for an agent'
@@ -16,47 +16,21 @@ export default class SourcesList extends ListCommand {
         const agentId = await this.agentId(flags, client)
         const mode = this.mode(flags)
 
-        type Page = {
-            data: Array<Record<string, unknown>>
-            pagination: { cursor?: string; hasMore: boolean; total: number }
-        }
-
-        const pages: Page[] = []
-        let cursor = flags.cursor
-        for (;;) {
-            const { data, error, response } = await client.GET(
-                '/agents/{agentId}/sources',
-                {
-                    params: {
-                        path: { agentId },
-                        query: { cursor, limit: flags.limit }
-                    }
-                }
-            )
-            throwIfError(response, error)
-            const page = data as unknown as Page
-            pages.push(page)
-            if (
-                !flags.all ||
-                !page.pagination.hasMore ||
-                !page.pagination.cursor
-            )
-                break
-            cursor = page.pagination.cursor
-        }
-
-        const rows = pages.flatMap((p) =>
-            p.data.map((s) => toSourceRow(s, mode))
+        const { pages, items } = await fetchAllPages<Record<string, unknown>>(
+            (query) =>
+                client.GET('/agents/{agentId}/sources', {
+                    params: { path: { agentId }, query }
+                }),
+            { limit: flags.limit, cursor: flags.cursor, all: flags.all }
         )
+
+        const rows = items.map((s) => toSourceRow(s, mode))
         const last = pages.at(-1)
         // --json must stay the raw API shape even when --all merges pages
         const raw =
             pages.length === 1
                 ? pages[0]
-                : {
-                      data: pages.flatMap((p) => p.data),
-                      pagination: last?.pagination
-                  }
+                : { data: items, pagination: last?.pagination }
 
         this.printData(flags, raw, rows, SOURCE_COLUMNS)
         if (!flags.all && last?.pagination.hasMore && last.pagination.cursor) {

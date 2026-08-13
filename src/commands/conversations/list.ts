@@ -1,5 +1,5 @@
 import { ListCommand } from '../../base/list-command.js'
-import { throwIfError } from '../../client/client.js'
+import { fetchAllPages } from '../../client/paginate.js'
 import type { Column } from '../../output/render.js'
 
 const COLUMNS: Column[] = [
@@ -23,53 +23,27 @@ export default class ConversationsList extends ListCommand {
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
 
-        type Page = {
-            data: Array<Record<string, string>>
-            pagination: { cursor?: string; hasMore: boolean; total: number }
-        }
-
-        const pages: Page[] = []
-        let cursor = flags.cursor
-        for (;;) {
-            const { data, error, response } = await client.GET(
-                '/agents/{agentId}/conversations',
-                {
-                    params: {
-                        path: { agentId },
-                        query: { cursor, limit: flags.limit }
-                    }
-                }
-            )
-            throwIfError(response, error)
-            const page = data as unknown as Page
-            pages.push(page)
-            if (
-                !flags.all ||
-                !page.pagination.hasMore ||
-                !page.pagination.cursor
-            )
-                break
-            cursor = page.pagination.cursor
-        }
-
-        const rows = pages.flatMap((p) =>
-            p.data.map((c) => ({
-                id: String(c.id ?? ''),
-                title: String(c.title ?? ''),
-                status: String(c.status ?? ''),
-                createdAt: String(c.createdAt ?? ''),
-                updatedAt: String(c.updatedAt ?? '')
-            }))
+        const { pages, items } = await fetchAllPages<Record<string, unknown>>(
+            (query) =>
+                client.GET('/agents/{agentId}/conversations', {
+                    params: { path: { agentId }, query }
+                }),
+            { limit: flags.limit, cursor: flags.cursor, all: flags.all }
         )
+
+        const rows = items.map((c) => ({
+            id: String(c.id ?? ''),
+            title: String(c.title ?? ''),
+            status: String(c.status ?? ''),
+            createdAt: String(c.createdAt ?? ''),
+            updatedAt: String(c.updatedAt ?? '')
+        }))
         const last = pages.at(-1)
         // --json must stay the raw API shape even when --all merges pages
         const raw =
             pages.length === 1
                 ? pages[0]
-                : {
-                      data: pages.flatMap((p) => p.data),
-                      pagination: last?.pagination
-                  }
+                : { data: items, pagination: last?.pagination }
 
         this.printData(flags, raw, rows, COLUMNS)
         if (!flags.all && last?.pagination.hasMore && last.pagination.cursor) {

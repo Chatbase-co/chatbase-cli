@@ -1,5 +1,5 @@
 import type { Client } from 'openapi-fetch'
-import { throwIfError } from '../client/client.js'
+import { fetchAllPages } from '../client/paginate.js'
 import type { paths } from '../generated/api.js'
 import type { OutputMode } from '../output/mode.js'
 import type { Column } from '../output/render.js'
@@ -73,11 +73,6 @@ export function toSourceRow(
     }
 }
 
-type SourcesPage = {
-    data: Array<Record<string, unknown>>
-    pagination: { cursor?: string | null; hasMore: boolean }
-}
-
 /**
  * Walks every page of GET /agents/{agentId}/sources to the end, mapping
  * each item down to SourceItem. Consumers that need full API fidelity
@@ -89,26 +84,18 @@ export async function listAllSources(
     client: Client<paths>,
     agentId: string
 ): Promise<SourceItem[]> {
-    const items: SourceItem[] = []
-    let cursor: string | undefined
-    for (;;) {
-        const { data, error, response } = await client.GET(
-            '/agents/{agentId}/sources',
-            { params: { path: { agentId }, query: { cursor } } }
-        )
-        throwIfError(response, error)
-        const page = data as unknown as SourcesPage
-        items.push(
-            ...page.data.map((s) => ({
-                id: String(s.id ?? ''),
-                type: String(s.type ?? ''),
-                name: String(s.name ?? ''),
-                size: Number(s.size ?? 0),
-                status: String(s.status ?? '')
-            }))
-        )
-        if (!page.pagination.hasMore || !page.pagination.cursor) break
-        cursor = page.pagination.cursor
-    }
-    return items
+    const { items } = await fetchAllPages<Record<string, unknown>>(
+        (query) =>
+            client.GET('/agents/{agentId}/sources', {
+                params: { path: { agentId }, query }
+            }),
+        { all: true }
+    )
+    return items.map((s) => ({
+        id: String(s.id ?? ''),
+        type: String(s.type ?? ''),
+        name: String(s.name ?? ''),
+        size: Number(s.size ?? 0),
+        status: String(s.status ?? '')
+    }))
 }
