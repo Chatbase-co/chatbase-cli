@@ -25,7 +25,7 @@ export default class TicketsUpdate extends AgentCommand {
 
     async run(): Promise<void> {
         const { args, flags } = await this.parse(TicketsUpdate)
-        const body = await readBodyData(flags.data)
+        const body = await readBodyData(flags.data, flags.field)
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
         const { error, response } = await client.PATCH(

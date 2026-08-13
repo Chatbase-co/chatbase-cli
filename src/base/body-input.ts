@@ -29,19 +29,37 @@ async function resolveInput(value: string, flagName: string): Promise<string> {
     return value
 }
 
-/** Resolve --data into an object: @file.json, @- (stdin), or inline JSON. */
-export async function readBodyData(
-    data?: string
-): Promise<Record<string, unknown>> {
-    if (!data) return {}
-    const raw = await resolveInput(data, '--data')
-    try {
-        return JSON.parse(raw) as Record<string, unknown>
-    } catch {
-        throw new UsageError(
-            '--data must be valid JSON (inline, @file, or @-).'
-        )
+/** Parse -f key=value pairs into an object. Flat strings only. */
+export function parseFields(fields?: string[]): Record<string, unknown> {
+    if (!fields?.length) return {}
+    const result: Record<string, unknown> = {}
+    for (const pair of fields) {
+        const eq = pair.indexOf('=')
+        if (eq < 1) {
+            throw new UsageError(`-f expects key=value, got "${pair}"`)
+        }
+        result[pair.slice(0, eq)] = pair.slice(eq + 1)
     }
+    return result
+}
+
+/** Build the request body: --data (base) → -f fields (override). */
+export async function readBodyData(
+    data?: string,
+    fields?: string[]
+): Promise<Record<string, unknown>> {
+    let base: Record<string, unknown> = {}
+    if (data) {
+        const raw = await resolveInput(data, '--data')
+        try {
+            base = JSON.parse(raw) as Record<string, unknown>
+        } catch {
+            throw new UsageError(
+                '--data must be valid JSON (inline, @file, or @-).'
+            )
+        }
+    }
+    return { ...base, ...parseFields(fields) }
 }
 
 /** Resolve a flag value via the same @file/@- indirection, without JSON parsing. */

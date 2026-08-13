@@ -26,7 +26,7 @@ export default class AgentsStyles extends BaseCommand {
 
     async run(): Promise<void> {
         const { args, flags } = await this.parse(AgentsStyles)
-        const stylesData = await readBodyData(flags.data)
+        const stylesData = await readBodyData(flags.data, flags.field)
         const client = this.apiClient(flags)
         const { error, response } = await client.PUT(
             '/agents/{agentId}/styles',

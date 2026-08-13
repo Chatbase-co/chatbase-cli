@@ -23,7 +23,7 @@ export default class AgentsCreate extends BaseCommand {
     async run(): Promise<void> {
         const { flags } = await this.parse(AgentsCreate)
         const body = {
-            ...(await readBodyData(flags.data)),
+            ...(await readBodyData(flags.data, flags.field)),
             ...(flags.name ? { name: flags.name } : {}),
             ...(flags.instructions ? { instructions: flags.instructions } : {}),
             ...(flags.model ? { model: flags.model } : {})

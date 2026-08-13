@@ -59,7 +59,7 @@ export default class SourcesUpdate extends AgentCommand {
                 apiKey: resolved.value
             })
         } else {
-            const body = await readBodyData(flags.data)
+            const body = await readBodyData(flags.data, flags.field)
             const { error, response } = await client.PUT(
                 '/agents/{agentId}/sources/{sourceId}',
                 {

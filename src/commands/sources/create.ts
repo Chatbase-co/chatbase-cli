@@ -15,6 +15,7 @@ type CreateFlags = {
     url?: string
     'link-type'?: string
     data?: string
+    field?: string[]
 }
 
 /** Merges --data (base) with per-type flags (win). Link fields default to
@@ -23,7 +24,7 @@ async function buildSourceBody(
     flags: CreateFlags
 ): Promise<Record<string, unknown>> {
     const body: Record<string, unknown> = {
-        ...(await readBodyData(flags.data)),
+        ...(await readBodyData(flags.data, flags.field)),
         type: flags.type
     }
     if (flags.type === 'text') {

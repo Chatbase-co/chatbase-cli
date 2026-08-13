@@ -20,7 +20,7 @@ export default class TicketsCreate extends AgentCommand {
     async run(): Promise<void> {
         const { flags } = await this.parse(TicketsCreate)
         const body = {
-            ...(await readBodyData(flags.data)),
+            ...(await readBodyData(flags.data, flags.field)),
             ...(flags.subject ? { subject: flags.subject } : {})
         }
         const client = this.apiClient(flags)

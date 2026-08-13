@@ -86,7 +86,12 @@ export abstract class BaseCommand extends Command {
         'no-input': Flags.boolean({
             description: 'Never prompt; fail instead'
         }),
-        'no-color': Flags.boolean({ description: 'Disable colored output' })
+        'no-color': Flags.boolean({ description: 'Disable colored output' }),
+        field: Flags.string({
+            char: 'f',
+            multiple: true,
+            description: 'Set a body field: -f key=value (repeatable)'
+        })
     }
 
     protected requireAuth = true

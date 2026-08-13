@@ -26,7 +26,7 @@ export default class AgentsUpdate extends BaseCommand {
     async run(): Promise<void> {
         const { args, flags } = await this.parse(AgentsUpdate)
         const body = {
-            ...(await readBodyData(flags.data)),
+            ...(await readBodyData(flags.data, flags.field)),
             ...(flags.name ? { name: flags.name } : {}),
             ...(flags.instructions ? { instructions: flags.instructions } : {}),
             ...(flags.model ? { model: flags.model } : {})

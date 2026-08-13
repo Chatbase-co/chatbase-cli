@@ -1,6 +1,6 @@
 import { Args, Flags } from '@oclif/core'
 import { BaseCommand } from '../base/base-command.js'
-import { readBodyData } from '../base/body-input.js'
+import { parseFields, readBodyData } from '../base/body-input.js'
 import { rawApiFetch } from '../client/client.js'
 import { resolveApiKey } from '../config/resolve.js'
 import { parseErrorResponse, UsageError } from '../errors/errors.js'
@@ -37,7 +37,7 @@ export default class Api extends BaseCommand {
     }
     static override flags = {
         ...BaseCommand.baseFlags,
-        field: Flags.string({
+        query: Flags.string({
             multiple: true,
             description: 'Query param k=v (repeatable)'
         }),
@@ -62,13 +62,16 @@ export default class Api extends BaseCommand {
             )
         }
 
-        const query = Object.fromEntries((flags.field ?? []).map(parseField))
-        const body = flags.body ? await readBodyData(flags.body) : undefined
+        const query = Object.fromEntries((flags.query ?? []).map(parseField))
+        const bodyData = flags.body
+            ? await readBodyData(flags.body, flags.field)
+            : parseFields(flags.field)
+        const hasBody = Object.keys(bodyData).length > 0
 
         const res = await rawApiFetch(args.method, args.path, {
             apiKey: resolved.value,
             query,
-            body
+            body: hasBody ? bodyData : undefined
         })
         if (res.status >= 400) {
             throw parseErrorResponse(res.status, res.body, res.requestId)

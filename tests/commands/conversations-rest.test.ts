@@ -336,4 +336,3 @@ describe('chatbase messages feedback', () => {
         expect(JSON.parse(sentBody)).toEqual({ feedback: 'positive' })
     })
 })
-

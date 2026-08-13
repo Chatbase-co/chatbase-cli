@@ -63,7 +63,7 @@ describe('chatbase api', () => {
             })
             .reply(200, { data: [] })
         const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
-        await Api.run(['GET', '/agents', '--field', 'limit=5'], process.cwd())
+        await Api.run(['GET', '/agents', '--query', 'limit=5'], process.cwd())
         expect(
             JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
         ).toEqual({ data: [] })
@@ -79,7 +79,7 @@ describe('chatbase api', () => {
             .reply(200, { data: [] })
         const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
         await Api.run(
-            ['GET', '/agents', '--field', 'limit=5', '--field', 'cursor=cur_1'],
+            ['GET', '/agents', '--query', 'limit=5', '--query', 'cursor=cur_1'],
             process.cwd()
         )
         expect(
@@ -147,7 +147,7 @@ describe('chatbase api', () => {
     it('rejects a --field without "="', async () => {
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await expect(
-            Api.run(['GET', '/agents', '--field', 'nope'], process.cwd())
+            Api.run(['GET', '/agents', '--query', 'nope'], process.cwd())
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
     })
 
