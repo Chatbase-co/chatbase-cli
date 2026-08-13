@@ -150,11 +150,9 @@ export function throwIfError(response: Response, errorBody: unknown): void {
 }
 
 export type RawFetchOptions = ApiClientOptions & {
-    /** Appended as URL search params — used by `chatbase api --field k=v`. */
+    /** Appended as URL search params. */
     query?: Record<string, string>
-    /** JSON-stringified and sent as the request body when present. `undefined`
-     * (the default) sends no body at all, so existing callers (auth login/status,
-     * which never pass this) are unaffected. */
+    /** JSON-stringified as the request body. Omit to send no body. */
     body?: unknown
 }
 
