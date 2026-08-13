@@ -1,6 +1,6 @@
-import fs from 'node:fs'
 import { Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
+import { assertFileReadable } from '../../base/assert-file.js'
 import { readBodyData, readTextInput } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
 import { uploadFileSource } from '../../client/files.js'
@@ -15,24 +15,6 @@ type CreateFlags = {
     url?: string
     'link-type'?: string
     data?: string
-}
-
-/** Throws a UsageError (never touches the network) unless filePath exists, is a regular file, and is readable. */
-export function assertFileReadable(filePath: string): void {
-    let stat: fs.Stats
-    try {
-        stat = fs.statSync(filePath)
-    } catch {
-        throw new UsageError(`File not found: ${filePath}`)
-    }
-    if (!stat.isFile()) {
-        throw new UsageError(`Not a regular file: ${filePath}`)
-    }
-    try {
-        fs.accessSync(filePath, fs.constants.R_OK)
-    } catch {
-        throw new UsageError(`File is not readable: ${filePath}`)
-    }
 }
 
 /**

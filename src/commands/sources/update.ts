@@ -1,11 +1,11 @@
 import { Args, Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
+import { assertFileReadable } from '../../base/assert-file.js'
 import { readBodyData } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
 import { uploadFileSource } from '../../client/files.js'
 import { resolveApiKey } from '../../config/resolve.js'
 import { UsageError } from '../../errors/errors.js'
-import { assertFileReadable } from './create.js'
 
 export default class SourcesUpdate extends AgentCommand {
     static override description =
