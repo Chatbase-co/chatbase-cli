@@ -89,7 +89,7 @@ async function toPlainRequestInit(
     }
 }
 
-function makeFetch(opts: ApiClientOptions) {
+export function makeFetch(opts: ApiClientOptions) {
     const timeoutMs = opts.timeoutMs ?? resolveTimeoutMs()
     return async (
         input: string | URL | Request,
