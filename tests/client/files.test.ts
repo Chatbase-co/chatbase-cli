@@ -136,6 +136,62 @@ describe('uploadFileSource', () => {
         expect(err).toMatchObject({ code: 'FILE_TOO_LARGE', status: 413 })
     })
 
+    it('wires the timeout signal through: a short override aborts an unresponsive request', async () => {
+        const f = tmpFile('slow.pdf', 'x')
+        mock.get('https://files.chatbase.co')
+            .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'POST' })
+            .reply(201, { data: { id: 'src_slow' } })
+            .delay(200)
+        const err = await uploadFileSource({
+            agentId: 'agt_1',
+            filePath: f,
+            apiKey: 'sk',
+            timeoutMs: 5
+        }).catch((e) => e)
+        expect(err).toBeInstanceOf(Error)
+        expect((err as Error).name).toBe('TimeoutError')
+    })
+
+    it('retries a 429 (using X-RateLimit-Reset) and then succeeds', async () => {
+        const f = tmpFile('retry.pdf', 'y')
+        const pool = mock.get('https://files.chatbase.co')
+        pool.intercept({
+            path: '/api/v2/agents/agt_1/sources',
+            method: 'POST'
+        }).reply(
+            429,
+            { error: { code: 'RATE_LIMITED', message: 'slow down' } },
+            { headers: { 'X-RateLimit-Reset': String(Date.now() + 5) } }
+        )
+        pool.intercept({
+            path: '/api/v2/agents/agt_1/sources',
+            method: 'POST'
+        }).reply(201, { data: { id: 'src_retried' } })
+        const res = await uploadFileSource({
+            agentId: 'agt_1',
+            filePath: f,
+            apiKey: 'sk'
+        })
+        expect(res.id).toBe('src_retried')
+    })
+
+    it('does not retry a 5xx — file uploads are POST/PUT, and only 429 is retried for writes', async () => {
+        const f = tmpFile('boom.pdf', 'z')
+        mock.get('https://files.chatbase.co')
+            .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'POST' })
+            .reply(500, { error: { code: 'INTERNAL', message: 'boom' } })
+        const err = await uploadFileSource({
+            agentId: 'agt_1',
+            filePath: f,
+            apiKey: 'sk'
+            // No second interceptor queued: if the code retried anyway,
+            // undici's MockAgent would throw "no matching interceptor"
+            // instead of the ApiError asserted below.
+        }).catch((e) => e)
+        expect(err).toBeInstanceOf(ApiError)
+        expect((err as ApiError).status).toBe(500)
+    })
+
     it('honors CHATBASE_FILES_URL as a base-url override for local dev', async () => {
         vi.stubEnv('CHATBASE_FILES_URL', 'https://files.dev.local/api/v2')
         const f = tmpFile('dev.txt', 'y')

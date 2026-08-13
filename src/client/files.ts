@@ -1,12 +1,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import {
-    getGlobalDispatcher,
     FormData as UndiciFormData,
+    type Response as UndiciResponse,
     fetch as undiciFetch
 } from 'undici'
+import { resolveTimeoutMs } from '../config/resolve.js'
 import { parseErrorResponse } from '../errors/errors.js'
-import { buildUserAgent } from './client.js'
+import { buildUserAgent, dispatcher } from './client.js'
+import { computeRetryDelayMs, shouldRetry } from './retry.js'
 import { getSigintSignal } from './signals.js'
 
 /**
@@ -29,6 +31,8 @@ export function resolveFilesBaseUrl(explicit?: string): string {
     return FILES_BASE_URL
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
 export async function uploadFileSource(opts: {
     agentId: string
     filePath: string
@@ -36,6 +40,8 @@ export async function uploadFileSource(opts: {
     apiKey: string
     sourceId?: string
     baseUrl?: string
+    /** Overrides resolveTimeoutMs() — mainly for tests exercising the abort path. */
+    timeoutMs?: number
 }): Promise<{ id: string }> {
     // undici's fetch() only recognizes ITS OWN FormData class as a
     // multipart-capable body. Node's ambient global FormData is a distinct
@@ -53,16 +59,43 @@ export async function uploadFileSource(opts: {
     const url = opts.sourceId
         ? `${base}/agents/${opts.agentId}/sources/${opts.sourceId}`
         : `${base}/agents/${opts.agentId}/sources`
-    const response = await undiciFetch(url, {
-        method: opts.sourceId ? 'PUT' : 'POST',
-        headers: {
-            Authorization: `Bearer ${opts.apiKey}`,
-            'User-Agent': buildUserAgent()
-        },
-        body: form,
-        dispatcher: getGlobalDispatcher(),
-        signal: getSigintSignal()
-    })
+    const method = opts.sourceId ? 'PUT' : 'POST'
+    const timeoutMs = opts.timeoutMs ?? resolveTimeoutMs()
+
+    // Same proxy/timeout/retry treatment as makeFetch() in client.ts — file
+    // uploads previously bypassed all three by calling undiciFetch directly
+    // with a bare getGlobalDispatcher()/getSigintSignal(). Only 429 is
+    // retried here: these requests are POST/PUT, and shouldRetry() only
+    // retries 5xx for GET (a write may have half-completed server-side
+    // before failing, so repeating it isn't safe).
+    let response: UndiciResponse
+    for (let attempt = 1; ; attempt++) {
+        response = await undiciFetch(url, {
+            method,
+            headers: {
+                Authorization: `Bearer ${opts.apiKey}`,
+                'User-Agent': buildUserAgent()
+            },
+            body: form,
+            dispatcher: dispatcher(),
+            signal: AbortSignal.any([
+                AbortSignal.timeout(timeoutMs),
+                getSigintSignal()
+            ]) as AbortSignal
+        })
+        if (response.ok || !shouldRetry(response.status, method, attempt)) break
+        // Draining before the retry avoids leaking the unread response
+        // body's underlying connection while we sleep and loop.
+        await response.body?.cancel()
+        await sleep(
+            computeRetryDelayMs(
+                attempt,
+                response.headers.get('x-ratelimit-reset'),
+                Date.now()
+            )
+        )
+    }
+
     const body = (await response.json().catch(() => undefined)) as
         | { data?: { id: string } }
         | undefined

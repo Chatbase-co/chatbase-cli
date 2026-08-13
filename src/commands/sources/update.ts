@@ -5,6 +5,7 @@ import { throwIfError } from '../../client/client.js'
 import { uploadFileSource } from '../../client/files.js'
 import { resolveApiKey } from '../../config/resolve.js'
 import { UsageError } from '../../errors/errors.js'
+import { assertFileReadable } from './create.js'
 
 export default class SourcesUpdate extends AgentCommand {
     static override description =
@@ -37,6 +38,9 @@ export default class SourcesUpdate extends AgentCommand {
                 'Specify --data for JSON source updates, or --file to upload a replacement file.'
             )
         }
+        // Validated before any network call, including agent-name
+        // resolution below — matches the guard in sources/create.ts.
+        if (flags.file) assertFileReadable(flags.file)
 
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)

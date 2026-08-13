@@ -48,7 +48,7 @@ const hasProxyEnv = () =>
 
 let proxyAgent: EnvHttpProxyAgent | undefined
 
-function dispatcher() {
+export function dispatcher() {
     // Node's fetch ignores HTTP(S)_PROXY by default; EnvHttpProxyAgent honors it.
     if (!hasProxyEnv()) return getGlobalDispatcher()
     proxyAgent ??= new EnvHttpProxyAgent()

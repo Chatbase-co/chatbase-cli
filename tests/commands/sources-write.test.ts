@@ -115,6 +115,28 @@ describe('chatbase sources update', () => {
             SourcesUpdate.run(['src_1', '-a', 'agt_1'], process.cwd())
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
     })
+
+    it('rejects a missing --file before any network call, naming the path', async () => {
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            SourcesUpdate.run(
+                [
+                    'src_1',
+                    '--file',
+                    '/definitely/does/not/exist-cb-test.pdf',
+                    '-a',
+                    'agt_1'
+                ],
+                process.cwd()
+            )
+            // disableNetConnect() (see beforeEach) means an unguarded
+            // network attempt here would surface as a MockAgent "no
+            // matching interceptor" error rather than this UsageError.
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            '/definitely/does/not/exist-cb-test.pdf'
+        )
+    })
 })
 
 describe('chatbase sources delete', () => {

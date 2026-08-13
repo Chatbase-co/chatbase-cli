@@ -18,7 +18,7 @@ type CreateFlags = {
 }
 
 /** Throws a UsageError (never touches the network) unless filePath exists, is a regular file, and is readable. */
-function assertFileReadable(filePath: string): void {
+export function assertFileReadable(filePath: string): void {
     let stat: fs.Stats
     try {
         stat = fs.statSync(filePath)

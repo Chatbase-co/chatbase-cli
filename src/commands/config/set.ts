@@ -55,14 +55,15 @@ export default class ConfigSet extends BaseCommand {
                     'Usage: chatbase config set timeout <milliseconds>'
                 )
             }
-            if (!/^\d+$/.test(args.value)) {
+            const timeoutMs = Number(args.value)
+            if (!/^\d+$/.test(args.value) || timeoutMs < 1) {
                 throw new UsageError(
-                    'timeout must be a positive integer number of milliseconds.'
+                    'timeout must be a positive integer number of milliseconds (>= 1).'
                 )
             }
             writeUserConfig({
                 ...readUserConfig(),
-                timeoutMs: Number(args.value)
+                timeoutMs
             })
             process.stdout.write(`${args.value}\n`)
             this.success(flags, `timeout set to ${args.value}ms`)
@@ -88,16 +89,27 @@ export default class ConfigSet extends BaseCommand {
                 'Not authenticated. Run `chatbase auth login`, or set CHATBASE_API_KEY.'
             )
         }
-        const res = await rawApiFetch('GET', '/agents', {
-            apiKey: resolved.value
-        })
-        if (res.status >= 400) {
-            throw parseErrorResponse(res.status, res.body, res.requestId)
+        // Paginate through every page (same loop as resolveAgentRef in
+        // agent-ref.ts) so the picker offers every agent in the workspace,
+        // not just whatever fits on the first page.
+        const agents: Array<{ id: string; name?: string }> = []
+        let cursor: string | undefined
+        for (;;) {
+            const res = await rawApiFetch('GET', '/agents', {
+                apiKey: resolved.value,
+                query: cursor ? { cursor } : undefined
+            })
+            if (res.status >= 400) {
+                throw parseErrorResponse(res.status, res.body, res.requestId)
+            }
+            const body = res.body as {
+                data?: Array<{ id: string; name?: string }>
+                pagination?: { cursor?: string | null; hasMore?: boolean }
+            }
+            agents.push(...(body.data ?? []))
+            if (!body.pagination?.hasMore || !body.pagination?.cursor) break
+            cursor = body.pagination.cursor
         }
-        const body = res.body as {
-            data?: Array<{ id: string; name?: string }>
-        }
-        const agents = body.data ?? []
         if (agents.length === 0) {
             throw new UsageError(
                 'No agents found in this workspace — create one first with `chatbase agents create`.'

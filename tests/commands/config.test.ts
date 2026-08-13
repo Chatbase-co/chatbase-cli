@@ -132,6 +132,14 @@ describe('config set + get round trip', () => {
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
     })
 
+    it('rejects timeout 0 (AbortSignal.timeout(0) would fire immediately and break every command)', async () => {
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            ConfigSet.run(['timeout', '0'], process.cwd())
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        expect(readUserConfig().timeoutMs).toBeUndefined()
+    })
+
     it('config get rejects an unknown key', async () => {
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await expect(
@@ -175,6 +183,37 @@ describe('config set agent (no value)', () => {
                 ],
                 pagination: { cursor: null, hasMore: false, total: 2 }
             })
+        vi.mocked(select).mockResolvedValue('agt_2' as never)
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConfigSet.run(['agent'], process.cwd())
+        expect(readUserConfig().agent).toBe('agt_2')
+        expect(vi.mocked(select)).toHaveBeenCalledWith(
+            expect.objectContaining({
+                choices: [
+                    expect.objectContaining({ value: 'agt_1' }),
+                    expect.objectContaining({ value: 'agt_2' })
+                ]
+            })
+        )
+    })
+
+    it('follows pagination to the end and offers every agent, not just the first page', async () => {
+        vi.stubEnv('CHATBASE_API_KEY', 'sk-test')
+        stubTTY()
+        const pool = mock.get(BASE)
+        pool.intercept({ path: '/api/v2/agents', method: 'GET' }).reply(200, {
+            data: [{ id: 'agt_1', name: 'Support Bot' }],
+            pagination: { cursor: 'cur_2', hasMore: true, total: 2 }
+        })
+        pool.intercept({
+            path: '/api/v2/agents',
+            method: 'GET',
+            query: { cursor: 'cur_2' }
+        }).reply(200, {
+            data: [{ id: 'agt_2', name: 'Sales Bot' }],
+            pagination: { cursor: null, hasMore: false, total: 2 }
+        })
         vi.mocked(select).mockResolvedValue('agt_2' as never)
         vi.spyOn(process.stdout, 'write').mockReturnValue(true)
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)

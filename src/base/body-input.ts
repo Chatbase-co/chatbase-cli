@@ -11,9 +11,19 @@ export async function readBodyData(
         if (process.stdin.isTTY)
             throw new UsageError('--data @- expects piped stdin.')
         raw = ''
+        // setEncoding before iterating makes Node decode UTF-8 across chunk
+        // boundaries; without it each Buffer chunk is coerced to a string
+        // independently, corrupting multi-byte characters split mid-chunk.
+        process.stdin.setEncoding('utf8')
         for await (const chunk of process.stdin) raw += chunk
     } else if (data.startsWith('@')) {
-        raw = fs.readFileSync(data.slice(1), 'utf8')
+        const filePath = data.slice(1)
+        if (!filePath) {
+            throw new UsageError(
+                '--data @ requires a filename: --data @path/to/file.json'
+            )
+        }
+        raw = fs.readFileSync(filePath, 'utf8')
     } else {
         raw = data
     }
@@ -35,9 +45,18 @@ export async function readTextInput(value: string): Promise<string> {
     if (value === '@-') {
         if (process.stdin.isTTY) throw new UsageError('@- expects piped stdin.')
         let raw = ''
+        process.stdin.setEncoding('utf8')
         for await (const chunk of process.stdin) raw += chunk
         return raw
     }
-    if (value.startsWith('@')) return fs.readFileSync(value.slice(1), 'utf8')
+    if (value.startsWith('@')) {
+        const filePath = value.slice(1)
+        if (!filePath) {
+            throw new UsageError(
+                '--content @ requires a filename: --content @path/to/file'
+            )
+        }
+        return fs.readFileSync(filePath, 'utf8')
+    }
     return value
 }
