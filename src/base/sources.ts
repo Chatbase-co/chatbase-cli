@@ -23,13 +23,15 @@ export const SOURCE_COLUMNS: Column[] = [
 
 const READY = new Set(['trained'])
 const PENDING = new Set(['untrained', 'updated', 'toBeDeleted'])
+const REMOVED = new Set(['deleted'])
 
-/** Pretty-mode glyph: ✓ trained, … untrained/updated, raw text for everything else. */
+/** Pretty-mode glyph: ✓ trained, … in progress, ✗ deleted. */
 export function renderStatus(status: string, mode: OutputMode): string {
     if (mode !== 'pretty') return status
     const key = status.toLowerCase()
     if (READY.has(key)) return `✓ ${status}`
     if (PENDING.has(key)) return `… ${status}`
+    if (REMOVED.has(key)) return `✗ ${status}`
     return status
 }
 
