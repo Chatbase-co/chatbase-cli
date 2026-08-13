@@ -1,6 +1,17 @@
 import fs from 'node:fs'
 import { UsageError } from '../errors/errors.js'
 
+/** Read all of stdin as a UTF-8 string. Shared by @- input and direct stdin reads. */
+export async function readStdinToEnd(): Promise<string> {
+    let raw = ''
+    // setEncoding before iterating makes Node decode UTF-8 across chunk
+    // boundaries; without it each Buffer chunk is coerced to a string
+    // independently, corrupting multi-byte characters split mid-chunk.
+    process.stdin.setEncoding('utf8')
+    for await (const chunk of process.stdin) raw += chunk
+    return raw.trim()
+}
+
 /**
  * Resolve @file, @- (stdin), or a literal string into its text content.
  * Shared core for both readBodyData (JSON) and readTextInput (free text).
@@ -9,13 +20,7 @@ async function resolveInput(value: string, flagName: string): Promise<string> {
     if (value === '@-') {
         if (process.stdin.isTTY)
             throw new UsageError(`${flagName} @- expects piped stdin.`)
-        let raw = ''
-        // setEncoding before iterating makes Node decode UTF-8 across chunk
-        // boundaries; without it each Buffer chunk is coerced to a string
-        // independently, corrupting multi-byte characters split mid-chunk.
-        process.stdin.setEncoding('utf8')
-        for await (const chunk of process.stdin) raw += chunk
-        return raw
+        return readStdinToEnd()
     }
     if (value.startsWith('@')) {
         const filePath = value.slice(1)

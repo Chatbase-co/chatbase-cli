@@ -1,18 +1,12 @@
 import { spawn } from 'node:child_process'
 import { Flags } from '@oclif/core'
 import { BaseCommand } from '../../base/base-command.js'
+import { readStdinToEnd } from '../../base/body-input.js'
 import { createApiClient, throwIfError } from '../../client/client.js'
 import { pollExchange, startPairing } from '../../client/pairing.js'
 import { configFile } from '../../config/paths.js'
 import { readUserConfig, writeUserConfig } from '../../config/store.js'
 import { UsageError } from '../../errors/errors.js'
-
-async function readStdinToEnd(): Promise<string> {
-    let data = ''
-    process.stdin.setEncoding('utf8')
-    for await (const chunk of process.stdin) data += chunk
-    return data.trim()
-}
 
 function tryOpenBrowser(url: string): void {
     try {

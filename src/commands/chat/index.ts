@@ -1,6 +1,7 @@
 import { Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
 import type { BaseFlags } from '../../base/base-command.js'
+import { readStdinToEnd } from '../../base/body-input.js'
 import {
     type ChatResponseEnvelope,
     extractText,
@@ -11,13 +12,6 @@ import { UsageError } from '../../errors/errors.js'
 import { runChatRepl } from '../../repl/chat-repl.js'
 
 type ChatFlags = BaseFlags & { agent?: string; conversation?: string }
-
-async function readStdinToEnd(): Promise<string> {
-    let data = ''
-    process.stdin.setEncoding('utf8')
-    for await (const chunk of process.stdin) data += chunk
-    return data.trim()
-}
 
 export default class Chat extends AgentCommand {
     static override description =
