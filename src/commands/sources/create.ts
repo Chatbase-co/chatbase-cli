@@ -75,7 +75,7 @@ export default class SourcesCreate extends AgentCommand {
         }),
         data: Flags.string({
             description:
-                'Full JSON body (@file, @-, or inline); dedicated flags override matching keys'
+                'JSON body (@file, @-, or inline); per-type flags override matching keys'
         })
     }
 

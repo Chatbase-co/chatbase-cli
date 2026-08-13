@@ -21,7 +21,7 @@ export default class SourcesUpdate extends AgentCommand {
         ...AgentCommand.baseFlags,
         data: Flags.string({
             description:
-                'Full JSON body for JSON sources (text/qna/link) (@file, @-, or inline)',
+                'JSON body for text/qna/link sources (@file, @-, or inline)',
             exclusive: ['file']
         }),
         file: Flags.string({

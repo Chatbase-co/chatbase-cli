@@ -18,7 +18,8 @@ export default class AgentsUpdate extends BaseCommand {
         instructions: Flags.string({ description: 'System instructions' }),
         model: Flags.string({ description: 'Model ID' }),
         data: Flags.string({
-            description: 'Full JSON body (@file, @-, or inline)'
+            description:
+                'JSON body (@file, @-, or inline). Fields: name, instructions, model, visibility, temp'
         })
     }
 

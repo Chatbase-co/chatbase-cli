@@ -13,7 +13,7 @@ export default class TicketsCreate extends AgentCommand {
         subject: Flags.string({ description: 'Ticket subject' }),
         data: Flags.string({
             description:
-                'Full JSON body (@file, @-, or inline) — description/customer/etc'
+                'JSON body (@file, @-, or inline). Fields: subject, description, customer, statusId, teamId'
         })
     }
 

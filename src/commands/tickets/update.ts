@@ -18,7 +18,8 @@ export default class TicketsUpdate extends AgentCommand {
     static override flags = {
         ...AgentCommand.baseFlags,
         data: Flags.string({
-            description: 'Full JSON body (@file, @-, or inline)'
+            description:
+                'JSON body (@file, @-, or inline). Fields: statusId, statusCategory, assigneeId, teamId'
         })
     }
 

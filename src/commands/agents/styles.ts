@@ -19,7 +19,8 @@ export default class AgentsStyles extends BaseCommand {
         ...BaseCommand.baseFlags,
         data: Flags.string({
             required: true,
-            description: 'Styles JSON (@file, @-, or inline)'
+            description:
+                'JSON body (@file, @-, or inline). See API docs for style properties'
         })
     }
 
