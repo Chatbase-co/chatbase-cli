@@ -175,7 +175,11 @@ export type RawFetchOptions = ApiClientOptions & {
     body?: unknown
 }
 
-/** Untyped fetch — used by `chatbase api`, auth login/status, and the pairing flow. */
+/**
+ * Untyped HTTP call — the `chatbase api` escape hatch (like `gh api` in
+ * GitHub's CLI: any method, any path, JSON in/out). Uses the same
+ * proxy/timeout/retry/SIGINT wrappers as the typed client.
+ */
 export async function rawApiFetch(
     method: string,
     path: string,

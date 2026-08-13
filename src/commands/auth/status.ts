@@ -1,7 +1,7 @@
 import { BaseCommand } from '../../base/base-command.js'
 import {
+    createApiClient,
     DEFAULT_BASE_URL,
-    rawApiFetch,
     resolveBaseUrl
 } from '../../client/client.js'
 import { resolveApiKey } from '../../config/resolve.js'
@@ -34,11 +34,10 @@ export default class AuthStatus extends BaseCommand {
             resolved.value.length > 8 ? `…${resolved.value.slice(-4)}` : '…****'
         this.note(flags, `Credential: ${tail} (from ${resolved.source})`)
 
-        const res = await rawApiFetch('GET', '/me', {
-            apiKey: resolved.value
-        })
-        if (res.status === 200) {
-            const body = res.body as {
+        const client = createApiClient({ apiKey: resolved.value })
+        const { data, response } = await client.GET('/me')
+        if (response.ok) {
+            const body = data as {
                 workspace?: { id?: string; name?: string }
                 plan?: string
                 credential?: {
@@ -53,7 +52,7 @@ export default class AuthStatus extends BaseCommand {
             )
             const cred = body.credential
             if (cred?.source === 'cli') {
-                this.note(flags, `Key type: CLI-paired device`)
+                this.note(flags, 'Key type: CLI-paired device')
             }
             if (cred?.expiresAt) {
                 const remaining = Math.max(
@@ -85,7 +84,7 @@ export default class AuthStatus extends BaseCommand {
             } else if (cred?.permissions === null) {
                 this.note(flags, 'Scopes: full access')
             }
-        } else if (res.status === 401 || res.status === 403) {
+        } else if (response.status === 401 || response.status === 403) {
             this.note(
                 flags,
                 this.palette(flags).yellow(

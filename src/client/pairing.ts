@@ -1,16 +1,14 @@
 /**
  * CLI-side of the browser pairing login flow:
  *   1. POST /cli/pairing → get user_code + device_code
- *   2. User approves at verification_uri (opens in browser)
- *   3. Poll POST /cli/pairing/exchange with device_code until approved
+ *   2. User approves at verification_uri
+ *   3. Poll POST /cli/pairing/exchange until approved
  *   4. Receive the minted API key + workspace info
  *
- * The endpoints are unauthenticated (the whole point is the user doesn't
- * have a key yet). Errors use the standard API envelope — PAIRING_PENDING
- * means "keep polling", anything else is terminal.
+ * These endpoints are unauthenticated — the user doesn't have a key yet.
  */
 import os from 'node:os'
-import { rawApiFetch } from './client.js'
+import { createApiClient, throwIfError } from './client.js'
 
 export type PairingResult = {
     apiKey: string
@@ -25,15 +23,12 @@ export async function startPairing(opts?: { baseUrl?: string }): Promise<{
     expiresIn: number
     interval: number
 }> {
-    const res = await rawApiFetch('POST', '/cli/pairing', {
-        baseUrl: opts?.baseUrl,
+    const client = createApiClient({ baseUrl: opts?.baseUrl })
+    const { data, error, response } = await client.POST('/cli/pairing', {
         body: { device_name: os.hostname() }
     })
-    if (res.status !== 201 && res.status !== 200) {
-        const { parseErrorResponse } = await import('../errors/errors.js')
-        throw parseErrorResponse(res.status, res.body, res.requestId)
-    }
-    const data = res.body as {
+    throwIfError(response, error)
+    const d = data as {
         device_code: string
         user_code: string
         verification_uri: string
@@ -42,12 +37,12 @@ export async function startPairing(opts?: { baseUrl?: string }): Promise<{
         interval: number
     }
     return {
-        deviceCode: data.device_code,
-        userCode: data.user_code,
-        verificationUri: data.verification_uri,
-        verificationUriComplete: data.verification_uri_complete,
-        expiresIn: data.expires_in,
-        interval: data.interval
+        deviceCode: d.device_code,
+        userCode: d.user_code,
+        verificationUri: d.verification_uri,
+        verificationUriComplete: d.verification_uri_complete,
+        expiresIn: d.expires_in,
+        interval: d.interval
     }
 }
 
@@ -62,27 +57,28 @@ export async function pollExchange(
 ): Promise<PairingResult> {
     const deadline = Date.now() + opts.timeoutMs
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+    const client = createApiClient({ baseUrl: opts.baseUrl })
 
     for (;;) {
         opts.onPoll?.()
-        const res = await rawApiFetch('POST', '/cli/pairing/exchange', {
-            baseUrl: opts.baseUrl,
-            body: { device_code: deviceCode }
-        })
+        const { data, error, response } = await client.POST(
+            '/cli/pairing/exchange',
+            { body: { device_code: deviceCode } }
+        )
 
-        if (res.status === 200) {
-            const data = res.body as {
+        if (response.ok) {
+            const result = data as {
                 api_key: string
                 workspace: { id: string; name: string }
             }
             return {
-                apiKey: data.api_key,
-                workspace: data.workspace
+                apiKey: result.api_key,
+                workspace: result.workspace
             }
         }
 
-        const errorBody = res.body as {
-            error?: { code?: string; message?: string }
+        const errorBody = error as {
+            error?: { code?: string }
         }
         const code = errorBody?.error?.code
 
@@ -101,7 +97,6 @@ export async function pollExchange(
             continue
         }
 
-        const { parseErrorResponse } = await import('../errors/errors.js')
-        throw parseErrorResponse(res.status, res.body, res.requestId)
+        throwIfError(response, error)
     }
 }

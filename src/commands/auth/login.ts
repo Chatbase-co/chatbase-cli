@@ -1,14 +1,15 @@
 import { spawn } from 'node:child_process'
 import { Flags } from '@oclif/core'
 import { BaseCommand } from '../../base/base-command.js'
-import { rawApiFetch } from '../../client/client.js'
+import { createApiClient, throwIfError } from '../../client/client.js'
 import { pollExchange, startPairing } from '../../client/pairing.js'
 import { configFile } from '../../config/paths.js'
 import { readUserConfig, writeUserConfig } from '../../config/store.js'
-import { parseErrorResponse, UsageError } from '../../errors/errors.js'
+import { UsageError } from '../../errors/errors.js'
 
 async function readStdinToEnd(): Promise<string> {
     let data = ''
+    process.stdin.setEncoding('utf8')
     for await (const chunk of process.stdin) data += chunk
     return data.trim()
 }
@@ -132,24 +133,23 @@ export default class AuthLogin extends BaseCommand {
         flags: Record<string, unknown>,
         key: string
     ): Promise<void> {
-        const res = await rawApiFetch('GET', '/me', { apiKey: key })
-        if (res.status === 200) {
-            const body = res.body as {
-                workspace?: { name?: string }
-            }
+        const client = createApiClient({ apiKey: key })
+        const { data, error, response } = await client.GET('/me')
+        if (response.ok) {
+            const me = data as { workspace?: { name?: string } }
             writeUserConfig({ ...readUserConfig(), apiKey: key })
             this.success(
                 flags,
-                `Logged in${body.workspace?.name ? ` to workspace ${body.workspace.name}` : ''}`
+                `Logged in${me?.workspace?.name ? ` to workspace ${me.workspace.name}` : ''}`
             )
-        } else if (res.status === 404) {
+        } else if (response.status === 404) {
             writeUserConfig({ ...readUserConfig(), apiKey: key })
             this.note(
                 flags,
                 'Key stored (verification unavailable — it will be checked on first use).'
             )
         } else {
-            throw parseErrorResponse(res.status, res.body, res.requestId)
+            throwIfError(response, error)
         }
         this.note(flags, `Saved to ${configFile()}`)
     }
