@@ -104,4 +104,10 @@ _Last updated: 2026-08-12_
       design + plan written and ready in Plan 4 Tasks 1-3
 - [ ] Homebrew distribution via `oclif pack`
 - [ ] `--all` pagination loop cap (harden against cycling cursors)
+- [ ] `?name=` query filter on GET /agents (simplifies --agent-name to
+      one request instead of fetching all pages)
+- [ ] Emoji polish for status glyphs and success/error lines
+- [ ] `chatbase docs` command (add back when CLI docs pages exist)
+- [ ] Tool-call event rendering in chat streams (dim annotation lines)
+- [ ] `as never` body casts — replace with proper typed helpers (10 commands)
 - [ ] Man pages (revisit on user demand)
