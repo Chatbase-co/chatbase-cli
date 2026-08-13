@@ -29,9 +29,9 @@ export abstract class AgentCommand extends BaseCommand {
         client: Client<paths>
     ): Promise<string> {
         if (flags['agent-name']) {
-            const ref = await resolveAgentRef(client, flags['agent-name'])
-            this.note(flags, `→ ${ref.id}`)
-            return ref.id
+            const id = await resolveAgentRef(client, flags['agent-name'])
+            this.note(flags, `→ ${id}`)
+            return id
         }
         const resolved = resolveAgent(flags.agent)
         if (!resolved) {
