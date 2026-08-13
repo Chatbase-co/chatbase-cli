@@ -12,10 +12,8 @@ import { computeRetryDelayMs, shouldRetry } from './retry.js'
 import { getSigintSignal } from './signals.js'
 
 /**
- * File sources live on a SEPARATE service from the main API — this host is
- * not in the vendored OpenAPI spec. Every other source type (text/qna/link)
- * goes through the typed client at DEFAULT_BASE_URL; file uploads only
- * exist here, as multipart POST (create) / PUT (update).
+ * "File sources require a dedicated endpoint" (API docs). Text/qna/link go
+ * through the main API; file uploads go here, as multipart POST/PUT.
  */
 export const FILES_BASE_URL = 'https://files.chatbase.co/api/v2'
 
