@@ -4,11 +4,7 @@ import type { paths } from '../generated/api.js'
 import type { OutputMode } from '../output/mode.js'
 import type { Column } from '../output/render.js'
 
-/**
- * Stable shape for display and for commands that need "every source,
- * minimally described" (e.g. `sources sync`). Append-only: existing
- * fields must not be renamed or removed once this ships.
- */
+/** Minimal source shape shared by display commands and `sources sync`. */
 export type SourceItem = {
     id: string
     type: string
