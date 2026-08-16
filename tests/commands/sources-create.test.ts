@@ -235,7 +235,7 @@ describe('chatbase sources create --file', () => {
             .reply(201, (opts) => {
                 const form = opts.body as unknown as FormData
                 sentName = String(form.get('name'))
-                return { data: { id: 'src_file' } }
+                return { id: 'src_file', type: 'file', status: 'untrained' }
             })
         const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
@@ -256,7 +256,7 @@ describe('chatbase sources create --file', () => {
             .reply(201, (opts) => {
                 const form = opts.body as unknown as FormData
                 sentName = String(form.get('name'))
-                return { data: { id: 'src_file2' } }
+                return { id: 'src_file2', type: 'file', status: 'untrained' }
             })
         vi.spyOn(process.stdout, 'write').mockReturnValue(true)
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)

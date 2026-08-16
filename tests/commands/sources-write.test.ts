@@ -77,7 +77,7 @@ describe('chatbase sources update', () => {
                 method: 'PUT'
             })
             .reply(200, () => {
-                return { data: { id: 'src_1' } }
+                return { id: 'src_1', type: 'file', status: 'untrained' }
             })
 
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
