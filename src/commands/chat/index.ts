@@ -3,12 +3,13 @@ import { AgentCommand } from '../../base/agent-command.js'
 import type { BaseFlags } from '../../base/base-command.js'
 import { readStdinToEnd } from '../../base/body-input.js'
 import {
-    type ChatResponseEnvelope,
+    type ChatResult,
     extractText,
     retryChat,
     sendChat
 } from '../../client/chat-helpers.js'
 import { UsageError } from '../../errors/errors.js'
+import { startSpinner } from '../../output/spinner.js'
 import { runChatRepl } from '../../repl/chat-repl.js'
 
 type ChatFlags = BaseFlags & { agent?: string; conversation?: string }
@@ -69,26 +70,35 @@ export default class Chat extends AgentCommand {
         // plain-text output. Otherwise stream tokens as they arrive.
         const stream = !flags.json && !flags['no-stream']
 
-        const { raw, conversationId } = await sendChat({
-            client,
-            agentId,
-            message,
-            conversationId: flags.conversation,
-            stream,
-            onText: stream ? (text) => process.stdout.write(text) : () => {}
-        })
+        // Non-streaming waits for the full response — show a spinner after
+        // 300ms so short waits never flicker.
+        const stop =
+            stream || flags.quiet ? () => {} : startSpinner('Typing…', 300)
+        let result: ChatResult
+        try {
+            result = await sendChat({
+                client,
+                agentId,
+                message,
+                conversationId: flags.conversation,
+                stream,
+                onText: stream ? (text) => process.stdout.write(text) : () => {}
+            })
+        } finally {
+            stop()
+        }
 
         if (stream) {
             process.stdout.write('\n')
+        } else if (!result.raw) {
+            throw new Error('Chat response was empty')
         } else if (flags.json) {
-            process.stdout.write(`${JSON.stringify(raw, null, 2)}\n`)
+            process.stdout.write(`${JSON.stringify(result.raw, null, 2)}\n`)
             return
         } else {
-            process.stdout.write(
-                `${extractText(raw as ChatResponseEnvelope)}\n`
-            )
+            process.stdout.write(`${extractText(result.raw)}\n`)
         }
-        this.printConversationHint(flags, agentId, conversationId)
+        this.printConversationHint(flags, agentId, result.conversationId)
     }
 
     /**

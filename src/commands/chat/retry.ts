@@ -1,10 +1,11 @@
 import { Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
 import {
-    type ChatResponseEnvelope,
+    type ChatResult,
     extractText,
     retryChat
 } from '../../client/chat-helpers.js'
+import { startSpinner } from '../../output/spinner.js'
 
 export default class ChatRetry extends AgentCommand {
     static override description = 'Retry generating an assistant response'
@@ -39,26 +40,33 @@ export default class ChatRetry extends AgentCommand {
         // plain-text output. Otherwise stream tokens as they arrive.
         const stream = !flags.json && !flags['no-stream']
 
-        const { raw, conversationId } = await retryChat({
-            client,
-            agentId,
-            conversationId: flags.conversation as string,
-            messageId: flags['message-id'] as string,
-            stream,
-            onText: stream ? (text) => process.stdout.write(text) : () => {}
-        })
+        const stop =
+            stream || flags.quiet ? () => {} : startSpinner('Typing…', 300)
+        let result: ChatResult
+        try {
+            result = await retryChat({
+                client,
+                agentId,
+                conversationId: flags.conversation as string,
+                messageId: flags['message-id'] as string,
+                stream,
+                onText: stream ? (text) => process.stdout.write(text) : () => {}
+            })
+        } finally {
+            stop()
+        }
 
         if (stream) {
             process.stdout.write('\n')
+        } else if (!result.raw) {
+            throw new Error('Retry response was empty')
         } else if (flags.json) {
-            process.stdout.write(`${JSON.stringify(raw, null, 2)}\n`)
+            process.stdout.write(`${JSON.stringify(result.raw, null, 2)}\n`)
             return
         } else {
-            process.stdout.write(
-                `${extractText(raw as ChatResponseEnvelope)}\n`
-            )
+            process.stdout.write(`${extractText(result.raw)}\n`)
         }
-        this.printConversationHint(flags, agentId, conversationId)
+        this.printConversationHint(flags, agentId, result.conversationId)
     }
 
     private printConversationHint(

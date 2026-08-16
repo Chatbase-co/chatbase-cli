@@ -19,7 +19,12 @@ export function extractText(envelope: ChatResponseEnvelope): string {
         .join('')
 }
 
-type ChatResult = { conversationId?: string; raw?: unknown }
+/** raw is the typed non-streaming envelope (from the generated OpenAPI
+ * types); present only when the call was made with stream: false. */
+export type ChatResult = {
+    conversationId?: string
+    raw?: ChatResponseEnvelope
+}
 
 /** Shared response handling for both sendChat and retryChat. */
 async function handleResponse(
