@@ -140,8 +140,6 @@ describe('auth login --browser', () => {
                 device_code: 'dev_1',
                 user_code: 'ABCD-1234',
                 verification_uri: 'https://chatbase.co/activate',
-                verification_uri_complete:
-                    'https://chatbase.co/activate?code=ABCD-1234',
                 expires_in: 60,
                 interval: 1
             })

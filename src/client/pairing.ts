@@ -19,7 +19,6 @@ export async function startPairing(opts?: { baseUrl?: string }): Promise<{
     deviceCode: string
     userCode: string
     verificationUri: string
-    verificationUriComplete: string
     expiresIn: number
     interval: number
 }> {
@@ -32,7 +31,6 @@ export async function startPairing(opts?: { baseUrl?: string }): Promise<{
         device_code: string
         user_code: string
         verification_uri: string
-        verification_uri_complete: string
         expires_in: number
         interval: number
     }
@@ -40,7 +38,6 @@ export async function startPairing(opts?: { baseUrl?: string }): Promise<{
         deviceCode: d.device_code,
         userCode: d.user_code,
         verificationUri: d.verification_uri,
-        verificationUriComplete: d.verification_uri_complete,
         expiresIn: d.expires_in,
         interval: d.interval
     }

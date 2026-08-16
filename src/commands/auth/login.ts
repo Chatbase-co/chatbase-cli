@@ -94,18 +94,16 @@ export default class AuthLogin extends BaseCommand {
 
     private async browserLogin(flags: Record<string, unknown>): Promise<void> {
         const pairing = await startPairing()
+        const approveUrl = `${pairing.verificationUri}?code=${pairing.userCode}`
 
         this.note(
             flags,
             `\nYour code: ${this.palette(flags).green(pairing.userCode)}\n`
         )
-        this.note(
-            flags,
-            `Open ${pairing.verificationUriComplete} and approve the request.`
-        )
+        this.note(flags, `Open ${approveUrl} and approve the request.`)
 
         if (process.stdout.isTTY && !flags['no-input']) {
-            tryOpenBrowser(pairing.verificationUriComplete)
+            tryOpenBrowser(approveUrl)
             this.note(flags, 'Waiting for approval...')
         }
 
