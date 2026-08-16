@@ -19,12 +19,10 @@ export default class AuthLogout extends BaseCommand {
             return
         }
 
-        // Pairing-minted keys belong to this device alone, so logout ends the
-        // session server-side too. Pasted keys may be shared (CI, teammates)
-        // and are only removed locally. Revocation is best-effort: the local
-        // key is deleted either way, and a failed revoke must not block that.
-        // rawApiFetch because DELETE /me/credential is not in the vendored
-        // spec yet — switch to the typed client on the next spec refresh.
+        // Pairing keys belong to this device — revoke server-side (best
+        // effort; local delete happens either way). Pasted keys may be
+        // shared, so they're local-only. rawApiFetch until DELETE
+        // /me/credential ships server-side and lands in the spec.
         if (config.apiKeySource === 'pairing') {
             try {
                 const res = await rawApiFetch('DELETE', '/me/credential', {
