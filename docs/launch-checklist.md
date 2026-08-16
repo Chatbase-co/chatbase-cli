@@ -106,6 +106,10 @@ _Last updated: 2026-08-12_
       ID. Without it, pairing works but users get no security notification
       that a new CLI key was minted. (verification_uri needs nothing new —
       it derives from the existing NEXT_PUBLIC_SITE_URL.)
+- [ ] **Document SUPABASE_JWT_SECRET in chatbase .env.example** — required
+      by getAccountOwnerToken (v2 train endpoint and anything minting owner
+      tokens). Not documented anywhere today; local dev fails with a bare
+      "Missing SUPABASE_JWT_SECRET" 500 without it.
 - [ ] **Key self-revocation endpoint (`DELETE /me/credential`)** — so
       `chatbase auth logout` can revoke CLI-paired keys server-side instead
       of leaving them valid for their remaining 90 days. Only for
