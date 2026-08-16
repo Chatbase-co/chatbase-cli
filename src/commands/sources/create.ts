@@ -7,6 +7,7 @@ import { uploadFileSource } from '../../client/files.js'
 import { resolveApiKey } from '../../config/resolve.js'
 import { UsageError } from '../../errors/errors.js'
 import type { components } from '../../generated/api.js'
+import { startSpinner } from '../../output/spinner.js'
 
 type CreateSourceBody = components['schemas']['CreateSourceBody']
 
@@ -106,13 +107,20 @@ export default class SourcesCreate extends AgentCommand {
                     'Not authenticated. Run `chatbase auth login`, or set CHATBASE_API_KEY.'
                 )
             }
-            const uploaded = await uploadFileSource({
-                agentId,
-                filePath: flags.file,
-                name: flags.name,
-                apiKey: resolved.value
-            })
-            id = uploaded.id
+            const stop = flags.quiet
+                ? () => {}
+                : startSpinner(`Uploading ${flags.file}…`)
+            try {
+                const uploaded = await uploadFileSource({
+                    agentId,
+                    filePath: flags.file,
+                    name: flags.name,
+                    apiKey: resolved.value
+                })
+                id = uploaded.id
+            } finally {
+                stop()
+            }
         } else {
             const body = await buildSourceBody(flags)
             const { data, error, response } = await client.POST(

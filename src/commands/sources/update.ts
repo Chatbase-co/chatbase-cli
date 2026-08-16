@@ -7,6 +7,7 @@ import { uploadFileSource } from '../../client/files.js'
 import { resolveApiKey } from '../../config/resolve.js'
 import { UsageError } from '../../errors/errors.js'
 import type { components } from '../../generated/api.js'
+import { startSpinner } from '../../output/spinner.js'
 
 type UpdateSourceBody = components['schemas']['UpdateSourceBody']
 
@@ -55,12 +56,19 @@ export default class SourcesUpdate extends AgentCommand {
                     'Not authenticated. Run `chatbase auth login`, or set CHATBASE_API_KEY.'
                 )
             }
-            await uploadFileSource({
-                agentId,
-                filePath: flags.file,
-                sourceId: args.sourceId,
-                apiKey: resolved.value
-            })
+            const stop = flags.quiet
+                ? () => {}
+                : startSpinner(`Uploading ${flags.file}…`)
+            try {
+                await uploadFileSource({
+                    agentId,
+                    filePath: flags.file,
+                    sourceId: args.sourceId,
+                    apiKey: resolved.value
+                })
+            } finally {
+                stop()
+            }
         } else {
             const body = await readBodyData(flags.data, flags.field)
             const { error, response } = await client.PUT(
