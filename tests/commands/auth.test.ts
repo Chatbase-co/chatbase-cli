@@ -191,12 +191,43 @@ describe('auth status with CHATBASE_API_URL override', () => {
 })
 
 describe('auth logout / status', () => {
-    it('logout removes the stored key', async () => {
+    it('logout removes a pasted key locally without any revoke call', async () => {
         const { writeUserConfig } = await import('../../src/config/store.js')
         writeUserConfig({ apiKey: 'sk-z' })
+        // disableNetConnect: any network request here would fail the test —
+        // pasted keys may be shared, so logout must stay local-only.
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await Logout.run([], process.cwd())
         expect(readUserConfig().apiKey).toBeUndefined()
+    })
+
+    it('logout revokes a pairing-minted key server-side, then removes it', async () => {
+        const { writeUserConfig } = await import('../../src/config/store.js')
+        writeUserConfig({ apiKey: 'sk-paired', apiKeySource: 'pairing' })
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/me/credential', method: 'DELETE' })
+            .reply(200, { data: { revoked: true } })
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await Logout.run([], process.cwd())
+        expect(readUserConfig().apiKey).toBeUndefined()
+        expect(readUserConfig().apiKeySource).toBeUndefined()
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'revoked'
+        )
+    })
+
+    it('logout still removes the local key when the revoke call fails', async () => {
+        const { writeUserConfig } = await import('../../src/config/store.js')
+        writeUserConfig({ apiKey: 'sk-paired', apiKeySource: 'pairing' })
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/me/credential', method: 'DELETE' })
+            .reply(503, {})
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await Logout.run([], process.cwd())
+        expect(readUserConfig().apiKey).toBeUndefined()
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'revoke it manually'
+        )
     })
 
     it('status names the credential source and masks the key', async () => {

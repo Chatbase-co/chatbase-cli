@@ -125,7 +125,8 @@ export default class AuthLogin extends BaseCommand {
 
         writeUserConfig({
             ...readUserConfig(),
-            apiKey: result.apiKey
+            apiKey: result.apiKey,
+            apiKeySource: 'pairing'
         })
         this.success(flags, `Logged in to workspace ${result.workspace.name}`)
         this.note(flags, `Saved to ${configFile()}`)
@@ -135,17 +136,20 @@ export default class AuthLogin extends BaseCommand {
         flags: Record<string, unknown>,
         key: string
     ): Promise<void> {
+        // Pasted keys never get apiKeySource — they may be shared with
+        // CI/teammates, so logout must not revoke them server-side.
+        const { apiKeySource: _dropped, ...rest } = readUserConfig()
         const client = createApiClient({ apiKey: key })
         const { data, error, response } = await client.GET('/me')
         if (response.ok) {
             const me = data as { workspace?: { name?: string } }
-            writeUserConfig({ ...readUserConfig(), apiKey: key })
+            writeUserConfig({ ...rest, apiKey: key })
             this.success(
                 flags,
                 `Logged in${me?.workspace?.name ? ` to workspace ${me.workspace.name}` : ''}`
             )
         } else if (response.status === 404) {
-            writeUserConfig({ ...readUserConfig(), apiKey: key })
+            writeUserConfig({ ...rest, apiKey: key })
             this.note(
                 flags,
                 'Key stored (verification unavailable — it will be checked on first use).'

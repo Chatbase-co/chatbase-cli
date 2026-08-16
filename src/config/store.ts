@@ -4,6 +4,9 @@ import { configDir, configFile } from './paths.js'
 
 export type UserConfig = {
     apiKey?: string
+    /** 'pairing' when the key was minted via browser login — logout revokes
+     * those server-side. Absent for pasted keys (may be shared; local-only). */
+    apiKeySource?: 'pairing'
     agent?: string
     timeoutMs?: number
 }
