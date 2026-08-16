@@ -77,7 +77,7 @@ export default class ChatRetry extends AgentCommand {
         if (!conversationId) return
         this.note(
             flags,
-            `Conversation: ${conversationId} — resume with: chatbase chat -a ${agentId} --conversation ${conversationId}`
+            `Conversation: ${conversationId} — resume with: chatbase chat -a ${agentId} --conversation ${conversationId} --resume`
         )
     }
 }
