@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { Command, Errors, Flags } from '@oclif/core'
 import type { Client } from 'openapi-fetch'
-import { createApiClient } from '../client/client.js'
+import { createApiClient, resolveBaseUrl } from '../client/client.js'
 import { installSigintHandler, wasInterrupted } from '../client/signals.js'
 import { logsDir } from '../config/paths.js'
 import { resolveApiKey, resolveTimeoutMs } from '../config/resolve.js'
@@ -196,6 +196,21 @@ export abstract class BaseCommand extends Command {
         if (classified.kind === 'timeout') {
             process.stderr.write(
                 `✗ Request timed out after ${resolveTimeoutMs()}ms (set CHATBASE_TIMEOUT to change)\n`
+            )
+            this.exit(1)
+        }
+        // Server returned HTML instead of JSON — usually a wrong base URL
+        // hitting a web page instead of the API.
+        const msg = (err as Error)?.message ?? ''
+        if (
+            err instanceof SyntaxError &&
+            (msg.includes('<!DOCTYPE') || msg.includes('is not valid JSON'))
+        ) {
+            const base = resolveBaseUrl()
+            process.stderr.write(
+                `✗ The server returned an HTML page instead of JSON.\n` +
+                    `  This usually means CHATBASE_API_URL is wrong or the endpoint doesn't exist on this host.\n` +
+                    `  Current base: ${base}\n`
             )
             this.exit(1)
         }
