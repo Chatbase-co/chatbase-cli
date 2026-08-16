@@ -113,22 +113,42 @@ export default class Chat extends AgentCommand {
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
 
+        // Streaming still has time-to-first-token dead air — spin until the
+        // first token arrives, then let the tokens themselves be the feedback.
+        const spinUntilFirstToken = () => {
+            const stop = flags.quiet ? () => {} : startSpinner('Typing…', 300)
+            let stopped = false
+            return () => {
+                if (stopped) return
+                stopped = true
+                stop()
+            }
+        }
+
         const send = async (
             message: string,
             conversationId?: string,
             signal?: AbortSignal
         ): Promise<{ conversationId?: string }> => {
-            const { conversationId: nextId } = await sendChat({
-                client,
-                agentId,
-                message,
-                conversationId,
-                stream: true,
-                signal,
-                onText: (text) => process.stdout.write(text)
-            })
-            process.stdout.write('\n')
-            return { conversationId: nextId }
+            const stop = spinUntilFirstToken()
+            try {
+                const { conversationId: nextId } = await sendChat({
+                    client,
+                    agentId,
+                    message,
+                    conversationId,
+                    stream: true,
+                    signal,
+                    onText: (text) => {
+                        stop()
+                        process.stdout.write(text)
+                    }
+                })
+                process.stdout.write('\n')
+                return { conversationId: nextId }
+            } finally {
+                stop()
+            }
         }
 
         // Retries the last message in the conversation. Since the REPL doesn't
@@ -138,16 +158,24 @@ export default class Chat extends AgentCommand {
             conversationId: string,
             signal?: AbortSignal
         ): Promise<void> => {
-            await retryChat({
-                client,
-                agentId,
-                conversationId,
-                messageId: 'last',
-                stream: true,
-                signal,
-                onText: (text) => process.stdout.write(text)
-            })
-            process.stdout.write('\n')
+            const stop = spinUntilFirstToken()
+            try {
+                await retryChat({
+                    client,
+                    agentId,
+                    conversationId,
+                    messageId: 'last',
+                    stream: true,
+                    signal,
+                    onText: (text) => {
+                        stop()
+                        process.stdout.write(text)
+                    }
+                })
+                process.stdout.write('\n')
+            } finally {
+                stop()
+            }
         }
 
         const { conversationId } = await runChatRepl({
