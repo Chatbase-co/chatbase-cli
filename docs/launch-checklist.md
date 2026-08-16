@@ -97,6 +97,10 @@ _Last updated: 2026-08-12_
       grant scopes their own role has, so without this, support staff's
       CLI keys can never touch helpdesk endpoints. (ref:
       cmsq4zaks0hw80j089qm6pyjr)
+- [ ] **chatlogs:write for every role** — all roles need CHATLOGS_WRITE so
+      any user's CLI key can grant it (covers conversation-mutating
+      operations like message feedback). Same RBAC rule as above: a scope
+      missing from your role can never be granted to your key.
 
 ## Private-repo work items (parallel track)
 
