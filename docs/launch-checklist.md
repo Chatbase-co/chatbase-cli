@@ -101,6 +101,11 @@ _Last updated: 2026-08-12_
       any user's CLI key can grant it (covers conversation-mutating
       operations like message feedback). Same RBAC rule as above: a scope
       missing from your role can never be granted to your key.
+- [ ] **LOOPS_CLI_PAIRING_APPROVED_TRANSACTIONAL_ID in prod env** — create
+      the "device paired" transactional email template in Loops and set its
+      ID. Without it, pairing works but users get no security notification
+      that a new CLI key was minted. (verification_uri needs nothing new —
+      it derives from the existing NEXT_PUBLIC_SITE_URL.)
 
 ## Private-repo work items (parallel track)
 
