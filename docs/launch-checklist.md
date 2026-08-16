@@ -87,6 +87,16 @@ _Last updated: 2026-08-12_
       added by the pairing work must have Row-Level Security enabled and
       policies scoped to `account_id`. Supabase tables default to no RLS;
       a missing policy = publicly queryable via the PostgREST API.
+- [ ] **Migration committed + applied** — the pairing work's schema changes
+      (cli_pairing_requests table, api_keys source/expires_at/permissions
+      columns) need their migration merged and run on staging + production
+      before the CLI's browser login can work there.
+- [ ] **Helpdesk permissions for Member + Support Associate roles** —
+      HELPDESK_TICKETS_READ/WRITE/DELETE exist in permissions.ts and the
+      CLI-grantable list, but no role includes them yet. Users can only
+      grant scopes their own role has, so without this, support staff's
+      CLI keys can never touch helpdesk endpoints. (ref:
+      cmsq4zaks0hw80j089qm6pyjr)
 
 ## Private-repo work items (parallel track)
 
