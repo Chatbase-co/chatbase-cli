@@ -519,7 +519,7 @@ Send a message to an agent and print its response
 ```
 USAGE
   $ chatbase chat [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>] [-m <value>] [--conversation <value>] [--no-stream]
+    [--agent-name <value> | -a <value>] [-m <value>] [--resume --conversation <value>] [--no-stream]
 
 FLAGS
   -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
@@ -531,6 +531,7 @@ FLAGS
       --no-color              Disable colored output
       --no-input              Never prompt; fail instead
       --no-stream             Wait for the complete response instead of streaming tokens
+      --resume                Replay the last few messages when continuing a conversation
       --verbose               Verbose diagnostics
 
 OUTPUT FLAGS

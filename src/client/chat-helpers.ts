@@ -112,3 +112,52 @@ export async function retryChat(opts: {
     )
     return handleResponse(data, error, response, opts.stream, opts.onText)
 }
+
+/** One line of replayed conversation history for the resume banner. */
+export type HistoryLine = { role: string; text: string }
+
+/**
+ * Fetches the last `count` messages of a conversation, oldest first, for
+ * the --resume banner. Non-text parts are skipped; long messages are
+ * truncated — this is orientation, not a transcript.
+ */
+export async function fetchRecentHistory(opts: {
+    client: Client<paths>
+    agentId: string
+    conversationId: string
+    count?: number
+    maxChars?: number
+}): Promise<HistoryLine[]> {
+    const count = opts.count ?? 6
+    const maxChars = opts.maxChars ?? 200
+    const { data, error, response } = await opts.client.GET(
+        '/agents/{agentId}/conversations/{conversationId}/messages',
+        {
+            params: {
+                path: {
+                    agentId: opts.agentId,
+                    conversationId: opts.conversationId
+                },
+                query: {}
+            }
+        }
+    )
+    throwIfError(response, error)
+    const items = (data as { data?: unknown[] } | undefined)?.data ?? []
+    return items.slice(-count).map((m) => {
+        const msg = m as {
+            role?: string
+            parts?: Array<{ type?: string; text?: string }>
+        }
+        const text = (msg.parts ?? [])
+            .filter((p) => p.type === 'text' && typeof p.text === 'string')
+            .map((p) => p.text)
+            .join('')
+            .replace(/\s+/g, ' ')
+            .trim()
+        return {
+            role: msg.role ?? 'unknown',
+            text: text.length > maxChars ? `${text.slice(0, maxChars)}…` : text
+        }
+    })
+}

@@ -36,3 +36,44 @@ describe('sendChat signal forwarding', () => {
         ).rejects.toMatchObject({ name: 'AbortError' })
     })
 })
+
+describe('fetchRecentHistory', () => {
+    it('returns the last N messages oldest-first with text extracted and truncated', async () => {
+        const { fetchRecentHistory } = await import(
+            '../../src/client/chat-helpers.js'
+        )
+        mock.get('https://www.chatbase.co')
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/conv_1/messages',
+                method: 'GET'
+            })
+            .reply(200, {
+                data: [
+                    {
+                        id: 'm1',
+                        role: 'user',
+                        parts: [{ type: 'text', text: 'first   question' }]
+                    },
+                    {
+                        id: 'm2',
+                        role: 'assistant',
+                        parts: [
+                            { type: 'tool-call', toolName: 'x' },
+                            { type: 'text', text: 'a'.repeat(300) }
+                        ]
+                    }
+                ],
+                pagination: { cursor: null, hasMore: false, total: 2 }
+            })
+        const history = await fetchRecentHistory({
+            client: createApiClient({ apiKey: 'sk-test' }),
+            agentId: 'agt_1',
+            conversationId: 'conv_1'
+        })
+        expect(history).toHaveLength(2)
+        expect(history[0]).toEqual({ role: 'user', text: 'first question' })
+        expect(history[1].role).toBe('assistant')
+        expect(history[1].text.length).toBe(201) // 200 chars + ellipsis
+        expect(history[1].text.endsWith('…')).toBe(true)
+    })
+})

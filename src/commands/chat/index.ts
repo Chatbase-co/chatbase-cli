@@ -5,6 +5,7 @@ import { readStdinToEnd } from '../../base/body-input.js'
 import {
     type ChatResult,
     extractText,
+    fetchRecentHistory,
     retryChat,
     sendChat
 } from '../../client/chat-helpers.js'
@@ -12,7 +13,11 @@ import { UsageError } from '../../errors/errors.js'
 import { startSpinner } from '../../output/spinner.js'
 import { runChatRepl } from '../../repl/chat-repl.js'
 
-type ChatFlags = BaseFlags & { agent?: string; conversation?: string }
+type ChatFlags = BaseFlags & {
+    agent?: string
+    conversation?: string
+    resume?: boolean
+}
 
 export default class Chat extends AgentCommand {
     static override description =
@@ -33,6 +38,11 @@ export default class Chat extends AgentCommand {
         }),
         conversation: Flags.string({
             description: 'Continue an existing conversation'
+        }),
+        resume: Flags.boolean({
+            description:
+                'Replay the last few messages when continuing a conversation',
+            dependsOn: ['conversation']
         }),
         'no-stream': Flags.boolean({
             description:
@@ -112,6 +122,30 @@ export default class Chat extends AgentCommand {
     private async runInteractive(flags: ChatFlags): Promise<void> {
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
+
+        // --resume replays the tail of the conversation so the user sees
+        // where they left off. Best-effort: a failed history fetch must
+        // not block the chat itself.
+        if (flags.conversation && flags.resume) {
+            try {
+                const history = await fetchRecentHistory({
+                    client,
+                    agentId,
+                    conversationId: flags.conversation
+                })
+                if (history.length > 0) {
+                    const dim = this.palette(flags).dim
+                    this.note(flags, dim(`— resuming ${flags.conversation} —`))
+                    for (const line of history) {
+                        const who = line.role === 'user' ? 'you' : 'agent'
+                        this.note(flags, dim(`${who}: ${line.text}`))
+                    }
+                    this.note(flags, dim('—'))
+                }
+            } catch {
+                // History is a nicety; the conversation still works without it.
+            }
+        }
 
         // Streaming still has time-to-first-token dead air — spin until the
         // first token arrives, then let the tokens themselves be the feedback.
