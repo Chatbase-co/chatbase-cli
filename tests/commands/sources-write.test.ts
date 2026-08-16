@@ -140,7 +140,7 @@ describe('chatbase sources update', () => {
 })
 
 describe('chatbase sources delete', () => {
-    it('DELETEs source without confirmation and prints restore hint on stderr', async () => {
+    it('prints the restore hint for a trained source (toBeDeleted)', async () => {
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/sources/src_1',
@@ -151,7 +151,7 @@ describe('chatbase sources delete', () => {
                     id: 'src_1',
                     name: 'Source',
                     type: 'text',
-                    status: 'deleted',
+                    status: 'toBeDeleted',
                     size: 0
                 }
             })
@@ -162,6 +162,28 @@ describe('chatbase sources delete', () => {
         expect(stderr).toContain(
             '↩ restore with: chatbase sources restore src_1 -a agt_1'
         )
+    })
+
+    it('omits the restore hint when an untrained source is hard-deleted', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/sources/src_1',
+                method: 'DELETE'
+            })
+            .reply(200, () => {
+                return {
+                    id: 'src_1',
+                    name: 'Source',
+                    type: 'file',
+                    status: 'deleted',
+                    size: 0
+                }
+            })
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await SourcesDelete.run(['src_1'], process.cwd())
+        const stderr = err.mock.calls.join('')
+        expect(stderr).toContain('Deleted source src_1')
+        expect(stderr).not.toContain('restore with')
     })
 })
 
