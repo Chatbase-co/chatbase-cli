@@ -39,19 +39,19 @@ const REMEDIATIONS: Record<string, string> = {
         'This API key has expired. Run `chatbase auth login` to authenticate again.',
     PERMISSION_DENIED:
         'This API key does not have permission for this operation. Check its scopes with `chatbase auth status`, re-pair with broader access via `chatbase auth login`, or ask a workspace admin.',
+    SUBSCRIPTION_API_RESTRICTED_PLAN:
+        'API access requires the Standard plan or higher — upgrade at chatbase.co.',
     VALIDATION_INVALID_BODY: 'Fix the fields above and retry.'
 }
 
 /**
  * Fallback tier: best-guess advice for error CODES this CLI version doesn't
  * know (e.g. the API added one after this release), keyed by HTTP status.
- * These are bets on the most likely cause — when a counterexample appears,
- * give its code a precise REMEDIATIONS entry instead of editing the guess
- * here (that's how PERMISSION_DENIED got promoted; the 403 below assumes
- * the only un-coded 403 is the subscription gate).
+ * No 403 fallback: the API has many distinct 403 codes (AGENT_LIMIT_REACHED,
+ * HELPDESK_NOT_ENABLED, plan gates, ...) whose server messages are already
+ * self-explanatory — a blanket guess was actively misleading for most.
  */
 const STATUS_REMEDIATIONS: Record<number, string> = {
-    403: 'API access requires the Standard plan or higher — upgrade at chatbase.co.',
     404: 'Resource not found — check the ID (agent IDs live in your dashboard).',
     429: 'Rate limited — the CLI already retried; wait for the reset and try again.'
 }
