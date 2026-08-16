@@ -458,7 +458,7 @@ _See code: [src/commands/auth/login.ts](https://github.com/Chatbase-co/chatbase-
 
 ## `chatbase auth logout`
 
-Remove the stored API key
+Remove the stored API key (revokes CLI-paired keys server-side)
 
 ```
 USAGE
@@ -476,7 +476,7 @@ OUTPUT FLAGS
   --plain  Tab-separated output for scripts
 
 DESCRIPTION
-  Remove the stored API key
+  Remove the stored API key (revokes CLI-paired keys server-side)
 
 EXAMPLES
   $ chatbase auth logout
