@@ -168,7 +168,7 @@ describe('auth login --browser', () => {
 
         expect(spawn).toHaveBeenCalledWith(
             'cmd',
-            ['/c', 'start', '', 'https://chatbase.co/activate?code=ABCD-1234'],
+            ['/c', 'start', '', 'https://chatbase.co/activate'],
             expect.objectContaining({ detached: true })
         )
         expect(readUserConfig().apiKey).toBe('sk-live-browser')
