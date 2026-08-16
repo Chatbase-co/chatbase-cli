@@ -5578,6 +5578,124 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/credential": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke the calling API key
+         * @description Deletes the CLI-issued API key used to authenticate this request. Called by `chatbase logout` to revoke its own session. Dashboard-created keys cannot revoke themselves.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Credential revoked */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success: boolean;
+                        };
+                    };
+                };
+                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "AUTH_MISSING_API_KEY",
+                         *         "message": "Authentication required"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Only CLI-issued keys can revoke themselves. Manage dashboard keys from the API keys settings page. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                         *         "message": "Too many requests, please try again later"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "INTERNAL_SERVER_ERROR",
+                         *         "message": "Something went wrong, please try again"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient — retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "SERVICE_UNDER_MAINTENANCE",
+                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                         *       }
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {

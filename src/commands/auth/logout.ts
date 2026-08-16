@@ -1,5 +1,5 @@
 import { BaseCommand } from '../../base/base-command.js'
-import { rawApiFetch } from '../../client/client.js'
+import { createApiClient } from '../../client/client.js'
 import { readUserConfig, writeUserConfig } from '../../config/store.js'
 
 export default class AuthLogout extends BaseCommand {
@@ -21,20 +21,18 @@ export default class AuthLogout extends BaseCommand {
 
         // Pairing keys belong to this device — revoke server-side (best
         // effort; local delete happens either way). Pasted keys may be
-        // shared, so they're local-only. rawApiFetch until DELETE
-        // /me/credential ships server-side and lands in the spec.
+        // shared with CI/teammates, so they're removed locally only.
         if (config.apiKeySource === 'pairing') {
             try {
-                const res = await rawApiFetch('DELETE', '/me/credential', {
-                    apiKey: config.apiKey
-                })
-                if (res.status >= 200 && res.status < 300) {
+                const client = createApiClient({ apiKey: config.apiKey })
+                const { response } = await client.DELETE('/me/credential')
+                if (response.ok) {
                     this.note(flags, 'CLI session revoked server-side.')
                 } else {
                     this.note(
                         flags,
                         this.palette(flags).yellow(
-                            `! Could not revoke the key server-side (${res.status}) — revoke it manually at chatbase.co if needed.`
+                            `! Could not revoke the key server-side (${response.status}) — revoke it manually at chatbase.co if needed.`
                         )
                     )
                 }
