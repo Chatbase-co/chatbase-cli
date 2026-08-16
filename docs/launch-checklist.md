@@ -106,6 +106,13 @@ _Last updated: 2026-08-12_
       ID. Without it, pairing works but users get no security notification
       that a new CLI key was minted. (verification_uri needs nothing new —
       it derives from the existing NEXT_PUBLIC_SITE_URL.)
+- [ ] **Key self-revocation endpoint (`DELETE /me/credential`)** — so
+      `chatbase auth logout` can revoke CLI-paired keys server-side instead
+      of leaving them valid for their remaining 90 days. Only for
+      `source: 'cli'` keys — pasted dashboard keys may be shared with
+      CI/teammates and must only be removed locally. CLI follow-up once the
+      endpoint ships: logout checks credential source via /me and revokes
+      cli-sourced keys.
 
 ## Private-repo work items (parallel track)
 
