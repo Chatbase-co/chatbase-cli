@@ -48,6 +48,36 @@ describe('computeSyncPlan', () => {
         expect(plan.unchanged).toBe(1)
     })
 
+    it('trusts originalSize over the extracted-text size when present', () => {
+        // The API's `size` for file sources is the EXTRACTED TEXT size (46
+        // here) — comparing it to raw bytes re-uploads every PDF forever.
+        // originalSize is the raw upload size the server now exposes.
+        const plan = computeSyncPlan(
+            [lf('report.pdf', 620)],
+            [{ ...rf('report.pdf', 46), originalSize: 620 }]
+        )
+        expect(plan.update).toEqual([])
+        expect(plan.unchanged).toBe(1)
+    })
+
+    it('flags a real content change via originalSize', () => {
+        const plan = computeSyncPlan(
+            [lf('report.pdf', 999)],
+            [{ ...rf('report.pdf', 46), originalSize: 620 }]
+        )
+        expect(plan.update.map((f) => f.relPath)).toEqual(['report.pdf'])
+    })
+
+    it('falls back to the extracted size when originalSize is null', () => {
+        // Sources uploaded before the server recorded originalSize keep
+        // today's over-eager behavior (may re-upload) — never under-report.
+        const plan = computeSyncPlan(
+            [lf('report.pdf', 620)],
+            [{ ...rf('report.pdf', 46), originalSize: null }]
+        )
+        expect(plan.update.map((f) => f.relPath)).toEqual(['report.pdf'])
+    })
+
     it('scopes the delete pass to the same include/exclude filters as the scan', () => {
         // With --include '**/*.pdf', other.txt was never scanned locally —
         // its remote source must NOT look like a removed file.

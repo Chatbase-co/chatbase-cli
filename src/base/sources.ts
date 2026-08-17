@@ -11,6 +11,11 @@ export type SourceItem = {
     name: string
     size: number
     status: string
+    /** Raw upload byte size for file sources (FileMetadata.originalSize).
+     * `size` holds the EXTRACTED TEXT size for files, so this is the only
+     * value comparable against a local file on disk. Null/absent for
+     * non-file sources and files uploaded before the server recorded it. */
+    originalSize?: number | null
 }
 
 export const SOURCE_COLUMNS: Column[] = [
@@ -61,11 +66,19 @@ export async function listAllSources(
             }),
         { all: true }
     )
-    return items.map((s) => ({
-        id: String(s.id ?? ''),
-        type: String(s.type ?? ''),
-        name: String(s.name ?? ''),
-        size: Number(s.size ?? 0),
-        status: String(s.status ?? '')
-    }))
+    return items.map((s) => {
+        const metadata = s.metadata as { originalSize?: number | null } | null
+        const originalSize =
+            typeof metadata?.originalSize === 'number'
+                ? metadata.originalSize
+                : undefined
+        return {
+            id: String(s.id ?? ''),
+            type: String(s.type ?? ''),
+            name: String(s.name ?? ''),
+            size: Number(s.size ?? 0),
+            status: String(s.status ?? ''),
+            ...(originalSize !== undefined ? { originalSize } : {})
+        }
+    })
 }

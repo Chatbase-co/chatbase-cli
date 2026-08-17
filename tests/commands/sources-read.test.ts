@@ -21,7 +21,7 @@ const src1 = {
     size: 1024,
     createdAt: '2026-01-01T00:00:00Z',
     status: 'trained',
-    metadata: null
+    metadata: { originalSize: 4096 }
 }
 const src2 = {
     id: 'src_2',
@@ -249,7 +249,8 @@ describe('listAllSources', () => {
                 type: 'file',
                 name: 'guide.pdf',
                 size: 1024,
-                status: 'trained'
+                status: 'trained',
+                originalSize: 4096
             },
             {
                 id: 'src_2',

@@ -179,7 +179,16 @@ export function computeSyncPlan(
         const r = remoteByName.get(l.relPath)
         if (!r) {
             create.push(l)
-        } else if (r.size !== l.size) {
+            continue
+        }
+        // For file sources the remote `size` is the EXTRACTED TEXT size,
+        // not the upload — comparing it to raw bytes marks every PDF/DOCX
+        // as changed forever. Prefer originalSize (the raw upload size the
+        // server records); fall back to the extracted size only when the
+        // source predates that field, which over-reports but never misses
+        // a change.
+        const reference = r.originalSize ?? r.size
+        if (reference !== l.size) {
             update.push({ ...l, sourceId: r.id })
         } else {
             unchanged++

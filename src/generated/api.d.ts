@@ -5629,12 +5629,20 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorResponse"];
                     };
                 };
-                /** @description Only CLI-issued keys can revoke themselves. Manage dashboard keys from the API keys settings page. */
+                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
                 403: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
+                        /**
+                         * @example {
+                         *       "error": {
+                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                         *         "message": "A Standard plan or higher is required to access the API"
+                         *       }
+                         *     }
+                         */
                         "application/json": components["schemas"]["ErrorResponse"];
                     };
                 };
@@ -5737,10 +5745,10 @@ export interface components {
             instructions?: string;
             /**
              * @description AI model to use
-             * @example gpt-5.1
+             * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
+            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
             /**
              * @description Model temperature (0–1)
              * @example 0
@@ -5837,8 +5845,8 @@ export interface components {
                 };
             } | null;
             /**
-             * @description AI model used by the agent
-             * @example gpt-5.1
+             * @description AI model used by the agent. Can be a deprecated model for agents that were configured before it was retired.
+             * @example gpt-5.6-terra
              * @enum {string}
              */
             model: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
@@ -6046,29 +6054,16 @@ export interface components {
                 buttonColor?: string | "transparent";
                 headerColor?: string;
                 userMessageColor?: string;
+                /** @description Tinted grayscale palette. When enabled the widget uses shades of a single hue instead of neutral gray */
                 tintedGrayscale?: {
-                    /** @default false */
+                    /** @description Whether tinted grayscale is active */
                     enabled: boolean;
-                    /** @default 0 */
+                    /** @description Base hue for the grayscale tint (0–360°) */
                     hue: number;
-                    /** @default 0 */
+                    /** @description Amount of hue mixed into lighter tones (0–9) */
                     tint: number;
-                    /** @default 0 */
+                    /** @description Amount of hue mixed into darker tones (−4–4) */
                     shade: number;
-                };
-                accentColor?: {
-                    /** @default false */
-                    enabled: boolean;
-                    /** @default #09090B */
-                    color: string;
-                };
-                customSurfaceColors?: {
-                    /** @default false */
-                    enabled: boolean;
-                    /** @default #FFFFFF */
-                    background: string;
-                    /** @default #FFFFFF */
-                    foreground: string;
                 };
                 typography?: {
                     /** @default Inter */
@@ -6410,10 +6405,10 @@ export interface components {
             } | null;
             /**
              * @description AI model
-             * @example gpt-5.1
+             * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
+            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
             /** @description Temperature (0–1) */
             temp?: number;
             /**
@@ -6563,10 +6558,10 @@ export interface components {
                 maxDailyCallsPerUser?: number | null;
                 /**
                  * @description AI model used to generate responses during a voice call. Can be set independently from the chat model — faster, cheaper models are common here.
-                 * @example gpt-4o-mini
+                 * @example gpt-5.6-luna
                  * @enum {string}
                  */
-                model?: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
+                model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
                 /**
                  * @description Randomness of voice responses (0–1). 0 = deterministic and focused, 1 = more varied and creative.
                  * @example 0
@@ -7313,28 +7308,27 @@ export interface components {
              * @enum {string}
              */
             status: "untrained" | "trained" | "toBeDeleted" | "updated";
-            metadata: components["schemas"]["LinkMetadata"];
+            /** @description Type-specific metadata: LinkMetadata for type="link", FileMetadata for type="file", null for other types. */
+            metadata: {
+                /** @enum {string} */
+                type: "individual";
+            } | {
+                /** @enum {string} */
+                type: "crawl" | "sitemap";
+                /** @description Regex patterns for excluded URL paths */
+                excludePaths: string[];
+                /** @description Regex patterns for included URL paths */
+                includeOnlyPaths: string[];
+                /** @description Whether slow scraping mode is enabled */
+                slowScraping: boolean;
+                /**
+                 * @description Crawl progress status.
+                 * @enum {string}
+                 */
+                crawlStatus: "fetching" | "fetched" | "failed";
+                children: components["schemas"]["LinkChildren"];
+            } | components["schemas"]["FileMetadata"] | null;
         };
-        /** @description Link-specific metadata. Present only for type="link". */
-        LinkMetadata: {
-            /** @enum {string} */
-            type: "individual";
-        } | {
-            /** @enum {string} */
-            type: "crawl" | "sitemap";
-            /** @description Regex patterns for excluded URL paths */
-            excludePaths: string[];
-            /** @description Regex patterns for included URL paths */
-            includeOnlyPaths: string[];
-            /** @description Whether slow scraping mode is enabled */
-            slowScraping: boolean;
-            /**
-             * @description Crawl progress status.
-             * @enum {string}
-             */
-            crawlStatus: "fetching" | "fetched" | "failed";
-            children: components["schemas"]["LinkChildren"];
-        } | null;
         /** @description Child link counts */
         LinkChildren: {
             /** @description Non-excluded, non-failed links */
@@ -7343,6 +7337,10 @@ export interface components {
             excluded: number;
             /** @description Failed or discarded links */
             failed: number;
+        };
+        FileMetadata: {
+            /** @description Uploaded file size in bytes before processing, when recorded */
+            originalSize: number | null;
         };
         CreateSourceBody: {
             /** @enum {string} */
@@ -7430,11 +7428,6 @@ export interface components {
              * @example https://www.chatbase.co/activate
              */
             verification_uri: string;
-            /**
-             * @description `verification_uri` with `user_code` pre-filled, for a clickable link or QR code.
-             * @example https://www.chatbase.co/activate?code=BCDF-GHJK
-             */
-            verification_uri_complete: string;
             /**
              * @description Seconds until this pairing request expires.
              * @example 900
