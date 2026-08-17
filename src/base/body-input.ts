@@ -1,7 +1,9 @@
 import fs from 'node:fs'
 import { UsageError } from '../errors/errors.js'
 
-/** Read all of stdin as a UTF-8 string. Shared by @- input and direct stdin reads. */
+/** Read all of stdin as a UTF-8 string, verbatim — @- must match @file's
+ * fidelity (fs.readFileSync returns exact bytes too). Callers that want
+ * trimmed input (a pasted key, a chat message) trim it themselves. */
 export async function readStdinToEnd(): Promise<string> {
     let raw = ''
     // setEncoding before iterating makes Node decode UTF-8 across chunk
@@ -9,7 +11,7 @@ export async function readStdinToEnd(): Promise<string> {
     // independently, corrupting multi-byte characters split mid-chunk.
     process.stdin.setEncoding('utf8')
     for await (const chunk of process.stdin) raw += chunk
-    return raw.trim()
+    return raw
 }
 
 /**

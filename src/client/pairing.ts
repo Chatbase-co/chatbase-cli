@@ -8,7 +8,9 @@
  * These endpoints are unauthenticated — the user doesn't have a key yet.
  */
 import os from 'node:os'
+import type { components } from '../generated/api.js'
 import { createApiClient, throwIfError } from './client.js'
+import { wasInterrupted } from './signals.js'
 
 export type PairingResult = {
     apiKey: string
@@ -27,13 +29,10 @@ export async function startPairing(opts?: { baseUrl?: string }): Promise<{
         body: { device_name: os.hostname() }
     })
     throwIfError(response, error)
-    const d = data as {
-        device_code: string
-        user_code: string
-        verification_uri: string
-        expires_in: number
-        interval: number
-    }
+    // The generated schema type keeps this cast honest: a field rename in
+    // the API contract becomes a compile error here instead of a runtime
+    // surprise (this exact type drifted twice as a hand-written literal).
+    const d = data as components['schemas']['CliPairingCreateResponse']
     return {
         deviceCode: d.device_code,
         userCode: d.user_code,
@@ -58,16 +57,34 @@ export async function pollExchange(
 
     for (;;) {
         opts.onPoll?.()
-        const { data, error, response } = await client.POST(
-            '/cli/pairing/exchange',
-            { body: { device_code: deviceCode } }
-        )
+
+        let data: unknown
+        let error: unknown
+        let response: Response
+        try {
+            ;({ data, error, response } = await client.POST(
+                '/cli/pairing/exchange',
+                { body: { device_code: deviceCode } }
+            ))
+        } catch (err) {
+            // The browser wait can run for minutes; a transient network blip
+            // must not abort the whole login. A genuine Ctrl-C still does —
+            // only other failures keep polling until the deadline.
+            const name = (err as { name?: string } | null)?.name
+            if (name === 'AbortError' && wasInterrupted()) throw err
+            if (Date.now() >= deadline) {
+                const { UsageError } = await import('../errors/errors.js')
+                throw new UsageError(
+                    'Pairing request expired. Run `chatbase auth login` to try again.'
+                )
+            }
+            await sleep(opts.intervalMs)
+            continue
+        }
 
         if (response.ok) {
-            const result = data as {
-                api_key: string
-                workspace: { id: string; name: string }
-            }
+            const result =
+                data as components['schemas']['CliPairingExchangeResponse']
             return {
                 apiKey: result.api_key,
                 workspace: result.workspace

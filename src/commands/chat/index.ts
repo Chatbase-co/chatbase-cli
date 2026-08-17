@@ -3,14 +3,13 @@ import { AgentCommand } from '../../base/agent-command.js'
 import type { BaseFlags } from '../../base/base-command.js'
 import { readStdinToEnd } from '../../base/body-input.js'
 import {
-    type ChatResult,
-    extractText,
     fetchRecentHistory,
     retryChat,
+    runChatTurn,
     sendChat
 } from '../../client/chat-helpers.js'
 import { UsageError } from '../../errors/errors.js'
-import { startSpinner } from '../../output/spinner.js'
+import { maybeSpinner } from '../../output/spinner.js'
 import { runChatRepl } from '../../repl/chat-repl.js'
 
 type ChatFlags = BaseFlags & {
@@ -55,7 +54,7 @@ export default class Chat extends AgentCommand {
         // A TTY with no -m is handled by run() before this is ever called
         // (it goes to the interactive REPL instead), so reaching here with
         // no message means stdin is a pipe that turned out to be empty.
-        const piped = await readStdinToEnd()
+        const piped = (await readStdinToEnd()).trim()
         if (piped) return piped
         throw new UsageError('No message received on stdin.')
     }
@@ -66,6 +65,15 @@ export default class Chat extends AgentCommand {
         if (!flags.message && process.stdin.isTTY) {
             await this.runInteractive(flags)
             return
+        }
+
+        if (flags.resume) {
+            this.note(
+                flags,
+                this.palette(flags).yellow(
+                    '! --resume only replays history in the interactive REPL (a TTY with no -m) — ignored here.'
+                )
+            )
         }
 
         // Resolve the message first: it's local (no network), so a failure
@@ -80,35 +88,23 @@ export default class Chat extends AgentCommand {
         // plain-text output. Otherwise stream tokens as they arrive.
         const stream = !flags.json && !flags['no-stream']
 
-        // Non-streaming waits for the full response — show a spinner after
-        // 300ms so short waits never flicker.
-        const stop =
-            stream || flags.quiet ? () => {} : startSpinner('Typing…', 300)
-        let result: ChatResult
-        try {
-            result = await sendChat({
-                client,
-                agentId,
-                message,
-                conversationId: flags.conversation,
-                stream,
-                onText: stream ? (text) => process.stdout.write(text) : () => {}
-            })
-        } finally {
-            stop()
+        const result = await runChatTurn({
+            stream,
+            quiet: flags.quiet,
+            json: flags.json,
+            call: (onText) =>
+                sendChat({
+                    client,
+                    agentId,
+                    message,
+                    conversationId: flags.conversation,
+                    stream,
+                    onText
+                })
+        })
+        if (!flags.json) {
+            this.printConversationHint(flags, agentId, result.conversationId)
         }
-
-        if (stream) {
-            process.stdout.write('\n')
-        } else if (!result.raw) {
-            throw new Error('Chat response was empty')
-        } else if (flags.json) {
-            process.stdout.write(`${JSON.stringify(result.raw, null, 2)}\n`)
-            return
-        } else {
-            process.stdout.write(`${extractText(result.raw)}\n`)
-        }
-        this.printConversationHint(flags, agentId, result.conversationId)
     }
 
     /**
@@ -142,15 +138,24 @@ export default class Chat extends AgentCommand {
                     }
                     this.note(flags, dim('—'))
                 }
-            } catch {
-                // History is a nicety; the conversation still works without it.
+            } catch (err) {
+                // Still best-effort — the conversation continues either way —
+                // but a bad --conversation id and "no history yet" must not
+                // look identical.
+                const detail = err instanceof Error ? err.message : String(err)
+                this.note(
+                    flags,
+                    this.palette(flags).yellow(
+                        `! Could not load history for ${flags.conversation} (${detail}) — continuing without it.`
+                    )
+                )
             }
         }
 
         // Streaming still has time-to-first-token dead air — spin until the
         // first token arrives, then let the tokens themselves be the feedback.
         const spinUntilFirstToken = () => {
-            const stop = flags.quiet ? () => {} : startSpinner('Typing…', 300)
+            const stop = maybeSpinner(flags.quiet, 'Typing…', 300)
             let stopped = false
             return () => {
                 if (stopped) return
@@ -159,6 +164,12 @@ export default class Chat extends AgentCommand {
             }
         }
 
+        // The server returns the assistant message id in the stream's finish
+        // metadata — remember it so /retry has a real id to send. The retry
+        // endpoint truncates the conversation at that message and re-sends
+        // the user message before it; there is no "last" sentinel.
+        let lastMessageId: string | undefined
+
         const send = async (
             message: string,
             conversationId?: string,
@@ -166,7 +177,7 @@ export default class Chat extends AgentCommand {
         ): Promise<{ conversationId?: string }> => {
             const stop = spinUntilFirstToken()
             try {
-                const { conversationId: nextId } = await sendChat({
+                const { conversationId: nextId, messageId } = await sendChat({
                     client,
                     agentId,
                     message,
@@ -178,6 +189,7 @@ export default class Chat extends AgentCommand {
                         process.stdout.write(text)
                     }
                 })
+                lastMessageId = messageId ?? lastMessageId
                 process.stdout.write('\n')
                 return { conversationId: nextId }
             } finally {
@@ -185,20 +197,37 @@ export default class Chat extends AgentCommand {
             }
         }
 
-        // Retries the last message in the conversation. Since the REPL doesn't
-        // track individual message IDs, we use "last" as a placeholder that
-        // the server interprets as the last message in the conversation.
         const retry = async (
             conversationId: string,
             signal?: AbortSignal
         ): Promise<void> => {
+            if (!lastMessageId) {
+                // Cold /retry on a --conversation the REPL just resumed:
+                // nothing sent this session yet, so look up the last
+                // assistant message (history returns the recent tail —
+                // enough, since /retry targets the latest response).
+                const history = await fetchRecentHistory({
+                    client,
+                    agentId,
+                    conversationId
+                })
+                const lastAssistant = [...history]
+                    .reverse()
+                    .find((line) => line.role === 'assistant' && line.id)
+                if (!lastAssistant) {
+                    throw new UsageError(
+                        'Nothing to retry yet in this conversation — send a message first.'
+                    )
+                }
+                lastMessageId = lastAssistant.id
+            }
             const stop = spinUntilFirstToken()
             try {
-                await retryChat({
+                const { messageId } = await retryChat({
                     client,
                     agentId,
                     conversationId,
-                    messageId: 'last',
+                    messageId: lastMessageId,
                     stream: true,
                     signal,
                     onText: (text) => {
@@ -206,6 +235,7 @@ export default class Chat extends AgentCommand {
                         process.stdout.write(text)
                     }
                 })
+                lastMessageId = messageId ?? lastMessageId
                 process.stdout.write('\n')
             } finally {
                 stop()
@@ -222,17 +252,5 @@ export default class Chat extends AgentCommand {
         })
 
         this.printConversationHint(flags, agentId, conversationId)
-    }
-
-    private printConversationHint(
-        flags: { quiet?: boolean },
-        agentId: string,
-        conversationId?: string
-    ): void {
-        if (!conversationId) return
-        this.note(
-            flags,
-            `Conversation: ${conversationId} — resume with: chatbase chat -a ${agentId} --conversation ${conversationId} --resume`
-        )
     }
 }

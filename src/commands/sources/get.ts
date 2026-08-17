@@ -25,11 +25,16 @@ export default class SourcesGet extends AgentCommand {
         )
         throwIfError(response, error)
         const source = data as unknown as Record<string, unknown>
-        this.printData(
-            flags,
-            data,
-            [toSourceRow(source, this.mode(flags))],
-            SOURCE_COLUMNS
-        )
+        const row = toSourceRow(source, this.mode(flags))
+        const str = (v: unknown) => (v == null ? '' : String(v))
+        this.printDetail(flags, data, row, SOURCE_COLUMNS, [
+            ['ID', row.id],
+            ['Name', row.name],
+            ['Type', row.type],
+            ['Status', row.status],
+            ['Size', row.size],
+            ['Created', str(source.createdAt)],
+            ['URL', str(source.url)]
+        ])
     }
 }

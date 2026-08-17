@@ -1,13 +1,17 @@
 import { Args, Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
 import { assertFileReadable } from '../../base/assert-file.js'
+import { bodyFieldFlags } from '../../base/base-command.js'
 import { readBodyData } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
-import { uploadFileSource } from '../../client/files.js'
+import {
+    filesHostMismatchWarning,
+    uploadFileSource
+} from '../../client/files.js'
 import { resolveApiKey } from '../../config/resolve.js'
 import { UsageError } from '../../errors/errors.js'
 import type { components } from '../../generated/api.js'
-import { startSpinner } from '../../output/spinner.js'
+import { maybeSpinner } from '../../output/spinner.js'
 
 type UpdateSourceBody = components['schemas']['UpdateSourceBody']
 
@@ -23,6 +27,7 @@ export default class SourcesUpdate extends AgentCommand {
     }
     static override flags = {
         ...AgentCommand.baseFlags,
+        ...bodyFieldFlags,
         data: Flags.string({
             description:
                 'JSON body for text/qna/link sources (@file, @-, or inline)',
@@ -56,15 +61,18 @@ export default class SourcesUpdate extends AgentCommand {
                     'Not authenticated. Run `chatbase auth login`, or set CHATBASE_API_KEY.'
                 )
             }
-            const stop = flags.quiet
-                ? () => {}
-                : startSpinner(`Uploading ${flags.file}…`)
+            const mismatch = filesHostMismatchWarning()
+            if (mismatch) {
+                this.note(flags, this.palette(flags).yellow(mismatch))
+            }
+            const stop = maybeSpinner(flags.quiet, `Uploading ${flags.file}…`)
             try {
                 await uploadFileSource({
                     agentId,
                     filePath: flags.file,
                     sourceId: args.sourceId,
-                    apiKey: resolved.value
+                    apiKey: resolved.value,
+                    verbose: flags.verbose
                 })
             } finally {
                 stop()

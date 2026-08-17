@@ -185,6 +185,47 @@ describe('chatbase sources create --type link', () => {
 })
 
 describe('chatbase sources create --type qna', () => {
+    it('requires a name client-side instead of letting the server 400', async () => {
+        // The API rejects qna sources without a name — fail fast locally
+        // (exit 2, no network call) with a usable message.
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            SourcesCreate.run(
+                [
+                    '--type',
+                    'qna',
+                    '--data',
+                    '{"questions":["Q1"],"answer":"A1"}'
+                ],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+    })
+
+    it('accepts a name supplied via --data instead of --name', async () => {
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'POST' })
+            .reply(201, {
+                id: 'src_qna2',
+                type: 'qna',
+                name: 'FAQ',
+                size: 0,
+                createdAt: '2026-01-01T00:00:00Z',
+                status: 'untrained'
+            })
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await SourcesCreate.run(
+            [
+                '--type',
+                'qna',
+                '--data',
+                '{"name":"FAQ","questions":["Q1"],"answer":"A1"}'
+            ],
+            process.cwd()
+        )
+    })
+
     it('takes questions/answer from --data and --name as a dedicated override', async () => {
         let sentBody = ''
         mock.get(BASE)

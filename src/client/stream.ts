@@ -7,7 +7,13 @@
 
 export type StreamEvent =
     | { type: 'text'; text: string }
-    | { type: 'metadata'; conversationId?: string; finishReason?: string }
+    | { type: 'metadata'; conversationId?: string; messageId?: string }
+    /** A server-side generation failure delivered mid-stream — the response
+     * is already 200 by then, so this event is the only failure signal. */
+    | { type: 'error'; message: string }
+    /** A `data:` payload that was not valid JSON. The stream continues, but
+     * the caller should say so rather than present a silent gap. */
+    | { type: 'warning'; message: string }
     | { type: 'done' }
 
 export async function parseSseStream(
@@ -55,6 +61,10 @@ export async function parseSseStream(
                     try {
                         part = JSON.parse(payload) as Record<string, unknown>
                     } catch {
+                        onEvent({
+                            type: 'warning',
+                            message: 'Skipped an unparseable stream chunk'
+                        })
                         continue
                     }
                     if (
@@ -62,18 +72,26 @@ export async function parseSseStream(
                         typeof part.delta === 'string'
                     ) {
                         onEvent({ type: 'text', text: part.delta })
+                    } else if (part.type === 'error') {
+                        onEvent({
+                            type: 'error',
+                            message:
+                                typeof part.errorText === 'string'
+                                    ? part.errorText
+                                    : 'The agent stopped with an error'
+                        })
                     } else if (
                         part.type === 'message-metadata' ||
                         part.type === 'finish'
                     ) {
                         const meta = (part.messageMetadata ?? {}) as {
                             conversationId?: string
-                            finishReason?: string
+                            messageId?: string
                         }
                         onEvent({
                             type: 'metadata',
                             conversationId: meta.conversationId,
-                            finishReason: meta.finishReason
+                            messageId: meta.messageId
                         })
                     }
                 }

@@ -14,6 +14,20 @@ export function resolveFilesBaseUrl(explicit?: string): string {
     return FILES_BASE_URL
 }
 
+/**
+ * The cross-environment trap: CHATBASE_API_URL points somewhere non-default
+ * (a preview/staging deployment) while file uploads still go to the
+ * production files host — silently sending that environment's credential to
+ * a different one. Returns the warning to print, or null when the setup is
+ * consistent (no API override, or an explicit CHATBASE_FILES_URL).
+ */
+export function filesHostMismatchWarning(): string | null {
+    const apiOverride = process.env.CHATBASE_API_URL
+    const filesOverride = process.env.CHATBASE_FILES_URL
+    if (!apiOverride || filesOverride) return null
+    return `! File uploads go to ${FILES_BASE_URL} while CHATBASE_API_URL is overridden — set CHATBASE_FILES_URL if this environment has its own files host.`
+}
+
 export async function uploadFileSource(opts: {
     agentId: string
     filePath: string
@@ -22,6 +36,7 @@ export async function uploadFileSource(opts: {
     sourceId?: string
     baseUrl?: string
     timeoutMs?: number
+    verbose?: boolean
 }): Promise<{ id: string }> {
     // Must use undici's FormData, not the global — global silently sends
     // "[object FormData]" as plain text instead of real multipart. No error.
@@ -37,7 +52,10 @@ export async function uploadFileSource(opts: {
         : `${base}/agents/${opts.agentId}/sources`
     const method = opts.sourceId ? 'PUT' : 'POST'
 
-    const response = await makeFetch({ timeoutMs: opts.timeoutMs })(url, {
+    const response = await makeFetch({
+        timeoutMs: opts.timeoutMs,
+        verbose: opts.verbose
+    })(url, {
         method,
         headers: {
             Authorization: `Bearer ${opts.apiKey}`,

@@ -36,11 +36,12 @@ export default class AuthLogout extends BaseCommand {
                         )
                     )
                 }
-            } catch {
+            } catch (err) {
+                const detail = err instanceof Error ? err.message : String(err)
                 this.note(
                     flags,
                     this.palette(flags).yellow(
-                        '! Could not reach the API to revoke the key — revoke it manually at chatbase.co if needed.'
+                        `! Could not reach the API to revoke the key (${detail}) — revoke it manually at chatbase.co if needed.`
                     )
                 )
             }

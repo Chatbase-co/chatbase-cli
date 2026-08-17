@@ -1,7 +1,8 @@
-import { Flags } from '@oclif/core'
+import { Args, Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
 import { throwIfError } from '../../client/client.js'
-import type { Column } from '../../output/render.js'
+import { UsageError } from '../../errors/errors.js'
+import { type Column, formatEpochSeconds } from '../../output/render.js'
 
 const COLUMNS: Column[] = [
     { key: 'id', header: 'ID' },
@@ -14,25 +15,44 @@ const COLUMNS: Column[] = [
 export default class ConversationsGet extends AgentCommand {
     static override description = 'Show one conversation'
     static override examples = [
+        '<%= config.bin %> conversations get conv_123 -a agt_123',
         '<%= config.bin %> conversations get --conversation conv_123 -a agt_123'
     ]
+    static override args = {
+        conversationId: Args.string({
+            required: false,
+            description: 'Conversation ID (alternative to --conversation)'
+        })
+    }
     static override flags = {
         ...AgentCommand.baseFlags,
         conversation: Flags.string({
-            required: true,
             description: 'Conversation ID'
         })
     }
 
     async run(): Promise<void> {
-        const { flags } = await this.parse(ConversationsGet)
+        const { args, flags } = await this.parse(ConversationsGet)
+        // Positional and flag are alternatives — `agents get <id>` set the
+        // positional convention, the flag predates it and stays supported.
+        const conversationId = args.conversationId ?? flags.conversation
+        if (!conversationId) {
+            throw new UsageError(
+                'Missing conversation ID. Pass it positionally (`conversations get <id>`) or via --conversation.'
+            )
+        }
+        if (args.conversationId && flags.conversation) {
+            throw new UsageError(
+                'Pass the conversation ID either positionally or via --conversation, not both.'
+            )
+        }
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
         const { data, error, response } = await client.GET(
             '/agents/{agentId}/conversations/{conversationId}',
             {
                 params: {
-                    path: { agentId, conversationId: flags.conversation }
+                    path: { agentId, conversationId }
                 }
             }
         )
@@ -42,6 +62,11 @@ export default class ConversationsGet extends AgentCommand {
         // envelope as-is, but the display row only needs the metadata
         // fields shared with `conversations list`.
         const conversation = (data as { data: Record<string, unknown> }).data
+        // Humans read ISO dates; --plain keeps the raw epoch for scripts.
+        const ts =
+            this.mode(flags) === 'pretty'
+                ? formatEpochSeconds
+                : (v: unknown) => String(v ?? '')
         this.printData(
             flags,
             data,
@@ -50,8 +75,8 @@ export default class ConversationsGet extends AgentCommand {
                     id: String(conversation.id ?? ''),
                     title: String(conversation.title ?? ''),
                     status: String(conversation.status ?? ''),
-                    createdAt: String(conversation.createdAt ?? ''),
-                    updatedAt: String(conversation.updatedAt ?? '')
+                    createdAt: ts(conversation.createdAt),
+                    updatedAt: ts(conversation.updatedAt)
                 }
             ],
             COLUMNS

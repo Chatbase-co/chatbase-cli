@@ -9,6 +9,17 @@ const CLEAR_LINE = '\r\x1b[2K'
  * stderr isn't a TTY — CI logs and pipes never see spinner frames.
  * `delayMs` holds the spinner back so sub-second operations never flicker.
  */
+/** Convenience for the common `<suppress> ? noop : startSpinner(...)`
+ * guard — --quiet (and streaming, where tokens are their own feedback)
+ * suppress the spinner entirely. */
+export function maybeSpinner(
+    suppress: boolean | undefined,
+    text: string,
+    delayMs = 0
+): () => void {
+    return suppress ? () => {} : startSpinner(text, delayMs)
+}
+
 export function startSpinner(text: string, delayMs = 0): () => void {
     if (!process.stderr.isTTY) return () => {}
     let i = 0

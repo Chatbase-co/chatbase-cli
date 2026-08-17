@@ -13,7 +13,7 @@ const page1 = {
         {
             id: 'c_1',
             title: 'Refunds',
-            createdAt: 1785542400,
+            createdAt: 1785542400, // 2026-08-01T00:00:00.000Z
             updatedAt: 1785628800,
             userId: 'u1',
             status: 'ongoing'
@@ -45,6 +45,24 @@ function mockAgentsList() {
     mock.get(BASE)
         .intercept({ path: '/api/v2/agents', method: 'GET' })
         .reply(200, agentsPage)
+}
+
+/** Forces stdout to report as a TTY so printData picks pretty mode. */
+function stubStdoutTTY(): { restore: () => void } {
+    const original = Object.getOwnPropertyDescriptor(process.stdout, 'isTTY')
+    Object.defineProperty(process.stdout, 'isTTY', {
+        value: true,
+        configurable: true
+    })
+    return {
+        restore: () => {
+            if (original) {
+                Object.defineProperty(process.stdout, 'isTTY', original)
+            } else {
+                delete (process.stdout as { isTTY?: boolean }).isTTY
+            }
+        }
+    }
 }
 
 beforeEach(() => {
@@ -148,7 +166,7 @@ describe('chatbase conversations list', () => {
         })
     })
 
-    it('renders pretty/table mode with aligned headers and numeric timestamps', async () => {
+    it('renders pretty/table mode with aligned headers', async () => {
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/conversations',
@@ -273,6 +291,52 @@ describe('chatbase conversations list', () => {
         await ConversationsList.run(['--plain'], process.cwd())
         expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
             'c_1'
+        )
+    })
+})
+
+describe('chatbase conversations list — human-mode niceties', () => {
+    it('formats epoch timestamps as ISO in pretty mode (plain keeps epoch)', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', 'agt_1')
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, {
+                data: page1.data,
+                pagination: { cursor: null, hasMore: false, total: 1 }
+            })
+        const tty = stubStdoutTTY()
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        try {
+            await ConversationsList.run([], process.cwd())
+        } finally {
+            tty.restore()
+        }
+        const printed = out.mock.calls.map((c) => String(c[0])).join('')
+        expect(printed).toContain('2026-08-01T00:00:00')
+        expect(printed).not.toContain('1785542400')
+    })
+
+    it('notes "No results." on stderr for an empty list instead of pure silence', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', 'agt_1')
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, {
+                data: [],
+                pagination: { cursor: null, hasMore: false, total: 0 }
+            })
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run([], process.cwd())
+        expect(out.mock.calls.length).toBe(0)
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'No results'
         )
     })
 })

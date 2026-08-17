@@ -268,6 +268,62 @@ describe('chatbase messages list', () => {
     })
 })
 
+describe('positional IDs (match agents/sources get ergonomics)', () => {
+    it('conversations get accepts the conversation ID positionally', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/conv_9',
+                method: 'GET'
+            })
+            .reply(200, {
+                data: {
+                    id: 'conv_9',
+                    title: 'T',
+                    status: 'ongoing',
+                    createdAt: 1,
+                    updatedAt: 2
+                },
+                pagination: { cursor: null, hasMore: false }
+            })
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsGet.run(['conv_9', '-a', 'agt_1'], process.cwd())
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'conv_9'
+        )
+    })
+
+    it('messages feedback accepts the message ID positionally', async () => {
+        let sent = ''
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/conv_1/messages/msg_7/feedback',
+                method: 'PATCH'
+            })
+            .reply(200, (o) => {
+                sent =
+                    o.body instanceof Uint8Array
+                        ? Buffer.from(o.body).toString('utf8')
+                        : String(o.body)
+                return { data: { ok: true } }
+            })
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await MessagesFeedback.run(
+            [
+                'msg_7',
+                '--conversation',
+                'conv_1',
+                '--rating',
+                'positive',
+                '-a',
+                'agt_1'
+            ],
+            process.cwd()
+        )
+        expect(JSON.parse(sent)).toEqual({ feedback: 'positive' })
+    })
+})
+
 describe('chatbase messages feedback', () => {
     it('maps --rating clear to a PATCH body of {"feedback":null}', async () => {
         let sentBody = ''

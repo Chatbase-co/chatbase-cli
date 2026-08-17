@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core'
-import { BaseCommand } from '../../base/base-command.js'
+import { BaseCommand, bodyFieldFlags } from '../../base/base-command.js'
 import { readBodyData } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
 import type { components } from '../../generated/api.js'
@@ -17,6 +17,7 @@ export default class AgentsUpdate extends BaseCommand {
     }
     static override flags = {
         ...BaseCommand.baseFlags,
+        ...bodyFieldFlags,
         name: Flags.string({ description: 'Agent name' }),
         instructions: Flags.string({ description: 'System instructions' }),
         model: Flags.string({ description: 'Model ID' }),

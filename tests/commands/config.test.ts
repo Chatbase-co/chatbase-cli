@@ -244,3 +244,16 @@ describe('config set agent (no value)', () => {
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
     })
 })
+
+describe('chatbase config set — clearing', () => {
+    it('an empty value removes the key and says "cleared", not "set to "', async () => {
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        await ConfigSet.run(['agent', 'agt_1'], process.cwd())
+        await ConfigSet.run(['agent', ''], process.cwd())
+        expect(readUserConfig().agent).toBeUndefined()
+        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(text).toContain('agent cleared')
+        expect(text).not.toContain('set to \n')
+    })
+})

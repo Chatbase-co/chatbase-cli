@@ -9,6 +9,12 @@ import { readUserConfig, writeUserConfig } from '../../config/store.js'
 import { UsageError } from '../../errors/errors.js'
 
 function tryOpenBrowser(url: string): void {
+    // Best-effort — the URL is printed to stderr regardless, so a failed
+    // open must never crash the login flow. spawn() failures arrive two
+    // ways: synchronously (caught below) or asynchronously as an 'error'
+    // event on the returned ChildProcess (e.g. ENOENT for a missing
+    // xdg-open on headless Linux) — an unhandled 'error' event throws and
+    // kills the process, so it needs its own no-op listener.
     try {
         if (process.platform === 'win32') {
             // `start` is a cmd.exe built-in, not a standalone executable —
@@ -18,13 +24,17 @@ function tryOpenBrowser(url: string): void {
             spawn('cmd', ['/c', 'start', '', url], {
                 detached: true,
                 stdio: 'ignore'
-            }).unref()
+            })
+                .on('error', () => {})
+                .unref()
             return
         }
         const cmd = process.platform === 'darwin' ? 'open' : 'xdg-open'
-        spawn(cmd, [url], { detached: true, stdio: 'ignore' }).unref()
+        spawn(cmd, [url], { detached: true, stdio: 'ignore' })
+            .on('error', () => {})
+            .unref()
     } catch {
-        // Browser open is best-effort — the URL is printed to stderr anyway.
+        // Synchronous spawn() failure — same best-effort contract.
     }
 }
 
@@ -57,7 +67,7 @@ export default class AuthLogin extends BaseCommand {
                 throw new UsageError(
                     '--with-token reads the key from stdin. Pipe it: chatbase auth login --with-token < key.txt'
                 )
-            const key = await readStdinToEnd()
+            const key = (await readStdinToEnd()).trim()
             if (!key) throw new UsageError('No token received on stdin.')
             return this.verifyAndStore(flags, key)
         }

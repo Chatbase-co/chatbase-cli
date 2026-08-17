@@ -21,14 +21,15 @@ export type SyncPlan = {
 
 export type ScanOptions = { include?: string[]; exclude?: string[] }
 
+// Only extensions the upload API accepts — it rejects everything else with
+// "Unsupported file type. Allowed: .pdf, .docx, .doc, .txt, .json", so
+// including more here (.md, .html, .csv, ...) guarantees failed uploads on
+// every run. If the API grows support for a type, add it here too.
 const DEFAULT_INCLUDE = [
     '**/*.pdf',
-    '**/*.md',
     '**/*.txt',
     '**/*.docx',
     '**/*.doc',
-    '**/*.html',
-    '**/*.csv',
     '**/*.json'
 ]
 
@@ -135,11 +136,24 @@ export function scanDir(dir: string, opts: ScanOptions = {}): LocalFile[] {
  * reported in `caseCollisions` (a warning, not an error — macOS's default
  * filesystem is case-insensitive so such a pair would silently clobber
  * itself, but Linux allows it) rather than blocking the diff.
+ *
+ * The delete pass is scoped by the SAME include/exclude filters the scan
+ * used: a remote source only becomes a delete candidate if the filters
+ * would have picked its local counterpart up. Otherwise `--include
+ * '**\/*.pdf'` (or the default extension list) would delete every remote
+ * source whose local file is still on disk but merely filtered out.
  */
 export function computeSyncPlan(
     local: LocalFile[],
-    remote: SourceItem[]
+    remote: SourceItem[],
+    opts: ScanOptions = {}
 ): SyncPlan {
+    const include = opts.include ?? DEFAULT_INCLUDE
+    const exclude = opts.exclude ?? DEFAULT_EXCLUDE
+    const inScope = (name: string): boolean =>
+        include.some((p) => matchGlob(p, name)) &&
+        !exclude.some((p) => matchGlob(p, name))
+
     const remoteFiles = remote.filter(
         (r) =>
             r.type === 'file' &&
@@ -174,6 +188,7 @@ export function computeSyncPlan(
 
     const del: Array<{ sourceId: string; name: string }> = []
     for (const r of remoteFiles) {
+        if (!inScope(r.name)) continue
         if (!localRelPaths.has(r.name))
             del.push({ sourceId: r.id, name: r.name })
     }

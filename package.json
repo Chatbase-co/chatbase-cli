@@ -38,14 +38,22 @@
         "dirname": "chatbase",
         "commands": "./dist/commands",
         "topicSeparator": " ",
-        "additionalHelpFlags": ["-h"],
+        "additionalHelpFlags": [
+            "-h"
+        ],
         "plugins": [
             "@oclif/plugin-help",
             "@oclif/plugin-not-found"
         ],
         "topics": {
+            "agents": {
+                "description": "Create, inspect, update, train, and delete agents"
+            },
             "auth": {
                 "description": "Log in, log out, and inspect credentials"
+            },
+            "sources": {
+                "description": "Manage an agent's knowledge sources (text, qna, link, file, sync)"
             },
             "conversations": {
                 "description": "List and inspect agent conversations"

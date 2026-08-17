@@ -10,9 +10,11 @@ vi.mock('@inquirer/prompts', () => ({
     confirm: vi.fn(),
     input: vi.fn()
 }))
-vi.mock('../../src/client/files.js', () => ({
-    uploadFileSource: vi.fn()
-}))
+vi.mock('../../src/client/files.js', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('../../src/client/files.js')>()
+    return { ...actual, uploadFileSource: vi.fn() }
+})
 // scanDir defaults to the REAL implementation (wrapped in vi.fn so it can be
 // overridden per-test) — every test except the case-collision one relies on
 // real filesystem scanning. Case-insensitive collisions can't be
@@ -78,9 +80,30 @@ afterEach(async () => {
     vi.unstubAllEnvs()
 })
 
+describe('chatbase sources sync — directory errors', () => {
+    it('distinguishes an unreadable path from a missing one', async () => {
+        // A path whose parent component is a regular file: statSync throws
+        // ENOTDIR, which must not be reported as "Directory not found".
+        const base = mkDir({
+            'plain.txt': 'x, padded well past the fifty byte upload minimum'
+        })
+        const dir = path.join(base, 'plain.txt', 'child')
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            SourcesSync.run([dir, '--dry-run'], process.cwd())
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(text).toMatch(/Cannot read directory: .*\(ENOTDIR\)/)
+        expect(text).not.toContain('Directory not found')
+    })
+})
+
 describe('chatbase sources sync — dry run', () => {
     it('prints the plan and makes no upload/delete calls', async () => {
-        const dir = mkDir({ 'new.md': 'hello world' })
+        const dir = mkDir({
+            'new.txt':
+                'hello world, padded well past the fifty byte upload minimum'
+        })
         mock.get(BASE)
             .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'GET' })
             .reply(200, sourcesPage([]))
@@ -88,7 +111,7 @@ describe('chatbase sources sync — dry run', () => {
         await SourcesSync.run([dir, '--dry-run'], process.cwd())
         const text = err.mock.calls.map((c) => String(c[0])).join('')
         expect(text).toContain('+1 created')
-        expect(text).toContain('new.md')
+        expect(text).toContain('new.txt')
         expect(uploadFileSource).not.toHaveBeenCalled()
     })
 })
@@ -96,8 +119,10 @@ describe('chatbase sources sync — dry run', () => {
 describe('chatbase sources sync — --force', () => {
     it('applies the plan: uploads creates/updates and deletes removals', async () => {
         const dir = mkDir({
-            'new.md': 'brand new',
-            'changed.md': 'now this is much longer content'
+            'new.txt':
+                'brand new, padded well past the fifty byte upload minimum',
+            'changed.txt':
+                'now this is much longer content, padded well past the fifty byte upload minimum'
         })
         vi.mocked(uploadFileSource).mockResolvedValue({ id: 'src_new' })
         mock.get(BASE)
@@ -108,14 +133,14 @@ describe('chatbase sources sync — --force', () => {
                     {
                         id: 'src_changed',
                         type: 'file',
-                        name: 'changed.md',
+                        name: 'changed.txt',
                         size: 1,
                         status: 'trained'
                     },
                     {
                         id: 'src_gone',
                         type: 'file',
-                        name: 'gone.md',
+                        name: 'gone.txt',
                         size: 5,
                         status: 'trained'
                     }
@@ -132,11 +157,11 @@ describe('chatbase sources sync — --force', () => {
 
         expect(uploadFileSource).toHaveBeenCalledTimes(2)
         expect(uploadFileSource).toHaveBeenCalledWith(
-            expect.objectContaining({ name: 'new.md', sourceId: undefined })
+            expect.objectContaining({ name: 'new.txt', sourceId: undefined })
         )
         expect(uploadFileSource).toHaveBeenCalledWith(
             expect.objectContaining({
-                name: 'changed.md',
+                name: 'changed.txt',
                 sourceId: 'src_changed'
             })
         )
@@ -147,7 +172,9 @@ describe('chatbase sources sync — --force', () => {
 
 describe('chatbase sources sync — non-interactive refusal', () => {
     it('refuses to apply without --force when not a TTY (exit 2)', async () => {
-        const dir = mkDir({ 'new.md': 'hello' })
+        const dir = mkDir({
+            'new.txt': 'hello, padded well past the fifty byte upload minimum'
+        })
         mock.get(BASE)
             .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'GET' })
             .reply(200, sourcesPage([]))
@@ -169,21 +196,21 @@ describe('chatbase sources sync — non-interactive refusal', () => {
                     {
                         id: 'src_1',
                         type: 'file',
-                        name: 'a.md',
+                        name: 'a.txt',
                         size: 1,
                         status: 'trained'
                     },
                     {
                         id: 'src_2',
                         type: 'file',
-                        name: 'b.md',
+                        name: 'b.txt',
                         size: 1,
                         status: 'trained'
                     },
                     {
                         id: 'src_3',
                         type: 'file',
-                        name: 'c.md',
+                        name: 'c.txt',
                         size: 1,
                         status: 'trained'
                     }
@@ -200,9 +227,12 @@ describe('chatbase sources sync — non-interactive refusal', () => {
 
 describe('chatbase sources sync — failure path', () => {
     it('exits 1 and reprints the failing file when an upload fails', async () => {
-        const dir = mkDir({ 'good.md': 'ok', 'bad.md': 'not ok' })
+        const dir = mkDir({
+            'good.txt': 'ok, padded well past the fifty byte upload minimum',
+            'bad.txt': 'not ok, padded well past the fifty byte upload minimum'
+        })
         vi.mocked(uploadFileSource).mockImplementation(async (opts) => {
-            if (opts.name === 'bad.md') throw new Error('upload failed: 500')
+            if (opts.name === 'bad.txt') throw new Error('upload failed: 500')
             return { id: 'src_ok' }
         })
         mock.get(BASE)
@@ -213,8 +243,10 @@ describe('chatbase sources sync — failure path', () => {
             SourcesSync.run([dir, '--force'], process.cwd())
         ).rejects.toMatchObject({ oclif: { exit: 1 } })
         const text = err.mock.calls.map((c) => String(c[0])).join('')
-        expect(text).toContain('bad.md')
+        expect(text).toContain('bad.txt')
         expect(text).toContain('upload failed: 500')
+        // Each failure prints once (inline, as it happens) — no re-list block.
+        expect(text).not.toContain('Failures (')
     })
 })
 
@@ -227,7 +259,10 @@ describe('chatbase sources sync — sync.dir from chatbase.json', () => {
         const realCwd = process.cwd()
         const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cb-sync-project-'))
         fs.mkdirSync(path.join(root, 'kb'))
-        fs.writeFileSync(path.join(root, 'kb', 'guide.md'), 'hello there')
+        fs.writeFileSync(
+            path.join(root, 'kb', 'guide.txt'),
+            'hello there, padded well past the fifty byte upload minimum'
+        )
         fs.writeFileSync(
             path.join(root, 'chatbase.json'),
             JSON.stringify({ agent: 'agt_proj', sync: { dir: 'kb' } })
@@ -245,14 +280,16 @@ describe('chatbase sources sync — sync.dir from chatbase.json', () => {
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await SourcesSync.run(['--dry-run'], realCwd)
         const text = err.mock.calls.map((c) => String(c[0])).join('')
-        expect(text).toContain('guide.md')
+        expect(text).toContain('guide.txt')
     })
 })
 
 describe('chatbase sources sync — interactive confirmation', () => {
     it('applies after the user confirms y on a TTY', async () => {
         stubTTY()
-        const dir = mkDir({ 'new.md': 'hello' })
+        const dir = mkDir({
+            'new.txt': 'hello, padded well past the fifty byte upload minimum'
+        })
         vi.mocked(uploadFileSource).mockResolvedValue({ id: 'src_new' })
         vi.mocked(confirm).mockResolvedValue(true as never)
         mock.get(BASE)
@@ -270,7 +307,9 @@ describe('chatbase sources sync — interactive confirmation', () => {
 
     it('aborts without applying when the user declines on a TTY', async () => {
         stubTTY()
-        const dir = mkDir({ 'new.md': 'hello' })
+        const dir = mkDir({
+            'new.txt': 'hello, padded well past the fifty byte upload minimum'
+        })
         vi.mocked(confirm).mockResolvedValue(false as never)
         mock.get(BASE)
             .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'GET' })
@@ -294,14 +333,14 @@ describe('chatbase sources sync — interactive confirmation', () => {
                     {
                         id: 'src_1',
                         type: 'file',
-                        name: 'a.md',
+                        name: 'a.txt',
                         size: 1,
                         status: 'trained'
                     },
                     {
                         id: 'src_2',
                         type: 'file',
-                        name: 'b.md',
+                        name: 'b.txt',
                         size: 1,
                         status: 'trained'
                     }
@@ -341,14 +380,14 @@ describe('chatbase sources sync — interactive confirmation', () => {
                     {
                         id: 'src_1',
                         type: 'file',
-                        name: 'a.md',
+                        name: 'a.txt',
                         size: 1,
                         status: 'trained'
                     },
                     {
                         id: 'src_2',
                         type: 'file',
-                        name: 'b.md',
+                        name: 'b.txt',
                         size: 1,
                         status: 'trained'
                     }
@@ -395,7 +434,10 @@ describe('chatbase sources sync — case collisions', () => {
 
 describe('chatbase sources sync — --include flag', () => {
     it('overrides the default include globs, scoping the scan to matching files only', async () => {
-        const dir = mkDir({ 'keep.txt': 'hello', 'skip.md': 'world' })
+        const dir = mkDir({
+            'keep.txt': 'hello, padded well past the fifty byte upload minimum',
+            'skip.md': 'world'
+        })
         mock.get(BASE)
             .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'GET' })
             .reply(200, sourcesPage([]))
@@ -411,10 +453,97 @@ describe('chatbase sources sync — --include flag', () => {
     })
 })
 
+describe('chatbase sources sync — delete-set scoping', () => {
+    it('does not plan deletion of remote sources the include filter never scanned', async () => {
+        // three.txt exists both locally and remotely; --include '**/*.pdf'
+        // filters it out of the scan — that must NOT read as "removed".
+        const dir = mkDir({
+            'three.txt': 'still right here on disk, well past fifty bytes'
+        })
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'GET' })
+            .reply(
+                200,
+                sourcesPage([
+                    {
+                        id: 'src_three',
+                        type: 'file',
+                        name: 'three.txt',
+                        size: 48,
+                        status: 'trained'
+                    }
+                ])
+            )
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await SourcesSync.run(
+            [dir, '--dry-run', '--include', '**/*.pdf'],
+            process.cwd()
+        )
+        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(text).not.toContain('− three.txt')
+        expect(text).toContain('−0 deleted')
+    })
+})
+
+describe('chatbase sources sync — upload size bounds', () => {
+    it('skips files under the 50-byte minimum with a note instead of a doomed upload', async () => {
+        const dir = mkDir({ 'tiny.txt': 'x' })
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'GET' })
+            .reply(200, sourcesPage([]))
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await SourcesSync.run([dir, '--dry-run'], process.cwd())
+        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(text).toMatch(/skipped tiny\.txt/i)
+        expect(text).toContain('+0 created')
+    })
+
+    it('never plans deletion of a remote source whose local file was size-skipped', async () => {
+        const dir = mkDir({ 'tiny.txt': 'x' })
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'GET' })
+            .reply(
+                200,
+                sourcesPage([
+                    {
+                        id: 'src_tiny',
+                        type: 'file',
+                        name: 'tiny.txt',
+                        size: 1,
+                        status: 'trained'
+                    }
+                ])
+            )
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await SourcesSync.run([dir, '--dry-run'], process.cwd())
+        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(text).not.toContain('− tiny.txt')
+        expect(text).toContain('−0 deleted')
+    })
+})
+
+describe('chatbase sources sync — cross-environment files host warning', () => {
+    it('warns when CHATBASE_API_URL is overridden but CHATBASE_FILES_URL is not', async () => {
+        vi.stubEnv('CHATBASE_API_URL', 'http://localhost:9999/api/v2')
+        const dir = mkDir({
+            'doc.txt': 'content padded well past the fifty byte upload minimum'
+        })
+        mock.get('http://localhost:9999')
+            .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'GET' })
+            .reply(200, sourcesPage([]))
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await SourcesSync.run([dir, '--dry-run'], process.cwd())
+        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(text).toContain('CHATBASE_FILES_URL')
+        expect(text).toContain('files.chatbase.co')
+    })
+})
+
 describe('chatbase sources sync — no-op plan', () => {
     it('does not prompt when the plan has no changes, even without --force on a non-TTY', async () => {
-        const content = 'stable content'
-        const dir = mkDir({ 'same.md': content })
+        const content =
+            'stable content, padded well past the fifty byte upload minimum'
+        const dir = mkDir({ 'same.txt': content })
         mock.get(BASE)
             .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'GET' })
             .reply(
@@ -423,7 +552,7 @@ describe('chatbase sources sync — no-op plan', () => {
                     {
                         id: 'src_same',
                         type: 'file',
-                        name: 'same.md',
+                        name: 'same.txt',
                         size: content.length,
                         status: 'trained'
                     }

@@ -28,6 +28,23 @@ describe('readTextInput', () => {
         expect(await readTextInput('hello')).toBe('hello')
     })
 
+    it('@- returns piped stdin verbatim, matching @file fidelity', async () => {
+        const { Readable } = await import('node:stream')
+        const stdin = Readable.from([
+            '  leading and trailing kept  \n'
+        ]) as unknown as NodeJS.ReadStream & { fd: 0 }
+        Object.defineProperty(stdin, 'isTTY', { value: false })
+        const { vi } = await import('vitest')
+        vi.spyOn(process, 'stdin', 'get').mockReturnValue(stdin)
+        try {
+            expect(await readTextInput('@-')).toBe(
+                '  leading and trailing kept  \n'
+            )
+        } finally {
+            vi.restoreAllMocks()
+        }
+    })
+
     it('rejects a bare "@" with a UsageError instead of readFileSync\'s raw ENOENT', async () => {
         let error: unknown
         try {

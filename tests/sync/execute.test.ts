@@ -39,6 +39,35 @@ function mkPlan(overrides: Partial<SyncPlan> = {}): SyncPlan {
 }
 
 describe('executeSyncPlan', () => {
+    it('failure lines carry the ApiError code and request id for log correlation', async () => {
+        const { ApiError } = await import('../../src/errors/errors.js')
+        vi.mocked(uploadFileSource).mockRejectedValue(
+            new ApiError({
+                code: 'ENDPOINT_TEMPORARILY_DISABLED',
+                message: 'This endpoint is temporarily disabled',
+                status: 503,
+                requestId: 'fra1::req-42'
+            })
+        )
+        const plan = mkPlan({
+            create: [{ relPath: 'a.md', size: 1, absPath: '/x/a.md' }]
+        })
+        const progress: string[] = []
+        const client = createApiClient({ apiKey: 'sk-test' })
+
+        const result = await executeSyncPlan(plan, {
+            agentId: 'agt_1',
+            apiKey: 'sk-test',
+            client,
+            onProgress: (line) => progress.push(line)
+        })
+
+        expect(result.failures[0]?.error).toContain(
+            '(ENDPOINT_TEMPORARILY_DISABLED)'
+        )
+        expect(result.failures[0]?.error).toContain('request id: fra1::req-42')
+    })
+
     it('uploads every create/update and deletes every removed source', async () => {
         vi.mocked(uploadFileSource).mockResolvedValue({ id: 'src_new' })
         mock.get(BASE)

@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core'
-import { BaseCommand } from '../base/base-command.js'
+import { BaseCommand, bodyFieldFlags } from '../base/base-command.js'
 import { parseFields, readBodyData } from '../base/body-input.js'
 import { rawApiFetch } from '../client/client.js'
 import { resolveApiKey } from '../config/resolve.js'
@@ -37,6 +37,7 @@ export default class Api extends BaseCommand {
     }
     static override flags = {
         ...BaseCommand.baseFlags,
+        ...bodyFieldFlags,
         query: Flags.string({
             multiple: true,
             description: 'Query param k=v (repeatable)'

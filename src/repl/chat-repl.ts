@@ -28,7 +28,7 @@ const GREETING =
 const HELP_LINES = [
     '/exit    Quit the REPL (same as Ctrl-D)',
     '/new     Start a fresh conversation (clears the current conversation id)',
-    '/retry   Retry the last response in the current conversation',
+    '/retry   Regenerate the last response (replaces it in the conversation)',
     '/id      Print the current conversation id',
     '/help    Show this list'
 ]

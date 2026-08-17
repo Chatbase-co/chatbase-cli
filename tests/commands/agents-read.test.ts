@@ -14,7 +14,8 @@ const agent = {
     name: 'Support Bot',
     model: 'gpt-5',
     visibility: 'private',
-    autoRetrain: false
+    autoRetrain: false,
+    status: 'trained'
 }
 
 const agent2 = {
@@ -134,5 +135,34 @@ describe('chatbase agents get', () => {
         expect(out.mock.calls.join('')).toContain(
             'agt_1\tSupport Bot\tgpt-5\tprivate'
         )
+    })
+
+    it('agents get renders a key-value detail view in pretty mode, not a list row', async () => {
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/agents/agt_1', method: 'GET' })
+            .reply(200, agent)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        const original = Object.getOwnPropertyDescriptor(
+            process.stdout,
+            'isTTY'
+        )
+        Object.defineProperty(process.stdout, 'isTTY', {
+            value: true,
+            configurable: true
+        })
+        try {
+            await AgentsGet.run(['agt_1'], process.cwd())
+        } finally {
+            if (original)
+                Object.defineProperty(process.stdout, 'isTTY', original)
+        }
+        const printed = out.mock.calls.map((c) => String(c[0])).join('')
+        expect(printed).toContain('Name')
+        expect(printed).toContain('Support Bot')
+        expect(printed).toContain('Model')
+        // The API's rich fields finally surface in the human view:
+        expect(printed).toContain('Status')
+        expect(printed).not.toContain('agt_1\tSupport Bot')
     })
 })

@@ -1,6 +1,7 @@
 import type { Client } from 'openapi-fetch'
 import { throwIfError } from '../client/client.js'
 import { uploadFileSource } from '../client/files.js'
+import { ApiError } from '../errors/errors.js'
 import type { paths } from '../generated/api.js'
 import type { SyncPlan } from './diff.js'
 
@@ -13,6 +14,8 @@ export type ExecuteSyncDeps = {
     /** Max concurrent operations in the pool. Defaults to 4. */
     concurrency?: number
     onProgress: (line: string) => void
+    /** --verbose: forwarded to the upload client's request logging. */
+    verbose?: boolean
 }
 
 export type ExecuteSyncResult = {
@@ -44,6 +47,13 @@ async function pool<T>(
 }
 
 function errorMessage(err: unknown): string {
+    // ApiErrors carry the code and request id engineering needs to
+    // correlate a failed file against server-side logs — keep them.
+    if (err instanceof ApiError) {
+        const parts = [`${err.message} (${err.code})`]
+        if (err.requestId) parts.push(`request id: ${err.requestId}`)
+        return parts.join(' — ')
+    }
     return err instanceof Error ? err.message : String(err)
 }
 
@@ -84,7 +94,8 @@ export async function executeSyncPlan(
                 filePath: item.filePath,
                 name: item.name,
                 apiKey: deps.apiKey,
-                sourceId: item.sourceId
+                sourceId: item.sourceId,
+                verbose: deps.verbose
             })
             deps.onProgress(`${prefix} ${item.name}`)
         } catch (err) {

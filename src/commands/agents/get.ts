@@ -22,22 +22,34 @@ export default class AgentsGet extends BaseCommand {
         throwIfError(response, error)
         // Note: GET /agents/{agentId} returns Agent directly, not wrapped in { data: ... }
         const a = data as Record<string, unknown>
-        this.printData(
+        const str = (v: unknown) => (v == null ? '' : String(v))
+        this.printDetail(
             flags,
             data,
-            [
-                {
-                    id: String(a.id),
-                    name: String(a.name),
-                    model: String(a.model ?? ''),
-                    visibility: String(a.visibility ?? '')
-                }
-            ],
+            {
+                id: str(a.id),
+                name: str(a.name),
+                model: str(a.model),
+                visibility: str(a.visibility)
+            },
             [
                 { key: 'id', header: 'ID' },
                 { key: 'name', header: 'NAME' },
                 { key: 'model', header: 'MODEL' },
                 { key: 'visibility', header: 'VISIBILITY' }
+            ],
+            [
+                ['ID', str(a.id)],
+                ['Name', str(a.name)],
+                ['Model', str(a.model)],
+                ['Visibility', str(a.visibility)],
+                ['Status', str(a.status)],
+                ['Auto-retrain', str(a.autoRetrain)],
+                ['Temperature', str(a.temp)],
+                ['Size', str(a.size)],
+                ['Created', str(a.createdAt)],
+                ['Last trained', str(a.lastTrainedAt)],
+                ['Instructions', str(a.instructions)]
             ]
         )
     }

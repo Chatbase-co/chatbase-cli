@@ -1,5 +1,16 @@
 export type Column = { key: string; header: string }
 
+/**
+ * The API's list endpoints return epoch seconds; humans get ISO. Callers
+ * apply this only in pretty mode — --plain keeps the raw epoch for scripts.
+ */
+export function formatEpochSeconds(value: unknown): string {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return new Date(value * 1000).toISOString()
+    }
+    return value == null ? '' : String(value)
+}
+
 export function renderTable(
     rows: Record<string, string>[],
     columns: Column[]

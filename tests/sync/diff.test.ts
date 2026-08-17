@@ -37,15 +37,36 @@ function mkFixtureTree() {
 describe('computeSyncPlan', () => {
     it('creates local-only, deletes remote-only, updates size mismatches, skips matches', () => {
         const plan = computeSyncPlan(
-            [lf('a.md', 10), lf('b.md', 20), lf('c.md', 30)],
-            [rf('b.md', 20), rf('c.md', 99), rf('gone.md', 5)]
+            [lf('a.txt', 10), lf('b.txt', 20), lf('c.txt', 30)],
+            [rf('b.txt', 20), rf('c.txt', 99), rf('gone.txt', 5)]
         )
-        expect(plan.create.map((f) => f.relPath)).toEqual(['a.md'])
-        expect(plan.update.map((f) => f.relPath)).toEqual(['c.md'])
-        expect(plan.update[0].sourceId).toBe('src_c.md')
-        expect(plan.del.map((d) => d.name)).toEqual(['gone.md'])
-        expect(plan.del[0].sourceId).toBe('src_gone.md')
+        expect(plan.create.map((f) => f.relPath)).toEqual(['a.txt'])
+        expect(plan.update.map((f) => f.relPath)).toEqual(['c.txt'])
+        expect(plan.update[0].sourceId).toBe('src_c.txt')
+        expect(plan.del.map((d) => d.name)).toEqual(['gone.txt'])
+        expect(plan.del[0].sourceId).toBe('src_gone.txt')
         expect(plan.unchanged).toBe(1)
+    })
+
+    it('scopes the delete pass to the same include/exclude filters as the scan', () => {
+        // With --include '**/*.pdf', other.txt was never scanned locally —
+        // its remote source must NOT look like a removed file.
+        const plan = computeSyncPlan(
+            [],
+            [rf('keep.pdf', 10), rf('other.txt', 10)],
+            { include: ['**/*.pdf'] }
+        )
+        expect(plan.del.map((d) => d.name)).toEqual(['keep.pdf'])
+    })
+
+    it('by default only deletes remote sources whose type the sync can manage', () => {
+        // legacy.md can't be uploaded by sync (the API rejects .md), so the
+        // default filters must leave its remote source alone too.
+        const plan = computeSyncPlan(
+            [],
+            [rf('legacy.md', 10), rf('gone.txt', 10)]
+        )
+        expect(plan.del.map((d) => d.name)).toEqual(['gone.txt'])
     })
 
     it('never touches non-file sources', () => {
@@ -105,13 +126,14 @@ describe('scanDir', () => {
         const byRelPath = Object.fromEntries(
             files.map((f) => [f.relPath, f.size])
         )
+        // Defaults track the upload API's allowed types (.pdf .docx .doc
+        // .txt .json) — .md/.html/.csv are rejected server-side, so scanning
+        // them by default guarantees failed uploads.
         expect(Object.keys(byRelPath).sort()).toEqual([
             'data.json',
-            'docs/guide.md',
-            'report.pdf',
-            'sheet.csv'
+            'report.pdf'
         ])
-        expect(byRelPath['docs/guide.md']).toBe('# guide'.length)
+        expect(byRelPath['data.json']).toBe('{}'.length)
         expect(byRelPath['report.pdf']).toBe('PDFDATA'.length)
     })
 
@@ -133,8 +155,8 @@ describe('scanDir', () => {
     it('produces absPath values that resolve back to the same file', () => {
         const dir = mkFixtureTree()
         const files = scanDir(dir)
-        const guide = files.find((f) => f.relPath === 'docs/guide.md')
-        expect(guide?.absPath).toBe(path.join(dir, 'docs', 'guide.md'))
+        const report = files.find((f) => f.relPath === 'report.pdf')
+        expect(report?.absPath).toBe(path.join(dir, 'report.pdf'))
     })
 
     it('always uses forward slashes in relPath', () => {

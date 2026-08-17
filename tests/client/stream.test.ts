@@ -48,9 +48,56 @@ it('emits text deltas, metadata, and done', async () => {
     expect(events).toEqual([
         { type: 'text', text: 'Hel' },
         { type: 'text', text: 'lo' },
-        { type: 'metadata', conversationId: 'c_9', finishReason: 'stop' },
+        { type: 'metadata', conversationId: 'c_9' },
         { type: 'done' }
     ])
+})
+
+it('surfaces the assistant messageId from finish metadata', async () => {
+    const events: StreamEvent[] = []
+    await parseSseStream(
+        streamOf([
+            'data: {"type":"finish","messageMetadata":{"conversationId":"c_9","messageId":"m_42"}}\n\n',
+            'data: [DONE]\n\n'
+        ]),
+        (e) => events.push(e)
+    )
+    expect(events[0]).toEqual({
+        type: 'metadata',
+        conversationId: 'c_9',
+        messageId: 'm_42'
+    })
+})
+
+it('emits an error event for a mid-stream error part', async () => {
+    const events: StreamEvent[] = []
+    await parseSseStream(
+        streamOf([
+            'data: {"type":"text-delta","delta":"partial"}\n\n',
+            'data: {"type":"error","errorText":"Model exploded"}\n\n',
+            'data: [DONE]\n\n'
+        ]),
+        (e) => events.push(e)
+    )
+    expect(events).toEqual([
+        { type: 'text', text: 'partial' },
+        { type: 'error', message: 'Model exploded' },
+        { type: 'done' }
+    ])
+})
+
+it('emits a warning for an unparseable data payload and keeps parsing', async () => {
+    const events: StreamEvent[] = []
+    await parseSseStream(
+        streamOf([
+            'data: {broken json\n\n',
+            'data: {"type":"text-delta","delta":"still here"}\n\n',
+            'data: [DONE]\n\n'
+        ]),
+        (e) => events.push(e)
+    )
+    expect(events[0]?.type).toBe('warning')
+    expect(events[1]).toEqual({ type: 'text', text: 'still here' })
 })
 
 it('handles events split across chunk boundaries', async () => {

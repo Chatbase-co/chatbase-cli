@@ -3,15 +3,10 @@ import { throwIfError } from '../../client/client.js'
 import type { Column } from '../../output/render.js'
 
 const COLUMNS: Column[] = [
-    { key: 'metric', header: 'METRIC' },
-    { key: 'value', header: 'VALUE' }
+    { key: 'type', header: 'TYPE' },
+    { key: 'count', header: 'COUNT' },
+    { key: 'size', header: 'SIZE' }
 ]
-
-function formatValue(value: unknown): string {
-    if (value === null || value === undefined) return ''
-    if (typeof value === 'object') return JSON.stringify(value)
-    return String(value)
-}
 
 export default class SourcesSummary extends AgentCommand {
     static override description =
@@ -29,10 +24,24 @@ export default class SourcesSummary extends AgentCommand {
         )
         throwIfError(response, error)
         const summary = data as unknown as Record<string, unknown>
-        const rows = Object.entries(summary).map(([metric, value]) => ({
-            metric,
-            value: formatValue(value)
-        }))
+        // Per-type {count, size} objects flatten to table columns; the one
+        // non-object field (shouldRetrain) reads better as a note than a row.
+        const rows = Object.entries(summary)
+            .filter(
+                (entry): entry is [string, { count?: number; size?: number }] =>
+                    typeof entry[1] === 'object' && entry[1] !== null
+            )
+            .map(([type, value]) => ({
+                type,
+                count: String(value.count ?? 0),
+                size: String(value.size ?? 0)
+            }))
         this.printData(flags, data, rows, COLUMNS)
+        if (!flags.json && summary.shouldRetrain === true) {
+            this.note(
+                flags,
+                'Sources changed since the last training — run `chatbase agents train` to retrain.'
+            )
+        }
     }
 }

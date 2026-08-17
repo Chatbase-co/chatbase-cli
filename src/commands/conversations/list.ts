@@ -1,6 +1,6 @@
 import { ListCommand } from '../../base/list-command.js'
 import { fetchAllPages } from '../../client/paginate.js'
-import type { Column } from '../../output/render.js'
+import { type Column, formatEpochSeconds } from '../../output/render.js'
 
 const COLUMNS: Column[] = [
     { key: 'id', header: 'ID' },
@@ -31,12 +31,17 @@ export default class ConversationsList extends ListCommand {
             { limit: flags.limit, cursor: flags.cursor, all: flags.all }
         )
 
+        // Humans read ISO dates; --plain keeps the raw epoch for scripts.
+        const ts =
+            this.mode(flags) === 'pretty'
+                ? formatEpochSeconds
+                : (v: unknown) => String(v ?? '')
         const rows = items.map((c) => ({
             id: String(c.id ?? ''),
             title: String(c.title ?? ''),
             status: String(c.status ?? ''),
-            createdAt: String(c.createdAt ?? ''),
-            updatedAt: String(c.updatedAt ?? '')
+            createdAt: ts(c.createdAt),
+            updatedAt: ts(c.updatedAt)
         }))
         const last = pages.at(-1)
         // --json must stay the raw API shape even when --all merges pages

@@ -53,13 +53,13 @@ calls you invoke.
 * [`chatbase config list`](#chatbase-config-list)
 * [`chatbase config set KEY [VALUE]`](#chatbase-config-set-key-value)
 * [`chatbase conversations export`](#chatbase-conversations-export)
-* [`chatbase conversations get`](#chatbase-conversations-get)
+* [`chatbase conversations get [CONVERSATIONID]`](#chatbase-conversations-get-conversationid)
 * [`chatbase conversations list`](#chatbase-conversations-list)
 * [`chatbase health`](#chatbase-health)
 * [`chatbase help [COMMAND]`](#chatbase-help-command)
 * [`chatbase helpdesk statuses`](#chatbase-helpdesk-statuses)
 * [`chatbase helpdesk teams`](#chatbase-helpdesk-teams)
-* [`chatbase messages feedback`](#chatbase-messages-feedback)
+* [`chatbase messages feedback [MESSAGEID]`](#chatbase-messages-feedback-messageid)
 * [`chatbase messages list`](#chatbase-messages-list)
 * [`chatbase sources create`](#chatbase-sources-create)
 * [`chatbase sources delete SOURCEID`](#chatbase-sources-delete-sourceid)
@@ -82,20 +82,19 @@ Enable or disable automatic retraining for an agent
 
 ```
 USAGE
-  $ chatbase agents auto-retrain AGENTID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--enabled] [--disabled]
+  $ chatbase agents auto-retrain AGENTID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--enabled]
+    [--disabled]
 
 ARGUMENTS
   AGENTID  Agent ID
 
 FLAGS
-  -f, --field=<value>...  Set a body field: -f key=value (repeatable)
-  -q, --quiet             Suppress non-essential output
-      --disabled          Disable automatic retraining
-      --enabled           Enable automatic retraining
-      --no-color          Disable colored output
-      --no-input          Never prompt; fail instead
-      --verbose           Verbose diagnostics
+  -q, --quiet     Suppress non-essential output
+      --disabled  Disable automatic retraining
+      --enabled   Enable automatic retraining
+      --no-color  Disable colored output
+      --no-input  Never prompt; fail instead
+      --verbose   Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -118,17 +117,16 @@ Clone an agent, including all its sources (excluding Notion)
 
 ```
 USAGE
-  $ chatbase agents clone AGENTID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
+  $ chatbase agents clone AGENTID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
 
 ARGUMENTS
   AGENTID  Agent ID to clone
 
 FLAGS
-  -f, --field=<value>...  Set a body field: -f key=value (repeatable)
-  -q, --quiet             Suppress non-essential output
-      --no-color          Disable colored output
-      --no-input          Never prompt; fail instead
-      --verbose           Verbose diagnostics
+  -q, --quiet     Suppress non-essential output
+      --no-color  Disable colored output
+      --no-input  Never prompt; fail instead
+      --verbose   Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -184,19 +182,17 @@ Permanently delete an agent (cannot be undone)
 
 ```
 USAGE
-  $ chatbase agents delete AGENTID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--confirm <value>]
+  $ chatbase agents delete AGENTID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--confirm <value>]
 
 ARGUMENTS
   AGENTID  Agent ID
 
 FLAGS
-  -f, --field=<value>...  Set a body field: -f key=value (repeatable)
-  -q, --quiet             Suppress non-essential output
-      --confirm=<value>   Confirm by repeating the agent ID (required in scripts and CI)
-      --no-color          Disable colored output
-      --no-input          Never prompt; fail instead
-      --verbose           Verbose diagnostics
+  -q, --quiet            Suppress non-essential output
+      --confirm=<value>  Confirm by repeating the agent ID (required in scripts and CI)
+      --no-color         Disable colored output
+      --no-input         Never prompt; fail instead
+      --verbose          Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -217,17 +213,16 @@ Show one agent
 
 ```
 USAGE
-  $ chatbase agents get AGENTID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
+  $ chatbase agents get AGENTID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
 
 ARGUMENTS
   AGENTID  Agent ID
 
 FLAGS
-  -f, --field=<value>...  Set a body field: -f key=value (repeatable)
-  -q, --quiet             Suppress non-essential output
-      --no-color          Disable colored output
-      --no-input          Never prompt; fail instead
-      --verbose           Verbose diagnostics
+  -q, --quiet     Suppress non-essential output
+      --no-color  Disable colored output
+      --no-input  Never prompt; fail instead
+      --verbose   Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -248,18 +243,17 @@ List all agents in the workspace
 
 ```
 USAGE
-  $ chatbase agents list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...] [--limit
-    <value>] [--cursor <value>] [--all]
+  $ chatbase agents list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--limit <value>]
+    [--cursor <value>] [--all]
 
 FLAGS
-  -f, --field=<value>...  Set a body field: -f key=value (repeatable)
-  -q, --quiet             Suppress non-essential output
-      --all               Fetch every page
-      --cursor=<value>    Pagination cursor from a previous page
-      --limit=<value>     Maximum items per page
-      --no-color          Disable colored output
-      --no-input          Never prompt; fail instead
-      --verbose           Verbose diagnostics
+  -q, --quiet           Suppress non-essential output
+      --all             Fetch every page
+      --cursor=<value>  Pagination cursor from a previous page
+      --limit=<value>   Maximum items per page
+      --no-color        Disable colored output
+      --no-input        Never prompt; fail instead
+      --verbose         Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -317,17 +311,16 @@ Queue a training job for an agent
 
 ```
 USAGE
-  $ chatbase agents train AGENTID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
+  $ chatbase agents train AGENTID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
 
 ARGUMENTS
   AGENTID  Agent ID to train
 
 FLAGS
-  -f, --field=<value>...  Set a body field: -f key=value (repeatable)
-  -q, --quiet             Suppress non-essential output
-      --no-color          Disable colored output
-      --no-input          Never prompt; fail instead
-      --verbose           Verbose diagnostics
+  -q, --quiet     Suppress non-essential output
+      --no-color  Disable colored output
+      --no-input  Never prompt; fail instead
+      --verbose   Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -427,17 +420,15 @@ Authenticate with Chatbase — paste an API key or log in via browser
 
 ```
 USAGE
-  $ chatbase auth login [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--with-token] [--browser]
+  $ chatbase auth login [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--with-token] [--browser]
 
 FLAGS
-  -f, --field=<value>...  Set a body field: -f key=value (repeatable)
-  -q, --quiet             Suppress non-essential output
-      --browser           Log in via browser — approve a code at chatbase.co/activate
-      --no-color          Disable colored output
-      --no-input          Never prompt; fail instead
-      --verbose           Verbose diagnostics
-      --with-token        Read the API key from stdin
+  -q, --quiet       Suppress non-essential output
+      --browser     Log in via browser — approve a code at chatbase.co/activate
+      --no-color    Disable colored output
+      --no-input    Never prompt; fail instead
+      --verbose     Verbose diagnostics
+      --with-token  Read the API key from stdin
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -462,14 +453,13 @@ Remove the stored API key (revokes CLI-paired keys server-side)
 
 ```
 USAGE
-  $ chatbase auth logout [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
+  $ chatbase auth logout [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
 
 FLAGS
-  -f, --field=<value>...  Set a body field: -f key=value (repeatable)
-  -q, --quiet             Suppress non-essential output
-      --no-color          Disable colored output
-      --no-input          Never prompt; fail instead
-      --verbose           Verbose diagnostics
+  -q, --quiet     Suppress non-essential output
+      --no-color  Disable colored output
+      --no-input  Never prompt; fail instead
+      --verbose   Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -490,14 +480,13 @@ Show the active credential and where it comes from
 
 ```
 USAGE
-  $ chatbase auth status [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
+  $ chatbase auth status [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
 
 FLAGS
-  -f, --field=<value>...  Set a body field: -f key=value (repeatable)
-  -q, --quiet             Suppress non-essential output
-      --no-color          Disable colored output
-      --no-input          Never prompt; fail instead
-      --verbose           Verbose diagnostics
+  -q, --quiet     Suppress non-essential output
+      --no-color  Disable colored output
+      --no-input  Never prompt; fail instead
+      --verbose   Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -518,12 +507,11 @@ Send a message to an agent and print its response
 
 ```
 USAGE
-  $ chatbase chat [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>] [-m <value>] [--resume --conversation <value>] [--no-stream]
+  $ chatbase chat [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [-m <value>] [--resume --conversation <value>] [--no-stream]
 
 FLAGS
   -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...      Set a body field: -f key=value (repeatable)
   -m, --message=<value>       Message to send (else read from piped stdin, else an interactive REPL)
   -q, --quiet                 Suppress non-essential output
       --agent-name=<value>    Agent display name — resolves to an ID via GET /agents
@@ -557,16 +545,15 @@ _See code: [src/commands/chat/index.ts](https://github.com/Chatbase-co/chatbase-
 
 ## `chatbase chat retry`
 
-Retry generating an assistant response
+Retry generating an assistant response (discards that message and everything after it in the conversation)
 
 ```
 USAGE
   $ chatbase chat retry --conversation <value> --message-id <value> [--json] [--plain] [-q] [--verbose]
-    [--no-input] [--no-color] [-f <value>...] [--agent-name <value> | -a <value>] [--no-stream]
+    [--no-input] [--no-color] [--agent-name <value> | -a <value>] [--no-stream]
 
 FLAGS
   -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...      Set a body field: -f key=value (repeatable)
   -q, --quiet                 Suppress non-essential output
       --agent-name=<value>    Agent display name — resolves to an ID via GET /agents
       --conversation=<value>  (required) The conversation ID to retry in
@@ -581,7 +568,7 @@ OUTPUT FLAGS
   --plain  Tab-separated output for scripts
 
 DESCRIPTION
-  Retry generating an assistant response
+  Retry generating an assistant response (discards that message and everything after it in the conversation)
 
 EXAMPLES
   $ chatbase chat retry --conversation c_123 -a agt_123 --message-id msg_456
@@ -597,17 +584,16 @@ Print a resolved CLI configuration value and where it comes from
 
 ```
 USAGE
-  $ chatbase config get KEY [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
+  $ chatbase config get KEY [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
 
 ARGUMENTS
   KEY  agent | timeout
 
 FLAGS
-  -f, --field=<value>...  Set a body field: -f key=value (repeatable)
-  -q, --quiet             Suppress non-essential output
-      --no-color          Disable colored output
-      --no-input          Never prompt; fail instead
-      --verbose           Verbose diagnostics
+  -q, --quiet     Suppress non-essential output
+      --no-color  Disable colored output
+      --no-input  Never prompt; fail instead
+      --verbose   Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -630,14 +616,13 @@ List every resolved CLI configuration value and its source
 
 ```
 USAGE
-  $ chatbase config list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
+  $ chatbase config list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
 
 FLAGS
-  -f, --field=<value>...  Set a body field: -f key=value (repeatable)
-  -q, --quiet             Suppress non-essential output
-      --no-color          Disable colored output
-      --no-input          Never prompt; fail instead
-      --verbose           Verbose diagnostics
+  -q, --quiet     Suppress non-essential output
+      --no-color  Disable colored output
+      --no-input  Never prompt; fail instead
+      --verbose   Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -658,18 +643,17 @@ Set a CLI configuration value
 
 ```
 USAGE
-  $ chatbase config set KEY [VALUE] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
+  $ chatbase config set KEY [VALUE] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
 
 ARGUMENTS
   KEY      agent | timeout
   [VALUE]  New value (omit for agent to pick interactively)
 
 FLAGS
-  -f, --field=<value>...  Set a body field: -f key=value (repeatable)
-  -q, --quiet             Suppress non-essential output
-      --no-color          Disable colored output
-      --no-input          Never prompt; fail instead
-      --verbose           Verbose diagnostics
+  -q, --quiet     Suppress non-essential output
+      --no-color  Disable colored output
+      --no-input  Never prompt; fail instead
+      --verbose   Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -694,12 +678,11 @@ Export conversations with full message history
 
 ```
 USAGE
-  $ chatbase conversations export [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>] [--cursor <value>] [--limit <value>] [-o <value>]
+  $ chatbase conversations export [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--cursor <value>] [--limit <value>] [-o <value>]
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -o, --output=<value>      Write export JSON to a file instead of stdout
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
@@ -724,21 +707,23 @@ EXAMPLES
 
 _See code: [src/commands/conversations/export.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/conversations/export.ts)_
 
-## `chatbase conversations get`
+## `chatbase conversations get [CONVERSATIONID]`
 
 Show one conversation
 
 ```
 USAGE
-  $ chatbase conversations get --conversation <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f
-    <value>...] [--agent-name <value> | -a <value>]
+  $ chatbase conversations get [CONVERSATIONID] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+    [--agent-name <value> | -a <value>] [--conversation <value>]
+
+ARGUMENTS
+  [CONVERSATIONID]  Conversation ID (alternative to --conversation)
 
 FLAGS
   -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...      Set a body field: -f key=value (repeatable)
   -q, --quiet                 Suppress non-essential output
       --agent-name=<value>    Agent display name — resolves to an ID via GET /agents
-      --conversation=<value>  (required) Conversation ID
+      --conversation=<value>  Conversation ID
       --no-color              Disable colored output
       --no-input              Never prompt; fail instead
       --verbose               Verbose diagnostics
@@ -751,6 +736,8 @@ DESCRIPTION
   Show one conversation
 
 EXAMPLES
+  $ chatbase conversations get conv_123 -a agt_123
+
   $ chatbase conversations get --conversation conv_123 -a agt_123
 ```
 
@@ -762,12 +749,11 @@ List conversations for an agent
 
 ```
 USAGE
-  $ chatbase conversations list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all]
+  $ chatbase conversations list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--limit <value>] [--cursor <value>] [--all]
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
       --all                 Fetch every page
@@ -798,14 +784,13 @@ Check that the Chatbase API is reachable
 
 ```
 USAGE
-  $ chatbase health [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
+  $ chatbase health [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
 
 FLAGS
-  -f, --field=<value>...  Set a body field: -f key=value (repeatable)
-  -q, --quiet             Suppress non-essential output
-      --no-color          Disable colored output
-      --no-input          Never prompt; fail instead
-      --verbose           Verbose diagnostics
+  -q, --quiet     Suppress non-essential output
+      --no-color  Disable colored output
+      --no-input  Never prompt; fail instead
+      --verbose   Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -848,12 +833,11 @@ List ticket statuses for an agent
 
 ```
 USAGE
-  $ chatbase helpdesk statuses [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>]
+  $ chatbase helpdesk statuses [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>]
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
       --no-color            Disable colored output
@@ -879,12 +863,11 @@ List helpdesk teams for an agent
 
 ```
 USAGE
-  $ chatbase helpdesk teams [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>]
+  $ chatbase helpdesk teams [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>]
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
       --no-color            Disable colored output
@@ -904,22 +887,24 @@ EXAMPLES
 
 _See code: [src/commands/helpdesk/teams.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/helpdesk/teams.ts)_
 
-## `chatbase messages feedback`
+## `chatbase messages feedback [MESSAGEID]`
 
 Set or clear user feedback on an assistant message
 
 ```
 USAGE
-  $ chatbase messages feedback --conversation <value> --message <value> --rating positive|negative|clear [--json]
-    [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...] [--agent-name <value> | -a <value>]
+  $ chatbase messages feedback [MESSAGEID] --conversation <value> --rating positive|negative|clear [--json] [--plain]
+    [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a <value>] [--message <value>]
+
+ARGUMENTS
+  [MESSAGEID]  Message ID (alternative to --message)
 
 FLAGS
   -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...      Set a body field: -f key=value (repeatable)
   -q, --quiet                 Suppress non-essential output
       --agent-name=<value>    Agent display name — resolves to an ID via GET /agents
       --conversation=<value>  (required) Conversation ID
-      --message=<value>       (required) Message ID
+      --message=<value>       Message ID
       --no-color              Disable colored output
       --no-input              Never prompt; fail instead
       --rating=<option>       (required) Feedback value ("clear" removes existing feedback)
@@ -934,7 +919,7 @@ DESCRIPTION
   Set or clear user feedback on an assistant message
 
 EXAMPLES
-  $ chatbase messages feedback --conversation conv_123 --message msg_1 --rating positive -a agt_123
+  $ chatbase messages feedback msg_1 --conversation conv_123 --rating positive -a agt_123
 
   $ chatbase messages feedback --conversation conv_123 --message msg_1 --rating clear -a agt_123
 ```
@@ -947,12 +932,11 @@ List messages in a conversation
 
 ```
 USAGE
-  $ chatbase messages list --conversation <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f
-    <value>...] [--agent-name <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all]
+  $ chatbase messages list --conversation <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+    [--agent-name <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all]
 
 FLAGS
   -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...      Set a body field: -f key=value (repeatable)
   -q, --quiet                 Suppress non-essential output
       --agent-name=<value>    Agent display name — resolves to an ID via GET /agents
       --all                   Fetch every page
@@ -984,9 +968,9 @@ Create a source: text/qna/link (JSON) or a file upload
 
 ```
 USAGE
-  $ chatbase sources create [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>] [--type text|qna|link | --file <value>] [--name <value>] [--content <value>]
-    [--url <value>] [--link-type individual|sitemap|crawl] [--data <value>]
+  $ chatbase sources create [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [-f <value>...] [--type text|qna|link | --file <value>] [--name <value>] [--content <value>] [--url
+    <value>] [--link-type individual|sitemap|crawl] [--data <value>]
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
@@ -1031,15 +1015,14 @@ Delete a source (restorable via restore command)
 
 ```
 USAGE
-  $ chatbase sources delete SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>]
+  $ chatbase sources delete SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>]
 
 ARGUMENTS
   SOURCEID  Source ID
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
       --no-color            Disable colored output
@@ -1065,15 +1048,14 @@ Show one source
 
 ```
 USAGE
-  $ chatbase sources get SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>]
+  $ chatbase sources get SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>]
 
 ARGUMENTS
   SOURCEID  Source ID
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
       --no-color            Disable colored output
@@ -1099,12 +1081,11 @@ List sources for an agent
 
 ```
 USAGE
-  $ chatbase sources list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all]
+  $ chatbase sources list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--limit <value>] [--cursor <value>] [--all]
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
       --all                 Fetch every page
@@ -1135,15 +1116,14 @@ Restore a deleted source
 
 ```
 USAGE
-  $ chatbase sources restore SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>]
+  $ chatbase sources restore SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>]
 
 ARGUMENTS
   SOURCEID  Source ID
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
       --no-color            Disable colored output
@@ -1169,12 +1149,11 @@ Show aggregated source counts and sizes for an agent
 
 ```
 USAGE
-  $ chatbase sources summary [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>]
+  $ chatbase sources summary [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>]
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
       --no-color            Disable colored output
@@ -1200,15 +1179,14 @@ Converge an agent's file sources to match a local directory (create/update/delet
 
 ```
 USAGE
-  $ chatbase sources sync [DIR] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>] [-n] [--force] [--include <value>...] [--exclude <value>...]
+  $ chatbase sources sync [DIR] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>] [-n] [--force] [--include <value>...] [--exclude <value>...]
 
 ARGUMENTS
   [DIR]  Local directory to sync (else chatbase.json "sync.dir")
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -n, --dry-run             Show the plan without applying it
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
@@ -1242,8 +1220,8 @@ Update an existing source (text, qna, link, or file)
 
 ```
 USAGE
-  $ chatbase sources update SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>] [--data <value> | --file <value>]
+  $ chatbase sources update SOURCEID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>] [-f <value>...] [--data <value> | --file <value>]
 
 ARGUMENTS
   SOURCEID  Source ID
@@ -1280,8 +1258,8 @@ Create a helpdesk ticket
 
 ```
 USAGE
-  $ chatbase tickets create [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>] [--subject <value>] [--data <value>]
+  $ chatbase tickets create [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [-f <value>...] [--subject <value>] [--data <value>]
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
@@ -1313,15 +1291,14 @@ Show one helpdesk ticket
 
 ```
 USAGE
-  $ chatbase tickets get TICKETNUMBER [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f
-    <value>...] [--agent-name <value> | -a <value>]
+  $ chatbase tickets get TICKETNUMBER [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>]
 
 ARGUMENTS
   TICKETNUMBER  Ticket number
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
       --no-color            Disable colored output
@@ -1347,12 +1324,11 @@ List helpdesk tickets for an agent
 
 ```
 USAGE
-  $ chatbase tickets list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f <value>...]
-    [--agent-name <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all]
+  $ chatbase tickets list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--limit <value>] [--cursor <value>] [--all]
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
       --all                 Fetch every page
@@ -1383,12 +1359,11 @@ List a ticket's message thread
 
 ```
 USAGE
-  $ chatbase tickets messages --ticket <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f
-    <value>...] [--agent-name <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all]
+  $ chatbase tickets messages --ticket <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+    [--agent-name <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all]
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
       --all                 Fetch every page
@@ -1421,11 +1396,10 @@ Post an agent reply to a ticket's message thread
 ```
 USAGE
   $ chatbase tickets reply --ticket <value> -m <value> [--json] [--plain] [-q] [--verbose] [--no-input]
-    [--no-color] [-f <value>...] [--agent-name <value> | -a <value>] [--author-id <value>] [--author-email <value>]
+    [--no-color] [--agent-name <value> | -a <value>] [--author-id <value>] [--author-email <value>]
 
 FLAGS
   -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...      Set a body field: -f key=value (repeatable)
   -m, --message=<value>       (required) Reply body as GitHub-flavored Markdown
   -q, --quiet                 Suppress non-essential output
       --agent-name=<value>    Agent display name — resolves to an ID via GET /agents
@@ -1457,8 +1431,8 @@ Update a ticket's status, assignee, and/or team
 
 ```
 USAGE
-  $ chatbase tickets update TICKETNUMBER [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [-f
-    <value>...] [--agent-name <value> | -a <value>] [--data <value>]
+  $ chatbase tickets update TICKETNUMBER [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>] [-f <value>...] [--data <value>]
 
 ARGUMENTS
   TICKETNUMBER  Ticket number

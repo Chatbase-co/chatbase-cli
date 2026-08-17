@@ -27,9 +27,11 @@ describe('parseErrorResponse', () => {
     })
 
     it('scoped-key permission denial guides to scopes, never to a plan upsell', () => {
+        // AUTH_INSUFFICIENT_PERMISSIONS is the code the API actually emits
+        // (src/lib/api/v2/errors/auth.ts server-side) — not PERMISSION_DENIED.
         const err = parseErrorResponse(403, {
             error: {
-                code: 'PERMISSION_DENIED',
+                code: 'AUTH_INSUFFICIENT_PERMISSIONS',
                 message: 'Missing permission: sources:write'
             }
         })
@@ -38,8 +40,9 @@ describe('parseErrorResponse', () => {
     })
 
     it('expired keys point at re-login, distinct from invalid keys', () => {
+        // AUTH_EXPIRED_API_KEY is the code the API actually emits.
         const err = parseErrorResponse(401, {
-            error: { code: 'API_KEY_EXPIRED', message: 'API key expired' }
+            error: { code: 'AUTH_EXPIRED_API_KEY', message: 'API key expired' }
         })
         expect(err.remediation).toContain('chatbase auth login')
         expect(err.remediation).toContain('expired')

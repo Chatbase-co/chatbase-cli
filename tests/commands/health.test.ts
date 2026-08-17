@@ -52,3 +52,9 @@ describe('chatbase health', () => {
         })
     })
 })
+
+describe('base flag scoping', () => {
+    it('does not advertise -f/--field on a command with no request body', () => {
+        expect(Object.keys(Health.flags ?? {})).not.toContain('field')
+    })
+})

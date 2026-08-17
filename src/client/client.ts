@@ -31,6 +31,9 @@ export type ApiClientOptions = {
     apiKey?: string
     timeoutMs?: number
     baseUrl?: string
+    /** --verbose: log each request/response line to stderr for diagnosis
+     * (resolved host, method, status, request id, timing). */
+    verbose?: boolean
 }
 
 export function buildUserAgent(): string {
@@ -55,7 +58,21 @@ export function dispatcher() {
     return proxyAgent
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+/** setTimeout that also rejects the moment `signal` aborts — the retry
+ * backoff must honor Ctrl-C / per-call cancels, not wait out the delay. */
+const sleep = (ms: number, signal?: AbortSignal) =>
+    new Promise<void>((resolve, reject) => {
+        if (signal?.aborted) return reject(signal.reason)
+        const timer = setTimeout(() => resolve(), ms)
+        signal?.addEventListener(
+            'abort',
+            () => {
+                clearTimeout(timer)
+                reject(signal.reason)
+            },
+            { once: true }
+        )
+    })
 
 /**
  * Node's global `Request` and the undici package's `Request` are two copies
@@ -113,26 +130,42 @@ export function makeFetch(opts: ApiClientOptions) {
             init
         )
         for (let attempt = 1; ; attempt++) {
+            const attemptSignal = AbortSignal.any([
+                AbortSignal.timeout(timeoutMs),
+                getSigintSignal(),
+                ...(signal ? [signal] : [])
+            ]) as AbortSignal
+            if (opts.verbose) {
+                const retryTag = attempt > 1 ? ` (attempt ${attempt})` : ''
+                process.stderr.write(`» ${method} ${url}${retryTag}\n`)
+            }
+            const started = Date.now()
             const response = await undiciFetch(url, {
                 ...requestInit,
                 dispatcher: dispatcher(),
-                signal: AbortSignal.any([
-                    AbortSignal.timeout(timeoutMs),
-                    getSigintSignal(),
-                    ...(signal ? [signal] : [])
-                ]) as AbortSignal
+                signal: attemptSignal
             })
+            if (opts.verbose) {
+                const requestId = response.headers.get('x-request-id')
+                process.stderr.write(
+                    `« ${response.status}${requestId ? ` (request-id: ${requestId})` : ''} in ${Date.now() - started}ms\n`
+                )
+            }
             if (response.ok || !shouldRetry(response.status, method, attempt))
                 return response
             // Draining before the retry avoids leaking the unread response
             // body's underlying connection while we sleep and loop.
             await response.body?.cancel()
+            // Same signal as the fetch above, so Ctrl-C (or the REPL's
+            // per-call cancel) interrupts the backoff wait too instead of
+            // only taking effect on the next attempt.
             await sleep(
                 computeRetryDelayMs(
                     attempt,
                     response.headers.get('x-ratelimit-reset'),
                     Date.now()
-                )
+                ),
+                attemptSignal
             )
         }
     }

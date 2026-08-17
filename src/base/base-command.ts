@@ -68,6 +68,17 @@ export type BaseFlags = {
     'no-color'?: boolean
 }
 
+/** -f key=value body fields — spread into the flags of commands that send a
+ * JSON request body (not part of baseFlags: advertising -f on body-less
+ * commands like `health` was just noise in --help). */
+export const bodyFieldFlags = {
+    field: Flags.string({
+        char: 'f',
+        multiple: true,
+        description: 'Set a body field: -f key=value (repeatable)'
+    })
+}
+
 export abstract class BaseCommand extends Command {
     static baseFlags = {
         json: Flags.boolean({
@@ -86,12 +97,7 @@ export abstract class BaseCommand extends Command {
         'no-input': Flags.boolean({
             description: 'Never prompt; fail instead'
         }),
-        'no-color': Flags.boolean({ description: 'Disable colored output' }),
-        field: Flags.string({
-            char: 'f',
-            multiple: true,
-            description: 'Set a body field: -f key=value (repeatable)'
-        })
+        'no-color': Flags.boolean({ description: 'Disable colored output' })
     }
 
     protected requireAuth = true
@@ -126,12 +132,42 @@ export abstract class BaseCommand extends Command {
         const mode = this.mode(flags)
         if (mode === 'json') {
             process.stdout.write(`${JSON.stringify(raw, null, 2)}\n`)
-        } else if (mode === 'plain') {
-            if (rows.length > 0)
-                process.stdout.write(`${renderPlain(rows, columns)}\n`)
+            return
+        }
+        if (rows.length === 0) {
+            // Scripts keep clean empty stdout; humans get told on stderr
+            // that the emptiness is an answer, not a hang or a bug.
+            this.note(flags, 'No results.')
+            return
+        }
+        if (mode === 'plain') {
+            process.stdout.write(`${renderPlain(rows, columns)}\n`)
         } else {
             process.stdout.write(`${renderTable(rows, columns)}\n`)
         }
+    }
+
+    /**
+     * Detail view for `get`-style commands: pretty mode prints aligned
+     * key-value lines (the full object, not a list row); --plain keeps the
+     * scriptable single row; --json keeps the raw envelope.
+     */
+    protected printDetail(
+        flags: BaseFlags,
+        raw: unknown,
+        row: Record<string, string>,
+        columns: Column[],
+        detail: Array<[string, string]>
+    ): void {
+        if (this.mode(flags) !== 'pretty') {
+            this.printData(flags, raw, [row], columns)
+            return
+        }
+        const shown = detail.filter(([, value]) => value !== '')
+        const width = Math.max(...shown.map(([label]) => label.length))
+        process.stdout.write(
+            `${shown.map(([label, value]) => `${label.padEnd(width + 2)}${value}`).join('\n')}\n`
+        )
     }
 
     protected apiClient(flags: BaseFlags): Client<paths> {
@@ -146,7 +182,10 @@ export abstract class BaseCommand extends Command {
                 'Not authenticated. Run `chatbase auth login`, or set CHATBASE_API_KEY.'
             )
         }
-        return createApiClient({ apiKey: resolved?.value })
+        return createApiClient({
+            apiKey: resolved?.value,
+            verbose: flags.verbose
+        })
     }
 
     override async catch(err: unknown): Promise<never> {

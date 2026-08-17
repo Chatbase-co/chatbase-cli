@@ -1,5 +1,6 @@
 import { Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
+import { bodyFieldFlags } from '../../base/base-command.js'
 import { readBodyData } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
 import type { components } from '../../generated/api.js'
@@ -13,6 +14,7 @@ export default class TicketsCreate extends AgentCommand {
     ]
     static override flags = {
         ...AgentCommand.baseFlags,
+        ...bodyFieldFlags,
         subject: Flags.string({ description: 'Ticket subject' }),
         data: Flags.string({
             description:

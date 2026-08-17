@@ -43,6 +43,14 @@ export default class ConfigSet extends BaseCommand {
         }
 
         if (key === 'agent') {
+            if (args.value === '') {
+                // Empty value clears — remove the key entirely instead of
+                // storing "" and printing the awkward "set to " message.
+                const { agent: _cleared, ...rest } = readUserConfig()
+                writeUserConfig(rest)
+                this.success(flags, 'agent cleared')
+                return
+            }
             const agentId = args.value ?? (await this.pickAgent(flags))
             writeUserConfig({ ...readUserConfig(), agent: agentId })
             process.stdout.write(`${agentId}\n`)

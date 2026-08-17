@@ -1,7 +1,7 @@
 import { Flags } from '@oclif/core'
 import { ListCommand } from '../../base/list-command.js'
 import { fetchAllPages } from '../../client/paginate.js'
-import type { Column } from '../../output/render.js'
+import { type Column, formatEpochSeconds } from '../../output/render.js'
 
 const COLUMNS: Column[] = [
     { key: 'id', header: 'ID' },
@@ -45,10 +45,15 @@ export default class MessagesList extends ListCommand {
             { limit: flags.limit, cursor: flags.cursor, all: flags.all }
         )
 
+        // Humans read ISO dates; --plain keeps the raw epoch for scripts.
+        const ts =
+            this.mode(flags) === 'pretty'
+                ? formatEpochSeconds
+                : (v: unknown) => String(v ?? '')
         const rows = items.map((m) => ({
             id: String(m.id ?? ''),
             role: String(m.role ?? ''),
-            createdAt: String(m.createdAt ?? '')
+            createdAt: ts(m.createdAt)
         }))
         const last = pages.at(-1)
         // --json must stay the raw API shape even when --all merges pages

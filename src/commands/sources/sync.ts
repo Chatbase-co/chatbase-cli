@@ -4,12 +4,14 @@ import { Args, Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
 import type { BaseFlags } from '../../base/base-command.js'
 import { listAllSources } from '../../base/sources.js'
+import { filesHostMismatchWarning } from '../../client/files.js'
 import { findProjectConfig, type ProjectConfig } from '../../config/project.js'
 import { resolveApiKey } from '../../config/resolve.js'
 import { UsageError } from '../../errors/errors.js'
 import type { Palette } from '../../output/color.js'
-import { computeSyncPlan, scanDir } from '../../sync/diff.js'
+import { computeSyncPlan, type LocalFile, scanDir } from '../../sync/diff.js'
 import { executeSyncPlan } from '../../sync/execute.js'
+import { acquireSyncLock } from '../../sync/lock.js'
 import { renderPlan } from '../../sync/render.js'
 
 type SyncFlags = BaseFlags & {
@@ -20,6 +22,13 @@ type SyncFlags = BaseFlags & {
     exclude?: string[]
 }
 
+// The upload API's documented size bounds — anything outside them is
+// rejected server-side ("File size must be between 50 bytes and 20 MB"),
+// so the plan skips those files up front with a note instead of burning a
+// round trip on a guaranteed failure.
+const MIN_UPLOAD_BYTES = 50
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024
+
 /** Throws a UsageError (never touches the network) unless `dir` exists and
  * is a directory — mirrors `sources create`'s assertFileReadable, so a bad
  * local path fails fast instead of after an agent lookup / sources list
@@ -28,8 +37,16 @@ function assertDirReadable(dir: string): void {
     let stat: fs.Stats
     try {
         stat = fs.statSync(dir)
-    } catch {
-        throw new UsageError(`Directory not found: ${dir}`)
+    } catch (err) {
+        const code = (err as NodeJS.ErrnoException)?.code
+        if (code === 'ENOENT') {
+            throw new UsageError(`Directory not found: ${dir}`)
+        }
+        // EACCES, ENOTDIR, ...: the path may well exist — saying "not
+        // found" would send the user hunting for the wrong problem.
+        throw new UsageError(
+            `Cannot read directory: ${dir} (${code ?? (err as Error)?.message})`
+        )
     }
     if (!stat.isDirectory()) {
         throw new UsageError(`Not a directory: ${dir}`)
@@ -115,9 +132,54 @@ export default class SourcesSync extends AgentCommand {
 
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
+
+        // Dry-run performs no writes, so it never contends for the lock —
+        // and must not fail just because a real sync is mid-flight.
+        const releaseLock = flags['dry-run']
+            ? () => {}
+            : await acquireSyncLock(dir, agentId)
+        try {
+            await this.runPlan(flags, client, agentId, dir, local, {
+                include,
+                exclude
+            })
+        } finally {
+            releaseLock()
+        }
+    }
+
+    private async runPlan(
+        flags: SyncFlags,
+        client: ReturnType<AgentCommand['apiClient']>,
+        agentId: string,
+        _dir: string,
+        local: LocalFile[],
+        scanOpts: { include?: string[]; exclude?: string[] }
+    ): Promise<void> {
         const remote = await listAllSources(client, agentId)
-        const plan = computeSyncPlan(local, remote)
+        // The FULL scan feeds the diff (so a size-skipped file still counts
+        // as "present locally" and its remote source is never deleted); the
+        // upload buckets are then filtered down to what the API accepts.
+        const plan = computeSyncPlan(local, remote, scanOpts)
         const color = this.palette(flags)
+
+        // Sync is all file uploads — surface the cross-environment files
+        // host trap before doing (or planning) any of them.
+        const mismatch = filesHostMismatchWarning()
+        if (mismatch) this.note(flags, color.yellow(mismatch))
+
+        const inBounds = (f: LocalFile): boolean =>
+            f.size >= MIN_UPLOAD_BYTES && f.size <= MAX_UPLOAD_BYTES
+        for (const f of [...plan.create, ...plan.update]) {
+            if (inBounds(f)) continue
+            const reason =
+                f.size < MIN_UPLOAD_BYTES
+                    ? `under the ${MIN_UPLOAD_BYTES}-byte upload minimum`
+                    : 'over the 20 MB upload maximum'
+            this.note(flags, color.yellow(`! skipped ${f.relPath} — ${reason}`))
+        }
+        plan.create = plan.create.filter(inBounds)
+        plan.update = plan.update.filter(inBounds)
 
         if (plan.caseCollisions.length > 0) {
             this.note(
@@ -132,9 +194,10 @@ export default class SourcesSync extends AgentCommand {
 
         if (flags['dry-run']) return
 
-        // remoteFileCount derives from the plan itself: every remote FILE
-        // source ends up matched (update/unchanged) or unmatched (del) —
-        // no second pass over `remote` needed.
+        // remoteFileCount derives from the plan itself: every IN-SCOPE
+        // remote FILE source ends up matched (update/unchanged) or unmatched
+        // (del) — out-of-scope sources fall out of all three buckets, so the
+        // high-risk denominator counts only what this sync can touch.
         const remoteFileCount =
             plan.unchanged + plan.update.length + plan.del.length
         const highRisk = plan.del.length > 0.5 * remoteFileCount
@@ -161,17 +224,13 @@ export default class SourcesSync extends AgentCommand {
             agentId,
             apiKey: resolvedKey.value,
             client,
+            verbose: flags.verbose,
             onProgress: (line) =>
                 this.note(flags, colorizeProgress(line, color))
         })
 
-        if (result.failures.length > 0) {
-            this.note(flags, color.red(`Failures (${result.failures.length}):`))
-            for (const f of result.failures) {
-                this.note(flags, color.red(`  ✗ ${f.name}: ${f.error}`))
-            }
-        }
-
+        // Each failure already printed inline as it happened (onProgress) —
+        // re-listing them here would just double the noise.
         const summary = `Synced: +${plan.create.length} ~${plan.update.length} −${plan.del.length} (${plan.unchanged} unchanged)`
         if (result.failures.length > 0) {
             this.note(flags, `${color.red('✗')} ${summary}`)

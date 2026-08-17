@@ -156,6 +156,7 @@ describe('auth login --browser', () => {
             configurable: true
         })
         vi.mocked(spawn).mockReturnValue({
+            on: vi.fn().mockReturnThis(),
             unref: vi.fn()
         } as unknown as ReturnType<typeof spawn>)
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)
@@ -172,6 +173,46 @@ describe('auth login --browser', () => {
             expect.objectContaining({ detached: true })
         )
         expect(readUserConfig().apiKey).toBe('sk-live-browser')
+    })
+})
+
+describe('auth login --browser (opener failures)', () => {
+    it('attaches an error listener to the browser-opener child so a missing opener binary cannot crash the login', async () => {
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/cli/pairing', method: 'POST' })
+            .reply(200, {
+                device_code: 'dev_2',
+                user_code: 'EFGH-5678',
+                verification_uri: 'https://chatbase.co/activate',
+                expires_in: 60,
+                interval: 1
+            })
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/cli/pairing/exchange', method: 'POST' })
+            .reply(200, {
+                api_key: 'sk-live-browser-2',
+                workspace: { id: 'w1', name: 'Acme' }
+            })
+
+        const platform = stubPlatform('darwin')
+        Object.defineProperty(process.stdout, 'isTTY', {
+            value: true,
+            configurable: true
+        })
+        const on = vi.fn().mockReturnThis()
+        vi.mocked(spawn).mockReturnValue({
+            on,
+            unref: vi.fn()
+        } as unknown as ReturnType<typeof spawn>)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+
+        try {
+            await Login.run(['--browser'], process.cwd())
+        } finally {
+            platform.restore()
+        }
+
+        expect(on).toHaveBeenCalledWith('error', expect.any(Function))
     })
 })
 
@@ -230,6 +271,19 @@ describe('auth logout / status', () => {
         )
     })
 
+    it('includes the failure detail when the revoke call cannot reach the API', async () => {
+        const { writeUserConfig } = await import('../../src/config/store.js')
+        writeUserConfig({ apiKey: 'sk-paired', apiKeySource: 'pairing' })
+        // No interceptor + disableNetConnect: the DELETE rejects at the
+        // network layer, exercising the catch branch rather than the
+        // non-2xx else-branch the 503 test above covers.
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await Logout.run([], process.cwd())
+        expect(readUserConfig().apiKey).toBeUndefined()
+        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(text).toMatch(/Could not reach the API to revoke the key \(.+\)/)
+    })
+
     it('status names the credential source and masks the key', async () => {
         vi.stubEnv('CHATBASE_API_KEY', 'sk-env-abcd')
         mock.get(BASE)
@@ -261,6 +315,70 @@ describe('auth logout / status', () => {
         const outText = err.mock.calls.map((c) => String(c[0])).join('')
         expect(outText).toContain('Already expired')
         expect(outText).not.toContain('Expires in 0 days')
+    })
+
+    it('warns instead of printing "Expires in NaN days" for an unparseable expiry', async () => {
+        vi.stubEnv('CHATBASE_API_KEY', 'sk-env-abcd')
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .reply(200, {
+                workspace: { id: 'w1', name: 'Acme' },
+                plan: 'standard',
+                credential: {
+                    source: 'cli',
+                    expiresAt: 'not-a-date',
+                    permissions: null
+                }
+            })
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await Status.run([], process.cwd())
+        const outText = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(outText).toContain('Could not parse credential expiry')
+        expect(outText).not.toContain('NaN')
+    })
+
+    it('status exits 1 when not authenticated so scripts can use it as a probe', async () => {
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(Status.run([], process.cwd())).rejects.toMatchObject({
+            oclif: { exit: 1 }
+        })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'Not authenticated'
+        )
+    })
+
+    it('recognizes the real expired-key error code (AUTH_EXPIRED_API_KEY)', async () => {
+        vi.stubEnv('CHATBASE_API_KEY', 'sk-env-abcd')
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .reply(401, {
+                error: {
+                    code: 'AUTH_EXPIRED_API_KEY',
+                    message: 'API key has expired'
+                }
+            })
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await Status.run([], process.cwd())
+        const outText = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(outText).toContain('Key has expired')
+        expect(outText).not.toContain('Key appears invalid')
+    })
+
+    it('explains a plan-restricted 403 instead of blaming key scopes', async () => {
+        vi.stubEnv('CHATBASE_API_KEY', 'sk-env-abcd')
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .reply(403, {
+                error: {
+                    code: 'SUBSCRIPTION_API_RESTRICTED_PLAN',
+                    message: 'API access requires a paid plan'
+                }
+            })
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await Status.run([], process.cwd())
+        const outText = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(outText).toMatch(/plan does not include API access/i)
+        expect(outText).not.toContain('Key appears invalid')
     })
 
     it('surfaces a non-2xx, non-401/403 /me response instead of swallowing it', async () => {

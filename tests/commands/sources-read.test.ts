@@ -189,7 +189,7 @@ describe('chatbase sources summary', () => {
         shouldRetrain: true
     }
 
-    it('renders a metric/value table in pretty mode', async () => {
+    it('renders a flattened type/count/size table instead of raw JSON cells', async () => {
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/sources/summary',
@@ -197,18 +197,21 @@ describe('chatbase sources summary', () => {
             })
             .reply(200, summary)
         const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         Object.defineProperty(process.stdout, 'isTTY', {
             value: true,
             configurable: true
         })
         await SourcesSummary.run([], process.cwd())
         const printed = out.mock.calls.map((c) => String(c[0])).join('')
-        expect(printed).toContain('METRIC')
-        expect(printed).toContain('VALUE')
+        expect(printed).toContain('TYPE')
+        expect(printed).toContain('COUNT')
+        expect(printed).toContain('SIZE')
         expect(printed).toContain('links')
-        expect(printed).toContain('"count":2')
-        expect(printed).toContain('shouldRetrain')
-        expect(printed).toContain('true')
+        expect(printed).not.toContain('"count":2')
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toMatch(
+            /retrain/i
+        )
     })
 
     it('--json emits the raw summary object', async () => {
