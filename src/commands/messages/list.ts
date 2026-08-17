@@ -46,14 +46,14 @@ export default class MessagesList extends ListCommand {
         )
 
         // Humans read ISO dates; --plain keeps the raw epoch for scripts.
-        const ts =
+        const formatTimestamp =
             this.mode(flags) === 'pretty'
                 ? formatEpochSeconds
                 : (v: unknown) => String(v ?? '')
         const rows = items.map((m) => ({
             id: String(m.id ?? ''),
             role: String(m.role ?? ''),
-            createdAt: ts(m.createdAt)
+            createdAt: formatTimestamp(m.createdAt)
         }))
         const last = pages.at(-1)
         // --json must stay the raw API shape even when --all merges pages

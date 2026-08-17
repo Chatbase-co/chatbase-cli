@@ -17,6 +17,13 @@ export type PairingResult = {
     workspace: { id: string; name: string }
 }
 
+/** One poll of the exchange endpoint: either the call's typed result, or
+ * the network-level failure — captured as a value so the poll loop can
+ * treat ONLY transport errors as transient, never response-handling ones. */
+type ExchangeAttempt =
+    | { ok: true; data: unknown; error: unknown; response: Response }
+    | { ok: false; cause: unknown }
+
 export async function startPairing(opts?: { baseUrl?: string }): Promise<{
     deviceCode: string
     userCode: string
@@ -58,20 +65,28 @@ export async function pollExchange(
     for (;;) {
         opts.onPoll?.()
 
-        let data: unknown
-        let error: unknown
-        let response: Response
-        try {
-            ;({ data, error, response } = await client.POST(
-                '/cli/pairing/exchange',
-                { body: { device_code: deviceCode } }
-            ))
-        } catch (err) {
+        // Two-arg .then(): only the POST's own rejection lands in the
+        // failure branch — not errors thrown while handling its response.
+        const attempt = await client
+            .POST('/cli/pairing/exchange', {
+                body: { device_code: deviceCode }
+            })
+            .then(
+                (r): ExchangeAttempt => ({
+                    ok: true,
+                    data: r.data,
+                    error: r.error,
+                    response: r.response
+                }),
+                (cause): ExchangeAttempt => ({ ok: false, cause })
+            )
+
+        if (!attempt.ok) {
             // The browser wait can run for minutes; a transient network blip
             // must not abort the whole login. A genuine Ctrl-C still does —
             // only other failures keep polling until the deadline.
-            const name = (err as { name?: string } | null)?.name
-            if (name === 'AbortError' && wasInterrupted()) throw err
+            const name = (attempt.cause as { name?: string } | null)?.name
+            if (name === 'AbortError' && wasInterrupted()) throw attempt.cause
             if (Date.now() >= deadline) {
                 const { UsageError } = await import('../errors/errors.js')
                 throw new UsageError(
@@ -81,6 +96,7 @@ export async function pollExchange(
             await sleep(opts.intervalMs)
             continue
         }
+        const { data, error, response } = attempt
 
         if (response.ok) {
             const result =

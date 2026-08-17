@@ -63,7 +63,7 @@ export default class ConversationsGet extends AgentCommand {
         // fields shared with `conversations list`.
         const conversation = (data as { data: Record<string, unknown> }).data
         // Humans read ISO dates; --plain keeps the raw epoch for scripts.
-        const ts =
+        const formatTimestamp =
             this.mode(flags) === 'pretty'
                 ? formatEpochSeconds
                 : (v: unknown) => String(v ?? '')
@@ -75,8 +75,8 @@ export default class ConversationsGet extends AgentCommand {
                     id: String(conversation.id ?? ''),
                     title: String(conversation.title ?? ''),
                     status: String(conversation.status ?? ''),
-                    createdAt: ts(conversation.createdAt),
-                    updatedAt: ts(conversation.updatedAt)
+                    createdAt: formatTimestamp(conversation.createdAt),
+                    updatedAt: formatTimestamp(conversation.updatedAt)
                 }
             ],
             COLUMNS

@@ -32,7 +32,7 @@ export default class ConversationsList extends ListCommand {
         )
 
         // Humans read ISO dates; --plain keeps the raw epoch for scripts.
-        const ts =
+        const formatTimestamp =
             this.mode(flags) === 'pretty'
                 ? formatEpochSeconds
                 : (v: unknown) => String(v ?? '')
@@ -40,8 +40,8 @@ export default class ConversationsList extends ListCommand {
             id: String(c.id ?? ''),
             title: String(c.title ?? ''),
             status: String(c.status ?? ''),
-            createdAt: ts(c.createdAt),
-            updatedAt: ts(c.updatedAt)
+            createdAt: formatTimestamp(c.createdAt),
+            updatedAt: formatTimestamp(c.updatedAt)
         }))
         const last = pages.at(-1)
         // --json must stay the raw API shape even when --all merges pages
