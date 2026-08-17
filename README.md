@@ -72,8 +72,8 @@ calls you invoke.
 * [`chatbase tickets create`](#chatbase-tickets-create)
 * [`chatbase tickets get TICKETNUMBER`](#chatbase-tickets-get-ticketnumber)
 * [`chatbase tickets list`](#chatbase-tickets-list)
-* [`chatbase tickets messages`](#chatbase-tickets-messages)
-* [`chatbase tickets reply`](#chatbase-tickets-reply)
+* [`chatbase tickets messages [TICKETNUMBER]`](#chatbase-tickets-messages-ticketnumber)
+* [`chatbase tickets reply [TICKETNUMBER]`](#chatbase-tickets-reply-ticketnumber)
 * [`chatbase tickets update TICKETNUMBER`](#chatbase-tickets-update-ticketnumber)
 
 ## `chatbase agents auto-retrain AGENTID`
@@ -1259,18 +1259,21 @@ Create a helpdesk ticket
 ```
 USAGE
   $ chatbase tickets create [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
-    <value>] [-f <value>...] [--subject <value>] [--data <value>]
+    <value>] [-f <value>...] [--subject <value>] [--customer-name <value> --customer-email <value>] [--data <value>]
 
 FLAGS
-  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
-  -f, --field=<value>...    Set a body field: -f key=value (repeatable)
-  -q, --quiet               Suppress non-essential output
-      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
-      --data=<value>        JSON body (@file, @-, or inline). Fields: subject, description, customer, statusId, teamId
-      --no-color            Disable colored output
-      --no-input            Never prompt; fail instead
-      --subject=<value>     Ticket subject
-      --verbose             Verbose diagnostics
+  -a, --agent=<value>           Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -f, --field=<value>...        Set a body field: -f key=value (repeatable)
+  -q, --quiet                   Suppress non-essential output
+      --agent-name=<value>      Agent display name — resolves to an ID via GET /agents
+      --customer-email=<value>  Customer email — builds the required customer object (alternative to customer in --data)
+      --customer-name=<value>   Customer display name, used only when the email creates a new customer record
+      --data=<value>            JSON body (@file, @-, or inline). Fields: subject, description, customer, statusId,
+                                statusCategory, assigneeId, assigneeEmail, teamId
+      --no-color                Disable colored output
+      --no-input                Never prompt; fail instead
+      --subject=<value>         Ticket subject
+      --verbose                 Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -1280,6 +1283,8 @@ DESCRIPTION
   Create a helpdesk ticket
 
 EXAMPLES
+  $ chatbase tickets create --subject "Export failing" -f description="Customer cannot export." --customer-email jane@example.com -a agt_123
+
   $ chatbase tickets create --subject "Export failing" --data '{"description":"Customer cannot export.","customer":{"email":"jane@example.com"}}' -a agt_123
 ```
 
@@ -1353,14 +1358,17 @@ EXAMPLES
 
 _See code: [src/commands/tickets/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/tickets/list.ts)_
 
-## `chatbase tickets messages`
+## `chatbase tickets messages [TICKETNUMBER]`
 
 List a ticket's message thread
 
 ```
 USAGE
-  $ chatbase tickets messages --ticket <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
-    [--agent-name <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all]
+  $ chatbase tickets messages [TICKETNUMBER] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+    [--agent-name <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all] [--ticket <value>]
+
+ARGUMENTS
+  [TICKETNUMBER]  Ticket number (alternative to --ticket)
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
@@ -1371,7 +1379,7 @@ FLAGS
       --limit=<value>       Maximum items per page
       --no-color            Disable colored output
       --no-input            Never prompt; fail instead
-      --ticket=<value>      (required) Ticket number
+      --ticket=<value>      Ticket number
       --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
@@ -1382,21 +1390,24 @@ DESCRIPTION
   List a ticket's message thread
 
 EXAMPLES
-  $ chatbase tickets messages --ticket 42 -a agt_123
+  $ chatbase tickets messages 42 -a agt_123
 
-  $ chatbase tickets messages --ticket 42 -a agt_123 --all --json
+  $ chatbase tickets messages 42 -a agt_123 --all --json
 ```
 
 _See code: [src/commands/tickets/messages.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/tickets/messages.ts)_
 
-## `chatbase tickets reply`
+## `chatbase tickets reply [TICKETNUMBER]`
 
 Post an agent reply to a ticket's message thread
 
 ```
 USAGE
-  $ chatbase tickets reply --ticket <value> -m <value> [--json] [--plain] [-q] [--verbose] [--no-input]
-    [--no-color] [--agent-name <value> | -a <value>] [--author-id <value>] [--author-email <value>]
+  $ chatbase tickets reply [TICKETNUMBER] -m <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+    [--agent-name <value> | -a <value>] [--ticket <value>] [--author-id <value>] [--author-email <value>]
+
+ARGUMENTS
+  [TICKETNUMBER]  Ticket number (alternative to --ticket)
 
 FLAGS
   -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
@@ -1409,7 +1420,7 @@ FLAGS
                               --author-id/--author-email)
       --no-color              Disable colored output
       --no-input              Never prompt; fail instead
-      --ticket=<value>        (required) Ticket number
+      --ticket=<value>        Ticket number
       --verbose               Verbose diagnostics
 
 OUTPUT FLAGS
@@ -1420,7 +1431,7 @@ DESCRIPTION
   Post an agent reply to a ticket's message thread
 
 EXAMPLES
-  $ chatbase tickets reply --ticket 42 -m "On it" --author-email sam@example.com -a agt_123
+  $ chatbase tickets reply 42 -m "On it" --author-email sam@example.com -a agt_123
 ```
 
 _See code: [src/commands/tickets/reply.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/tickets/reply.ts)_
@@ -1442,7 +1453,8 @@ FLAGS
   -f, --field=<value>...    Set a body field: -f key=value (repeatable)
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
-      --data=<value>        JSON body (@file, @-, or inline). Fields: statusId, statusCategory, assigneeId, teamId
+      --data=<value>        JSON body (@file, @-, or inline). Fields: statusId, statusCategory, assigneeId,
+                            assigneeEmail, teamId
       --no-color            Disable colored output
       --no-input            Never prompt; fail instead
       --verbose             Verbose diagnostics

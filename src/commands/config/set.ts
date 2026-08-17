@@ -3,6 +3,7 @@ import type { BaseFlags } from '../../base/base-command.js'
 import { BaseCommand } from '../../base/base-command.js'
 import { createApiClient } from '../../client/client.js'
 import { fetchAllPages } from '../../client/paginate.js'
+import { findProjectConfig } from '../../config/project.js'
 import { resolveApiKey } from '../../config/resolve.js'
 import { readUserConfig, writeUserConfig } from '../../config/store.js'
 import { UsageError } from '../../errors/errors.js'
@@ -55,6 +56,7 @@ export default class ConfigSet extends BaseCommand {
             writeUserConfig({ ...readUserConfig(), agent: agentId })
             process.stdout.write(`${agentId}\n`)
             this.success(flags, `agent set to ${agentId}`)
+            this.warnIfShadowed(flags)
             return
         }
 
@@ -82,6 +84,33 @@ export default class ConfigSet extends BaseCommand {
         throw new UsageError(
             `Unknown config key "${args.key}". Valid keys: agent, timeout.`
         )
+    }
+
+    /** `config set` writes user config — the LOWEST precedence tier
+     * (flag > CHATBASE_AGENT_ID > chatbase.json > user config). A set that
+     * succeeds but is outranked looks exactly like "set doesn't work", so
+     * name the shadow instead of staying silent. */
+    private warnIfShadowed(flags: BaseFlags): void {
+        const yellow = this.palette(flags).yellow
+        const env = process.env.CHATBASE_AGENT_ID
+        if (env && env.length > 0) {
+            this.note(
+                flags,
+                yellow(
+                    `! CHATBASE_AGENT_ID=${env} is set and takes precedence — unset it for this value to apply.`
+                )
+            )
+            return
+        }
+        const project = findProjectConfig()
+        if (project?.agent) {
+            this.note(
+                flags,
+                yellow(
+                    `! ${project.path} sets "agent" and takes precedence here — this value applies outside that project.`
+                )
+            )
+        }
     }
 
     /** No value given for `config set agent`: prompt with a picker over

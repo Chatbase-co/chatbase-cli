@@ -128,6 +128,49 @@ describe('chatbase tickets create', () => {
         expect(out.mock.calls.map((c) => String(c[0])).join('')).toBe('99\n')
         expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain('99')
     })
+
+    it('--customer-email and --customer-name build the customer object', async () => {
+        let sentBody = ''
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/helpdesk/tickets',
+                method: 'POST'
+            })
+            .reply(201, (opts) => {
+                sentBody = bodyText(opts.body)
+                return { ...ticketListItem, ticketNumber: 100 }
+            })
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await TicketsCreate.run(
+            [
+                '--subject',
+                'Refund broken',
+                '-f',
+                'description=Customer cannot export.',
+                '--customer-email',
+                'jane@example.com',
+                '--customer-name',
+                'Jane'
+            ],
+            process.cwd()
+        )
+        expect(JSON.parse(sentBody)).toEqual({
+            subject: 'Refund broken',
+            description: 'Customer cannot export.',
+            customer: { email: 'jane@example.com', name: 'Jane' }
+        })
+    })
+
+    it('--customer-name without --customer-email is a usage error', async () => {
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            TicketsCreate.run(
+                ['--subject', 'X', '--customer-name', 'Jane'],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+    })
 })
 
 describe('chatbase tickets update', () => {
@@ -210,6 +253,44 @@ describe('chatbase tickets messages', () => {
         )
     })
 
+    it('accepts the ticket number positionally', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/helpdesk/tickets/42/messages',
+                method: 'GET'
+            })
+            .reply(200, page1)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await TicketsMessages.run(['42', '--plain'], process.cwd())
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'msg_1'
+        )
+    })
+
+    it('rejects positional and --ticket together', async () => {
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            TicketsMessages.run(
+                ['42', '--ticket', '42', '--plain'],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'not both'
+        )
+    })
+
+    it('names both forms when the ticket number is missing', async () => {
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            TicketsMessages.run(['--plain'], process.cwd())
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'positionally'
+        )
+    })
+
     it('--all follows pagination to the end', async () => {
         const pool = mock.get(BASE)
         pool.intercept({
@@ -275,6 +356,64 @@ describe('chatbase tickets reply', () => {
             authorEmail: 'sam@example.com'
         })
         expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain('42')
+    })
+
+    it('accepts the ticket number positionally', async () => {
+        let sentBody = ''
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/helpdesk/tickets/42/messages',
+                method: 'POST'
+            })
+            .reply(201, (opts) => {
+                sentBody = bodyText(opts.body)
+                return { id: 'msg_4', type: 'reply' }
+            })
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await TicketsReply.run(
+            ['42', '-m', 'On it', '--author-email', 'sam@example.com'],
+            process.cwd()
+        )
+        expect(JSON.parse(sentBody)).toEqual({
+            type: 'reply',
+            content: 'On it',
+            authorEmail: 'sam@example.com'
+        })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain('42')
+    })
+
+    it('rejects positional and --ticket together', async () => {
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            TicketsReply.run(
+                [
+                    '42',
+                    '--ticket',
+                    '42',
+                    '-m',
+                    'On it',
+                    '--author-email',
+                    'sam@example.com'
+                ],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'not both'
+        )
+    })
+
+    it('names both forms when the ticket number is missing', async () => {
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            TicketsReply.run(
+                ['-m', 'On it', '--author-email', 'sam@example.com'],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'positionally'
+        )
     })
 
     it('rejects when both --author-id and --author-email are given', async () => {

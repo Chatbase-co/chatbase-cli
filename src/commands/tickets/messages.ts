@@ -1,6 +1,7 @@
-import { Flags } from '@oclif/core'
+import { Args, Flags } from '@oclif/core'
 import { ListCommand } from '../../base/list-command.js'
 import { fetchAllPages } from '../../client/paginate.js'
+import { UsageError } from '../../errors/errors.js'
 import type { Column } from '../../output/render.js'
 
 const COLUMNS: Column[] = [
@@ -26,19 +27,38 @@ function senderLabel(sender: Sender): string {
 export default class TicketsMessages extends ListCommand {
     static override description = "List a ticket's message thread"
     static override examples = [
-        '<%= config.bin %> tickets messages --ticket 42 -a agt_123',
-        '<%= config.bin %> tickets messages --ticket 42 -a agt_123 --all --json'
+        '<%= config.bin %> tickets messages 42 -a agt_123',
+        '<%= config.bin %> tickets messages 42 -a agt_123 --all --json'
     ]
+    static override args = {
+        ticketNumber: Args.integer({
+            required: false,
+            description: 'Ticket number (alternative to --ticket)'
+        })
+    }
     static override flags = {
         ...ListCommand.baseFlags,
         ticket: Flags.integer({
-            required: true,
             description: 'Ticket number'
         })
     }
 
     async run(): Promise<void> {
-        const { flags } = await this.parse(TicketsMessages)
+        const { args, flags } = await this.parse(TicketsMessages)
+        // Positional and flag are alternatives — `tickets get <n>` and
+        // `tickets update <n>` set the positional convention, the flag
+        // predates it and stays supported.
+        const ticketNumber = args.ticketNumber ?? flags.ticket
+        if (ticketNumber === undefined) {
+            throw new UsageError(
+                'Missing ticket number. Pass it positionally (`tickets messages <number>`) or via --ticket.'
+            )
+        }
+        if (args.ticketNumber !== undefined && flags.ticket !== undefined) {
+            throw new UsageError(
+                'Pass the ticket number either positionally or via --ticket, not both.'
+            )
+        }
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
 
@@ -50,7 +70,7 @@ export default class TicketsMessages extends ListCommand {
                         params: {
                             path: {
                                 agentId,
-                                ticketNumber: flags.ticket
+                                ticketNumber
                             },
                             query
                         }

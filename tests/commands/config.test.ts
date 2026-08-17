@@ -155,6 +155,50 @@ describe('config set + get round trip', () => {
     })
 })
 
+describe('config set agent warns when the stored value is shadowed', () => {
+    it('warns when CHATBASE_AGENT_ID takes precedence', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', 'agt_env')
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConfigSet.run(['agent', 'agt_123'], process.cwd())
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'CHATBASE_AGENT_ID'
+        )
+    })
+
+    it('warns when a project chatbase.json takes precedence', async () => {
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cb-proj-'))
+        fs.writeFileSync(
+            path.join(dir, 'chatbase.json'),
+            JSON.stringify({ agent: 'agt_proj' })
+        )
+        const prev = process.cwd()
+        process.chdir(dir)
+        try {
+            vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+            const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+            // run()'s second arg is the oclif ROOT (must hold the CLI's own
+            // package.json) — cwd is the tmpdir, which is what's under test.
+            await ConfigSet.run(['agent', 'agt_123'], prev)
+            expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+                'chatbase.json'
+            )
+        } finally {
+            process.chdir(prev)
+        }
+    })
+
+    it('stays quiet when nothing shadows the stored value', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', '')
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConfigSet.run(['agent', 'agt_123'], process.cwd())
+        const printed = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(printed).not.toContain('CHATBASE_AGENT_ID')
+        expect(printed).not.toContain('chatbase.json')
+    })
+})
+
 describe('config set agent (no value)', () => {
     it('refuses to prompt without a TTY', async () => {
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)

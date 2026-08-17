@@ -24,7 +24,7 @@ export default class TicketsUpdate extends AgentCommand {
         ...bodyFieldFlags,
         data: Flags.string({
             description:
-                'JSON body (@file, @-, or inline). Fields: statusId, statusCategory, assigneeId, teamId'
+                'JSON body (@file, @-, or inline). Fields: statusId, statusCategory, assigneeId, assigneeEmail, teamId'
         })
     }
 
