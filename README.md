@@ -41,7 +41,7 @@ calls you invoke.
 * [`chatbase agents get AGENTID`](#chatbase-agents-get-agentid)
 * [`chatbase agents list`](#chatbase-agents-list)
 * [`chatbase agents styles AGENTID`](#chatbase-agents-styles-agentid)
-* [`chatbase agents train AGENTID`](#chatbase-agents-train-agentid)
+* [`chatbase agents train [AGENTID]`](#chatbase-agents-train-agentid)
 * [`chatbase agents update AGENTID`](#chatbase-agents-update-agentid)
 * [`chatbase api METHOD PATH`](#chatbase-api-method-path)
 * [`chatbase auth login`](#chatbase-auth-login)
@@ -305,22 +305,25 @@ EXAMPLES
 
 _See code: [src/commands/agents/styles.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/agents/styles.ts)_
 
-## `chatbase agents train AGENTID`
+## `chatbase agents train [AGENTID]`
 
 Queue a training job for an agent
 
 ```
 USAGE
-  $ chatbase agents train AGENTID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+  $ chatbase agents train [AGENTID] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>]
 
 ARGUMENTS
-  AGENTID  Agent ID to train
+  [AGENTID]  Agent ID to train (defaults to the configured agent, like other commands)
 
 FLAGS
-  -q, --quiet     Suppress non-essential output
-      --no-color  Disable colored output
-      --no-input  Never prompt; fail instead
-      --verbose   Verbose diagnostics
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -331,6 +334,8 @@ DESCRIPTION
 
 EXAMPLES
   $ chatbase agents train agt_123
+
+  $ chatbase agents train
 ```
 
 _See code: [src/commands/agents/train.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/agents/train.ts)_

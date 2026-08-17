@@ -70,6 +70,9 @@
             "config": {
                 "description": "Manage CLI configuration (agent, timeout)"
             }
+        },
+        "hooks": {
+            "command_not_found": "./dist/hooks/chat-message-hint"
         }
     },
     "dependencies": {
