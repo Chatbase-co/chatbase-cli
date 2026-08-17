@@ -3,11 +3,24 @@
 Living checklist of the non-code items around shipping the CLI. Nothing here
 blocks development; revisit before the public v1.0 launch.
 
-_Last updated: 2026-08-12_
+_Last updated: 2026-08-17_
 
-## Release readiness (verified 2026-08-12)
+## Now (pre-merge, 2026-08-17)
 
-- [x] 258 unit/integration tests green (35 files)
+- [ ] **Review + merge PR #3** (`feat/workflows`) — all 24 review findings,
+      B1–B9, and C1–C11 fixed across 7 commits; full command surface
+      live-verified twice against the preview API (see the QA report).
+- [ ] **CI checkmark on `3b12b18`** — identical gate green locally
+      (345 tests, lint, typecheck, README drift); only blocked by the
+      GitHub Actions outage on 2026-08-17.
+- [ ] **Delete/archive the untracked review docs** in the repo root
+      (`feat-workflows_review.md`, `feat-workflows_solutions*`,
+      `feat-workflows_findings/`, `feat-workflows_summary.md`) — untracked,
+      so they can't ship or enter history; just clutter.
+
+## Release readiness (verified 2026-08-12; counts refreshed 2026-08-17)
+
+- [x] 345 unit/integration tests green (38 files)
 - [x] 5 e2e smoke tests written (skip cleanly when secrets absent; need
       one live `workflow_dispatch` run with real secrets before trusting)
 - [x] CI: ubuntu/macos/windows × node 20/22 matrix with permissions +
@@ -110,23 +123,27 @@ _Last updated: 2026-08-12_
       by getAccountOwnerToken (v2 train endpoint and anything minting owner
       tokens). Not documented anywhere today; local dev fails with a bare
       "Missing SUPABASE_JWT_SECRET" 500 without it.
-- [ ] **Key self-revocation endpoint (`DELETE /me/credential`)** — so
-      `chatbase auth logout` can revoke CLI-paired keys server-side instead
-      of leaving them valid for their remaining 90 days. Only for
-      `source: 'cli'` keys — pasted dashboard keys may be shared with
-      CI/teammates and must only be removed locally. CLI follow-up once the
-      endpoint ships: logout checks credential source via /me and revokes
-      cli-sourced keys.
+- [x] **Key self-revocation endpoint (`DELETE /me/credential`)** — shipped
+      on the pairing branch; `chatbase auth logout` revokes cli-sourced keys
+      through it (live-verified during the permission-phase QA, 2026-08-16).
+      Lands on staging/prod with the branch merge.
 
 ## Private-repo work items (parallel track)
 
-- [x] Routes-only OpenAPI generator — built 2026-08-06 (uncommitted in the
-      chatbase repo — commit them there)
-- [ ] `GET /api/v2/me` endpoint (upgrades `auth login` verification)
-- [ ] Pairing login (design done + being implemented in another session;
-      scoped RBAC keys + 90-day expiry; CLI follow-up when it merges:
-      spec refresh 25→28 paths + browser-login path + scopes/expiry in
-      auth status)
+- [x] Routes-only OpenAPI generator — built 2026-08-06; now up as
+      chatbase PR #4586 (with the explicit tintedGrayscale API schema) —
+      merge it there
+- [x] `GET /api/v2/me` endpoint — live on the pairing branch; `auth status`
+      uses it (verified against preview + localhost, 2026-08-16/17)
+- [x] Pairing login — implemented and live-tested end to end on the preview
+      (approve, poll, scoped keys, 90-day expiry, `auth status` shows
+      scopes/expiry, logout revokes via `DELETE /me/credential`); spec
+      refreshed. Backend branch `feat/cli-pairing-login` still needs to land
+      on main (see Database section)
+- [ ] API v2 fixes from QA — design doc handed over at
+      `chatbase/api-v2-fixes-design.md` (train-with-0-sources 500,
+      404 for nonexistent agents on sources/conversations lists, preview
+      upload 500, + decisions/polish)
 
 ## Post-v1 backlog
 
