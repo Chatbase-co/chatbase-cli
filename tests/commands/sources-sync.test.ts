@@ -93,8 +93,14 @@ describe('chatbase sources sync — directory errors', () => {
             SourcesSync.run([dir, '--dry-run'], process.cwd())
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
         const text = err.mock.calls.map((c) => String(c[0])).join('')
-        expect(text).toMatch(/Cannot read directory: .*\(ENOTDIR\)/)
-        expect(text).not.toContain('Directory not found')
+        if (process.platform === 'win32') {
+            // Windows reports ENOENT (not ENOTDIR) for a path that goes
+            // through a regular file, so "not found" is correct there.
+            expect(text).toContain('Directory not found')
+        } else {
+            expect(text).toMatch(/Cannot read directory: .*\(ENOTDIR\)/)
+            expect(text).not.toContain('Directory not found')
+        }
     })
 })
 
