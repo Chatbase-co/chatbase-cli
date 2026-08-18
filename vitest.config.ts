@@ -18,6 +18,7 @@ export default defineConfig({
         exclude: runningE2e ? [] : ['tests/e2e/**'],
         environment: 'node',
         restoreMocks: true,
-        unstubEnvs: true
+        unstubEnvs: true,
+        setupFiles: ['tests/setup.ts']
     }
 })
