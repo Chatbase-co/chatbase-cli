@@ -37,17 +37,15 @@ export default class TicketsCreate extends AgentCommand {
         const customerEmail = flags['customer-email']
         const body = {
             ...(await readBodyData(flags.data, flags.field)),
-            ...(flags.subject ? { subject: flags.subject } : {}),
-            ...(customerEmail
-                ? {
-                      customer: {
-                          email: customerEmail,
-                          ...(flags['customer-name']
-                              ? { name: flags['customer-name'] }
-                              : {})
-                      }
-                  }
-                : {})
+            ...(flags.subject && { subject: flags.subject }),
+            ...(customerEmail && {
+                customer: {
+                    email: customerEmail,
+                    ...(flags['customer-name'] && {
+                        name: flags['customer-name']
+                    })
+                }
+            })
         }
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
