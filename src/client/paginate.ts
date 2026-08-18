@@ -55,6 +55,7 @@ export async function fetchAllPages<T>(
 ): Promise<{ pages: PaginatedResponse<T>[]; items: T[] }> {
     const pages: PaginatedResponse<T>[] = []
     let cursor = opts.cursor
+    let hasMore = false
     do {
         const { data, error, response } = await fetcher({
             cursor,
@@ -64,6 +65,7 @@ export async function fetchAllPages<T>(
         const page = data as unknown as PaginatedResponse<T>
         pages.push(page)
         cursor = page.pagination.cursor ?? undefined
-    } while (opts.all && pages.at(-1)!.pagination.hasMore && cursor)
+        hasMore = page.pagination.hasMore
+    } while (opts.all && hasMore && cursor)
     return { pages, items: pages.flatMap((p) => p.data) }
 }
