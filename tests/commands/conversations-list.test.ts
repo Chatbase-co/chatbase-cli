@@ -320,6 +320,51 @@ describe('chatbase conversations list — human-mode niceties', () => {
         expect(printed).not.toContain('1785542400')
     })
 
+    // The v2 API serves this endpoint from API-created conversations only, so
+    // an agent with hundreds of widget chats legitimately lists 0 rows. Saying
+    // so is the difference between "the CLI is broken" and "wrong endpoint".
+    it('always notes the API-source-only scope and points at export', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', 'agt_1')
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, {
+                data: page1.data,
+                pagination: { cursor: null, hasMore: false, total: 1 }
+            })
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run(['--plain'], process.cwd())
+        const stderr = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(stderr).toContain('API-created conversations')
+        expect(stderr).toContain('conversations export')
+        // Never on stdout — --plain output must stay parseable.
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).not.toContain(
+            'API-created'
+        )
+    })
+
+    it('--quiet suppresses the scope note', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', 'agt_1')
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, {
+                data: page1.data,
+                pagination: { cursor: null, hasMore: false, total: 1 }
+            })
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run(['--plain', '--quiet'], process.cwd())
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).not.toContain(
+            'API-created'
+        )
+    })
+
     it('notes "No results." on stderr for an empty list instead of pure silence', async () => {
         vi.stubEnv('CHATBASE_AGENT_ID', 'agt_1')
         mock.get(BASE)

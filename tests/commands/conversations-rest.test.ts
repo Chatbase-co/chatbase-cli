@@ -180,6 +180,78 @@ describe('chatbase conversations export', () => {
             JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
         ).toEqual(exportResponse)
     })
+
+    // The export endpoint caps `limit` at 20, so any agent with real traffic
+    // spans many pages — --all is what makes a whole-agent export one command.
+    const exportPage1 = {
+        data: [{ id: 'conv_1', title: 'Refunds', messages: [] }],
+        pagination: { cursor: 'cur_2', hasMore: true, total: 2 }
+    }
+    const exportPage2 = {
+        data: [{ id: 'conv_2', title: 'Hello', messages: [] }],
+        pagination: { cursor: null, hasMore: false, total: 2 }
+    }
+
+    function mockExportPages() {
+        const pool = mock.get(BASE)
+        pool.intercept({
+            path: '/api/v2/agents/agt_1/conversations/export',
+            method: 'GET'
+        }).reply(200, exportPage1)
+        pool.intercept({
+            path: '/api/v2/agents/agt_1/conversations/export',
+            method: 'GET',
+            query: { cursor: 'cur_2' }
+        }).reply(200, exportPage2)
+    }
+
+    it('--all follows the cursor and merges every page into one envelope', async () => {
+        mockExportPages()
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsExport.run(['--all'], process.cwd())
+        expect(
+            JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
+        ).toEqual({
+            data: [...exportPage1.data, ...exportPage2.data],
+            pagination: exportPage2.pagination
+        })
+    })
+
+    it('--all -o writes the merged multi-page export to the file', async () => {
+        mockExportPages()
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        const tmpFile = path.join(
+            fs.mkdtempSync(path.join(os.tmpdir(), 'cb-export-all-')),
+            'out.json'
+        )
+        await ConversationsExport.run(['--all', '-o', tmpFile], process.cwd())
+        expect(out.mock.calls.length).toBe(0)
+        expect(JSON.parse(fs.readFileSync(tmpFile, 'utf8')).data).toEqual([
+            ...exportPage1.data,
+            ...exportPage2.data
+        ])
+    })
+
+    it('without --all, a truncated export points at --all on stderr', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/export',
+                method: 'GET'
+            })
+            .reply(200, exportPage1)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsExport.run([], process.cwd())
+        const stderr = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(stderr).toContain('--all')
+        expect(stderr).toContain('cur_2')
+        // The hint is stderr-only; stdout stays valid JSON for piping.
+        expect(
+            JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
+        ).toEqual(exportPage1)
+    })
 })
 
 describe('chatbase messages list', () => {

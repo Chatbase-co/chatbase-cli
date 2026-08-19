@@ -10,8 +10,23 @@ const COLUMNS: Column[] = [
     { key: 'updatedAt', header: 'UPDATED' }
 ]
 
+/** Printed after every result: the endpoint's scope is the single most
+ * common source of "the CLI is broken" reports, because an agent whose
+ * traffic is all widget/Slack legitimately lists zero rows here. */
+const SCOPE_NOTE =
+    'Note: API-created conversations only — use `chatbase conversations export` for widget and integration conversations.'
+
 export default class ConversationsList extends ListCommand {
-    static override description = 'List conversations for an agent'
+    static override summary = 'List an agent’s API-created conversations'
+    static override description =
+        'List conversations for an agent, newest first.\n\n' +
+        'Scope: the API v2 list endpoint returns only conversations created ' +
+        'programmatically through the API. Conversations from the chat bubble ' +
+        'and external integrations (Slack, WhatsApp, Instagram, Messenger, and ' +
+        'the like) are not accessible here and are not counted in `total`. ' +
+        'Use `chatbase conversations export` to read conversations from every ' +
+        'source — it also embeds full message history, which `conversations ' +
+        'get` and `messages list` cannot retrieve for those conversations.'
     static override examples = [
         '<%= config.bin %> conversations list -a agt_123',
         '<%= config.bin %> conversations list -a agt_123 --all --json'
@@ -57,5 +72,6 @@ export default class ConversationsList extends ListCommand {
                 `More results: rerun with --cursor ${last.pagination.cursor} (or use --all)`
             )
         }
+        this.note(flags, SCOPE_NOTE)
     }
 }
