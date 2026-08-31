@@ -2,7 +2,7 @@ import { Flags } from '@oclif/core'
 import { BaseCommand } from '../../base/base-command.js'
 import { rawApiFetch } from '../../client/client.js'
 import { configFile } from '../../config/paths.js'
-import { readUserConfig, writeUserConfig } from '../../config/store.js'
+import { writeUserConfig } from '../../config/store.js'
 import { parseErrorResponse, UsageError } from '../../errors/errors.js'
 
 async function readStdinToEnd(): Promise<string> {
@@ -58,13 +58,13 @@ export default class AuthLogin extends BaseCommand {
                 workspace?: { name?: string }
                 plan?: string
             }
-            writeUserConfig({ ...readUserConfig(), apiKey: key })
+            writeUserConfig({ apiKey: key })
             this.success(
                 flags,
                 `Logged in${body.workspace?.name ? ` to workspace ${body.workspace.name}` : ''}`
             )
         } else if (res.status === 404) {
-            writeUserConfig({ ...readUserConfig(), apiKey: key })
+            writeUserConfig({ apiKey: key })
             this.note(
                 flags,
                 'Key stored (verification unavailable — it will be checked on first use).'

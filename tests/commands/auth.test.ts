@@ -123,12 +123,12 @@ describe('auth status with CHATBASE_API_URL override', () => {
 })
 
 describe('auth logout / status', () => {
-    it('logout removes the stored key', async () => {
+    it('logout removes the entire stored config', async () => {
         const { writeUserConfig } = await import('../../src/config/store.js')
-        writeUserConfig({ apiKey: 'sk-z' })
+        writeUserConfig({ apiKey: 'sk-z', agent: 'agt_old' })
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await Logout.run([], process.cwd())
-        expect(readUserConfig().apiKey).toBeUndefined()
+        expect(readUserConfig()).toEqual({})
     })
 
     it('status names the credential source and masks the key', async () => {

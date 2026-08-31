@@ -1,5 +1,7 @@
 import { BaseCommand } from '../../base/base-command.js'
-import { readUserConfig, writeUserConfig } from '../../config/store.js'
+import { configFile } from '../../config/paths.js'
+import { readUserConfig } from '../../config/store.js'
+import fs from 'node:fs'
 
 export default class AuthLogout extends BaseCommand {
     static override description = 'Remove the stored API key'
@@ -15,8 +17,7 @@ export default class AuthLogout extends BaseCommand {
             this.note(flags, 'No stored credential — nothing to remove.')
             return
         }
-        const { apiKey: _removed, ...rest } = config
-        writeUserConfig(rest)
-        this.success(flags, 'Logged out (stored key removed).')
+        fs.rmSync(configFile(), { force: true })
+        this.success(flags, 'Logged out (stored config removed).')
     }
 }
