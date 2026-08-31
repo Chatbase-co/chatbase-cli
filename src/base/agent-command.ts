@@ -11,7 +11,7 @@ export abstract class AgentCommand extends BaseCommand {
         ...BaseCommand.baseFlags,
         agent: Flags.string({
             char: 'a',
-            description: 'Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)'
+            description: 'Agent ID (or set CHATBASE_AGENT_ID)'
         }),
         'agent-name': Flags.string({
             description:
@@ -36,7 +36,7 @@ export abstract class AgentCommand extends BaseCommand {
         const resolved = resolveAgent(flags.agent)
         if (!resolved) {
             throw new UsageError(
-                'No agent specified. Pass -a <agentId>, --agent-name <name>, set CHATBASE_AGENT_ID, or add "agent" to chatbase.json.'
+                'No agent specified. Pass -a <agentId>, --agent-name <name>, or set CHATBASE_AGENT_ID.'
             )
         }
         return resolved.value

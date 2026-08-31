@@ -23,12 +23,9 @@ describe('colorEnabled', () => {
         expect(colorEnabled({ isTTY: false })).toBe(true)
     })
 
-    it('disabled by --no-color, NO_COLOR, CHATBASE_NO_COLOR, TERM=dumb, non-TTY', () => {
+    it('disabled by --no-color, NO_COLOR, TERM=dumb, non-TTY', () => {
         expect(colorEnabled({ isTTY: true }, true)).toBe(false)
         vi.stubEnv('NO_COLOR', '1')
-        expect(colorEnabled({ isTTY: true })).toBe(false)
-        vi.unstubAllEnvs()
-        vi.stubEnv('CHATBASE_NO_COLOR', '1')
         expect(colorEnabled({ isTTY: true })).toBe(false)
         vi.unstubAllEnvs()
         vi.stubEnv('TERM', 'dumb')

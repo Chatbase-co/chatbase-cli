@@ -30,6 +30,16 @@ describe('user config store', () => {
         expect(readUserConfig()).toEqual({})
     })
 
+    it('deletes a corrupt config file instead of leaving it stale', async () => {
+        const dir = withTempConfigHome()
+        const { readUserConfig } = await import('../../src/config/store.js')
+        const file = path.join(dir, 'chatbase', 'config.json')
+        fs.mkdirSync(path.dirname(file), { recursive: true })
+        fs.writeFileSync(file, '{ not valid json')
+        expect(readUserConfig()).toEqual({})
+        expect(fs.existsSync(file)).toBe(false)
+    })
+
     it('leaves no temp files behind (atomic write)', async () => {
         const dir = withTempConfigHome()
         const { writeUserConfig } = await import('../../src/config/store.js')

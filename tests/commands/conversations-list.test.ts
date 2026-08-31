@@ -176,7 +176,7 @@ describe('chatbase conversations list', () => {
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         vi.stubEnv('CHATBASE_AGENT_ID', '')
         await expect(
-            ConversationsList.run(['--plain'], '/tmp') // /tmp: no chatbase.json above it
+            ConversationsList.run(['--plain'], '/tmp')
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
     })
 
