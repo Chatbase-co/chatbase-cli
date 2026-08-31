@@ -2,7 +2,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { Command, Errors, Flags } from '@oclif/core'
 import type { Client } from 'openapi-fetch'
-import { createApiClient } from '../client/client.js'
+import {
+    createApiClient,
+    DEFAULT_BASE_URL,
+    resolveBaseUrl
+} from '../client/client.js'
 import { installSigintHandler, wasInterrupted } from '../client/signals.js'
 import { logsDir } from '../config/paths.js'
 import { resolveApiKey, resolveTimeoutMs } from '../config/resolve.js'
@@ -23,6 +27,15 @@ function isCliError(err: unknown): err is CliError {
     return typeof withOclif?.oclif?.exit === 'number'
 }
 
+function isFetchFailure(err: unknown): boolean {
+    return err instanceof TypeError && /fetch failed/i.test(err.message)
+}
+
+function networkErrorCode(err: unknown): string | undefined {
+    const cause = (err as any)?.cause
+    return cause?.code ?? cause?.errors?.[0]?.code
+}
+
 /** True for fetch's AbortSignal.timeout() firing (a TimeoutError DOMException). */
 function isTimeoutError(err: unknown): boolean {
     const e = err as { name?: string; message?: string } | null | undefined
@@ -39,6 +52,7 @@ export type ClassifiedError =
     | { kind: 'cli'; error: CliError }
     | { kind: 'interrupted' }
     | { kind: 'timeout' }
+    | { kind: 'network'; code?: string }
     | { kind: 'unexpected'; error: unknown }
 
 /**
@@ -52,6 +66,8 @@ export function classifyError(err: unknown): ClassifiedError {
     if (err instanceof ApiError) return { kind: 'api', error: err }
     if (isCliError(err)) return { kind: 'cli', error: err }
     if (isTimeoutError(err)) return { kind: 'timeout' }
+    if (isFetchFailure(err))
+        return { kind: 'network', code: networkErrorCode(err) }
     const name = (err as { name?: string } | null | undefined)?.name
     if (name === 'AbortError') {
         return wasInterrupted() ? { kind: 'interrupted' } : { kind: 'timeout' }
@@ -184,6 +200,18 @@ export abstract class BaseCommand extends Command {
         if (classified.kind === 'timeout') {
             process.stderr.write(
                 `✗ Request timed out after ${resolveTimeoutMs()}ms (set CHATBASE_TIMEOUT to change)\n`
+            )
+            this.exit(1)
+        }
+        if (classified.kind === 'network') {
+            const base = resolveBaseUrl()
+            process.stderr.write(
+                `✗ Network error: could not reach ${base}${classified.code ? ` (${classified.code})` : ''}\n`
+            )
+            process.stderr.write(
+                base === DEFAULT_BASE_URL
+                    ? '  Check your internet connection and retry.\n'
+                    : '  CHATBASE_API_URL is overriding the API base — check that value first.\n'
             )
             this.exit(1)
         }

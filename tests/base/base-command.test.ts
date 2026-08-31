@@ -133,4 +133,76 @@ describe('classifyError', () => {
         const err = new Error('something broke')
         expect(classifyError(err)).toEqual({ kind: 'unexpected', error: err })
     })
+
+    it('classifies undici "fetch failed" as "network" with the cause code', () => {
+        const err = Object.assign(new TypeError('fetch failed'), {
+            cause: Object.assign(new Error('connect ECONNREFUSED'), {
+                code: 'ECONNREFUSED'
+            })
+        })
+        expect(classifyError(err)).toEqual({
+            kind: 'network',
+            code: 'ECONNREFUSED'
+        })
+    })
+
+    it('digs the code out of an AggregateError cause', () => {
+        const err = Object.assign(new TypeError('fetch failed'), {
+            cause: new AggregateError([
+                Object.assign(new Error('connect'), { code: 'ENOTFOUND' })
+            ])
+        })
+        expect(classifyError(err)).toEqual({
+            kind: 'network',
+            code: 'ENOTFOUND'
+        })
+    })
+
+    it('classifies a codeless fetch failure as "network" too', () => {
+        expect(classifyError(new TypeError('fetch failed'))).toEqual({
+            kind: 'network',
+            code: undefined
+        })
+    })
+})
+
+describe('network failure presentation', () => {
+    afterEach(() => {
+        vi.restoreAllMocks()
+        vi.unstubAllEnvs()
+    })
+
+    class NetProbe extends BaseCommand {
+        static override flags = { ...BaseCommand.baseFlags }
+        protected override requireAuth = false
+        async run() {
+            throw Object.assign(new TypeError('fetch failed'), {
+                cause: Object.assign(new Error('connect ECONNREFUSED'), {
+                    code: 'ECONNREFUSED'
+                })
+            })
+        }
+    }
+
+    it('prints a connectivity message, not a bug-report URL, and exits 1', async () => {
+        const errWrite = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(NetProbe.run([], process.cwd())).rejects.toMatchObject({
+            oclif: { exit: 1 }
+        })
+        const stderr = errWrite.mock.calls.map((c) => String(c[0])).join('')
+        expect(stderr).toContain('could not reach')
+        expect(stderr).toContain('ECONNREFUSED')
+        expect(stderr).not.toContain('issues/new')
+    })
+
+    it('points at CHATBASE_API_URL when the base is overridden', async () => {
+        vi.stubEnv('CHATBASE_API_URL', 'http://localhost:9')
+        const errWrite = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(NetProbe.run([], process.cwd())).rejects.toMatchObject({
+            oclif: { exit: 1 }
+        })
+        const stderr = errWrite.mock.calls.map((c) => String(c[0])).join('')
+        expect(stderr).toContain('CHATBASE_API_URL')
+        expect(stderr).toContain('http://localhost:9')
+    })
 })
