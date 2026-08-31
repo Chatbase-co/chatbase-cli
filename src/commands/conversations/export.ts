@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import { Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
-import { fetchAllPages } from '../../client/paginate.js'
+import { fetchPages } from '../../client/paginate.js'
 
 export default class ConversationsExport extends AgentCommand {
     static override summary =
@@ -49,7 +49,7 @@ export default class ConversationsExport extends AgentCommand {
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
 
-        const { pages, items } = await fetchAllPages<Record<string, unknown>>(
+        const { pages, items } = await fetchPages<Record<string, unknown>>(
             (query) =>
                 client.GET('/agents/{agentId}/conversations/export', {
                     params: { path: { agentId }, query }

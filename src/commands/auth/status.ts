@@ -1,7 +1,7 @@
 import { BaseCommand, type BaseFlags } from '../../base/base-command.js'
 import {
-    createApiClient,
     DEFAULT_BASE_URL,
+    rawApiFetch,
     resolveBaseUrl
 } from '../../client/client.js'
 import { resolveApiKey } from '../../config/resolve.js'
@@ -39,20 +39,21 @@ export default class AuthStatus extends BaseCommand {
             resolved.value.length > 8 ? `…${resolved.value.slice(-4)}` : '…****'
         this.note(flags, `Credential: ${tail} (from ${resolved.source})`)
 
-        const client = createApiClient({ apiKey: resolved.value })
-        const { data, error, response } = await client.GET('/me')
-        if (response.ok) {
-            this.renderMe(flags, data as MeBody)
-        } else if (response.status === 401 || response.status === 403) {
+        const res = await rawApiFetch('GET', '/me', {
+            apiKey: resolved.value
+        })
+        if (res.status === 200) {
+            this.renderMe(flags, res.body as MeBody)
+        } else if (res.status === 401 || res.status === 403) {
             this.renderAuthError(
                 flags,
-                error as { error?: { code?: string } } | null
+                res.body as { error?: { code?: string } } | null
             )
         } else {
             this.note(
                 flags,
                 this.palette(flags).yellow(
-                    `! Could not verify key (server returned ${response.status})`
+                    `! Could not verify key (server returned ${res.status})`
                 )
             )
         }

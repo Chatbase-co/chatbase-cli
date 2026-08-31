@@ -8,7 +8,6 @@
  * These endpoints are unauthenticated — the user doesn't have a key yet.
  */
 import os from 'node:os'
-import type { components } from '../generated/api.js'
 import { createApiClient, throwIfError } from './client.js'
 import { wasInterrupted } from './signals.js'
 
@@ -32,14 +31,19 @@ export async function startPairing(opts?: { baseUrl?: string }): Promise<{
     interval: number
 }> {
     const client = createApiClient({ baseUrl: opts?.baseUrl })
-    const { data, error, response } = await client.POST('/cli/pairing', {
-        body: { device_name: os.hostname() }
-    })
+    // /cli/pairing is not in the vendored spec (private endpoint) — cast to any
+    const { data, error, response } = await (client as any).POST(
+        '/cli/pairing',
+        { body: { device_name: os.hostname() } }
+    )
     throwIfError(response, error)
-    // The generated schema type keeps this cast honest: a field rename in
-    // the API contract becomes a compile error here instead of a runtime
-    // surprise (this exact type drifted twice as a hand-written literal).
-    const d = data as components['schemas']['CliPairingCreateResponse']
+    const d = data as {
+        device_code: string
+        user_code: string
+        verification_uri: string
+        expires_in: number
+        interval: number
+    }
     return {
         deviceCode: d.device_code,
         userCode: d.user_code,
@@ -67,18 +71,18 @@ export async function pollExchange(
 
         // Two-arg .then(): only the POST's own rejection lands in the
         // failure branch — not errors thrown while handling its response.
-        const attempt = await client
+        const attempt = await (client as any)
             .POST('/cli/pairing/exchange', {
                 body: { device_code: deviceCode }
             })
             .then(
-                (r): ExchangeAttempt => ({
+                (r: any): ExchangeAttempt => ({
                     ok: true,
                     data: r.data,
                     error: r.error,
                     response: r.response
                 }),
-                (cause): ExchangeAttempt => ({ ok: false, cause })
+                (cause: unknown): ExchangeAttempt => ({ ok: false, cause })
             )
 
         if (!attempt.ok) {
@@ -99,8 +103,10 @@ export async function pollExchange(
         const { data, error, response } = attempt
 
         if (response.ok) {
-            const result =
-                data as components['schemas']['CliPairingExchangeResponse']
+            const result = data as {
+                api_key: string
+                workspace: { id: string; name: string }
+            }
             return {
                 apiKey: result.api_key,
                 workspace: result.workspace

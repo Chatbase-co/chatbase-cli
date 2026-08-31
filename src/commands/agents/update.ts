@@ -1,22 +1,25 @@
 import { Args, Flags } from '@oclif/core'
-import { BaseCommand, bodyFieldFlags } from '../../base/base-command.js'
+import { AgentCommand } from '../../base/agent-command.js'
+import { bodyFieldFlags } from '../../base/base-command.js'
 import { readBodyData } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
+import { UsageError } from '../../errors/errors.js'
 import type { components } from '../../generated/api.js'
 
 type UpdateAgentBody = components['schemas']['UpdateAgentBody']
 
-export default class AgentsUpdate extends BaseCommand {
+export default class AgentsUpdate extends AgentCommand {
     static override description = 'Update an existing agent'
     static override examples = [
         '<%= config.bin %> agents update agt_123 --name "New Name"',
+        '<%= config.bin %> agents update --name "New Name"',
         '<%= config.bin %> agents update agt_123 --data @agent.json'
     ]
     static override args = {
-        agentId: Args.string({ required: true, description: 'Agent ID' })
+        agentId: Args.string({ required: false, description: 'Agent ID' })
     }
     static override flags = {
-        ...BaseCommand.baseFlags,
+        ...AgentCommand.baseFlags,
         ...bodyFieldFlags,
         name: Flags.string({ description: 'Agent name' }),
         instructions: Flags.string({ description: 'System instructions' }),
@@ -29,6 +32,11 @@ export default class AgentsUpdate extends BaseCommand {
 
     async run(): Promise<void> {
         const { args, flags } = await this.parse(AgentsUpdate)
+        if (args.agentId && flags.agent) {
+            throw new UsageError(
+                'Pass the agent ID either positionally or via -a, not both.'
+            )
+        }
         const body = {
             ...(await readBodyData(flags.data, flags.field)),
             ...(flags.name ? { name: flags.name } : {}),
@@ -36,11 +44,12 @@ export default class AgentsUpdate extends BaseCommand {
             ...(flags.model ? { model: flags.model } : {})
         }
         const client = this.apiClient(flags)
+        const agentId = args.agentId ?? (await this.agentId(flags, client))
         const { error, response } = await client.PUT('/agents/{agentId}', {
-            params: { path: { agentId: args.agentId } },
+            params: { path: { agentId } },
             body: body as UpdateAgentBody
         })
         throwIfError(response, error)
-        this.success(flags, `Updated agent ${args.agentId}`)
+        this.success(flags, `Updated agent ${agentId}`)
     }
 }

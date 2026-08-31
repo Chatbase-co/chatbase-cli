@@ -1,5 +1,6 @@
+import { Flags } from '@oclif/core'
 import { ListCommand } from '../../base/list-command.js'
-import { fetchAllPages } from '../../client/paginate.js'
+import { fetchPages } from '../../client/paginate.js'
 import { type Column, formatEpochSeconds } from '../../output/render.js'
 
 const COLUMNS: Column[] = [
@@ -29,19 +30,36 @@ export default class ConversationsList extends ListCommand {
         'get` and `messages list` cannot retrieve for those conversations.'
     static override examples = [
         '<%= config.bin %> conversations list -a agt_123',
+        '<%= config.bin %> conversations list -a agt_123 --user usr_456',
         '<%= config.bin %> conversations list -a agt_123 --all --json'
     ]
-    static override flags = { ...ListCommand.baseFlags }
+    static override flags = {
+        ...ListCommand.baseFlags,
+        user: Flags.string({
+            description:
+                'List conversations for a specific user (uses GET /users/{userId}/conversations)'
+        })
+    }
 
     async run(): Promise<void> {
         const { flags } = await this.parse(ConversationsList)
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
 
-        const { pages, items } = await fetchAllPages<Record<string, unknown>>(
+        const fetcherPath = flags.user
+            ? '/agents/{agentId}/users/{userId}/conversations'
+            : '/agents/{agentId}/conversations'
+
+        const { pages, items } = await fetchPages<Record<string, unknown>>(
             (query) =>
-                client.GET('/agents/{agentId}/conversations', {
-                    params: { path: { agentId }, query }
+                client.GET(fetcherPath as any, {
+                    params: {
+                        path: {
+                            agentId,
+                            ...(flags.user ? { userId: flags.user } : {})
+                        },
+                        query
+                    }
                 }),
             { limit: flags.limit, cursor: flags.cursor, all: flags.all }
         )

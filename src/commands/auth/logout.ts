@@ -1,6 +1,8 @@
+import fs from 'node:fs'
 import { BaseCommand } from '../../base/base-command.js'
-import { createApiClient } from '../../client/client.js'
-import { readUserConfig, writeUserConfig } from '../../config/store.js'
+import { rawApiFetch } from '../../client/client.js'
+import { configFile } from '../../config/paths.js'
+import { readUserConfig } from '../../config/store.js'
 
 export default class AuthLogout extends BaseCommand {
     static override description =
@@ -19,20 +21,18 @@ export default class AuthLogout extends BaseCommand {
             return
         }
 
-        // Pairing keys belong to this device — revoke server-side (best
-        // effort; local delete happens either way). Pasted keys may be
-        // shared with CI/teammates, so they're removed locally only.
         if (config.apiKeySource === 'pairing') {
             try {
-                const client = createApiClient({ apiKey: config.apiKey })
-                const { response } = await client.DELETE('/me/credential')
-                if (response.ok) {
+                const res = await rawApiFetch('DELETE', '/me/credential', {
+                    apiKey: config.apiKey
+                })
+                if (res.status >= 200 && res.status < 300) {
                     this.note(flags, 'CLI session revoked server-side.')
                 } else {
                     this.note(
                         flags,
                         this.palette(flags).yellow(
-                            `! Could not revoke the key server-side (${response.status}) — revoke it manually at chatbase.co if needed.`
+                            `! Could not revoke the key server-side (${res.status}) — revoke it manually at chatbase.co if needed.`
                         )
                     )
                 }
@@ -47,8 +47,7 @@ export default class AuthLogout extends BaseCommand {
             }
         }
 
-        const { apiKey: _removed, apiKeySource: _src, ...rest } = config
-        writeUserConfig(rest)
-        this.success(flags, 'Logged out (stored key removed).')
+        fs.rmSync(configFile(), { force: true })
+        this.success(flags, 'Logged out (stored config removed).')
     }
 }

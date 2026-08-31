@@ -1,5 +1,5 @@
 import type { Client } from 'openapi-fetch'
-import { fetchAllPages } from '../client/paginate.js'
+import { fetchPages } from '../client/paginate.js'
 import type { paths } from '../generated/api.js'
 import type { OutputMode } from '../output/mode.js'
 import type { Column } from '../output/render.js'
@@ -59,7 +59,7 @@ export async function listAllSources(
     client: Client<paths>,
     agentId: string
 ): Promise<SourceItem[]> {
-    const { items } = await fetchAllPages<Record<string, unknown>>(
+    const { items } = await fetchPages<Record<string, unknown>>(
         (query) =>
             client.GET('/agents/{agentId}/sources', {
                 params: { path: { agentId }, query }

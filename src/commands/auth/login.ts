@@ -2,25 +2,15 @@ import { spawn } from 'node:child_process'
 import { Flags } from '@oclif/core'
 import { BaseCommand } from '../../base/base-command.js'
 import { readStdinToEnd } from '../../base/body-input.js'
-import { createApiClient, throwIfError } from '../../client/client.js'
+import { rawApiFetch } from '../../client/client.js'
 import { pollExchange, startPairing } from '../../client/pairing.js'
 import { configFile } from '../../config/paths.js'
-import { readUserConfig, writeUserConfig } from '../../config/store.js'
+import { writeUserConfig } from '../../config/store.js'
 import { UsageError } from '../../errors/errors.js'
 
 function tryOpenBrowser(url: string): void {
-    // Best-effort — the URL is printed to stderr regardless, so a failed
-    // open must never crash the login flow. spawn() failures arrive two
-    // ways: synchronously (caught below) or asynchronously as an 'error'
-    // event on the returned ChildProcess (e.g. ENOENT for a missing
-    // xdg-open on headless Linux) — an unhandled 'error' event throws and
-    // kills the process, so it needs its own no-op listener.
     try {
         if (process.platform === 'win32') {
-            // `start` is a cmd.exe built-in, not a standalone executable —
-            // spawning it directly throws ENOENT. Run it through cmd.exe
-            // instead; the empty '' arg keeps `start` from treating the URL
-            // as the window title.
             spawn('cmd', ['/c', 'start', '', url], {
                 detached: true,
                 stdio: 'ignore'
@@ -114,8 +104,6 @@ export default class AuthLogin extends BaseCommand {
             `Open ${pairing.verificationUri} and enter the code to approve.`
         )
 
-        // The code is never in the URL — /activate requires typing it, so
-        // only someone who saw the code in their own terminal can approve.
         if (process.stdout.isTTY && !flags['no-input']) {
             tryOpenBrowser(pairing.verificationUri)
             this.note(flags, 'Waiting for approval...')
@@ -134,7 +122,6 @@ export default class AuthLogin extends BaseCommand {
         if (!flags.quiet) process.stderr.write('\n')
 
         writeUserConfig({
-            ...readUserConfig(),
             apiKey: result.apiKey,
             apiKeySource: 'pairing'
         })
@@ -146,26 +133,27 @@ export default class AuthLogin extends BaseCommand {
         flags: Record<string, unknown>,
         key: string
     ): Promise<void> {
-        // Pasted keys never get apiKeySource — they may be shared with
-        // CI/teammates, so logout must not revoke them server-side.
-        const { apiKeySource: _dropped, ...rest } = readUserConfig()
-        const client = createApiClient({ apiKey: key })
-        const { data, error, response } = await client.GET('/me')
-        if (response.ok) {
-            const me = data as { workspace?: { name?: string } }
-            writeUserConfig({ ...rest, apiKey: key })
+        const res = await rawApiFetch('GET', '/me', { apiKey: key })
+        if (res.status === 200) {
+            const body = res.body as {
+                workspace?: { name?: string }
+            }
+            writeUserConfig({ apiKey: key })
             this.success(
                 flags,
-                `Logged in${me?.workspace?.name ? ` to workspace ${me.workspace.name}` : ''}`
+                `Logged in${body.workspace?.name ? ` to workspace ${body.workspace.name}` : ''}`
             )
-        } else if (response.status === 404) {
-            writeUserConfig({ ...rest, apiKey: key })
+        } else if (res.status === 404) {
+            writeUserConfig({ apiKey: key })
             this.note(
                 flags,
                 'Key stored (verification unavailable — it will be checked on first use).'
             )
         } else {
-            throwIfError(response, error)
+            const { parseErrorResponse } = await import(
+                '../../errors/errors.js'
+            )
+            throw parseErrorResponse(res.status, res.body, res.requestId)
         }
         this.note(flags, `Saved to ${configFile()}`)
     }

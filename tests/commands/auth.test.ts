@@ -234,12 +234,10 @@ describe('auth status with CHATBASE_API_URL override', () => {
 describe('auth logout / status', () => {
     it('logout removes a pasted key locally without any revoke call', async () => {
         const { writeUserConfig } = await import('../../src/config/store.js')
-        writeUserConfig({ apiKey: 'sk-z' })
-        // disableNetConnect: any network request here would fail the test —
-        // pasted keys may be shared, so logout must stay local-only.
+        writeUserConfig({ apiKey: 'sk-z', agent: 'agt_old' })
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await Logout.run([], process.cwd())
-        expect(readUserConfig().apiKey).toBeUndefined()
+        expect(readUserConfig()).toEqual({})
     })
 
     it('logout revokes a pairing-minted key server-side, then removes it', async () => {

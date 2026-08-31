@@ -1,5 +1,5 @@
 import type { Client } from 'openapi-fetch'
-import { fetchAllPages } from '../client/paginate.js'
+import { fetchPages } from '../client/paginate.js'
 import { UsageError } from '../errors/errors.js'
 import type { paths } from '../generated/api.js'
 
@@ -10,7 +10,7 @@ export async function resolveAgentRef(
     client: Client<paths>,
     name: string
 ): Promise<string> {
-    const { items: agents } = await fetchAllPages<AgentSummary>(
+    const { items: agents } = await fetchPages<AgentSummary>(
         (query) => client.GET('/agents', { params: { query } }),
         { all: true }
     )

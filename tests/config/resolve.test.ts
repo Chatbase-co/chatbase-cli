@@ -7,36 +7,11 @@ import {
     resolveApiKey,
     resolveTimeoutMs
 } from '../../src/config/resolve.js'
-import { UsageError } from '../../src/errors/errors.js'
 
 describe('resolveApiKey', () => {
     afterEach(() => vi.unstubAllEnvs())
 
-    it('throws a UsageError naming the path when CHATBASE_API_KEY_FILE is unreadable', () => {
-        const missing = path.join(
-            fs.mkdtempSync(path.join(os.tmpdir(), 'cb-key-missing-')),
-            'does-not-exist'
-        )
-        vi.stubEnv('CHATBASE_API_KEY_FILE', missing)
-        expect(() => resolveApiKey()).toThrow(UsageError)
-        expect(() => resolveApiKey()).toThrow(missing)
-    })
-
-    it('CHATBASE_API_KEY_FILE beats CHATBASE_API_KEY, with a warning', () => {
-        const f = path.join(
-            fs.mkdtempSync(path.join(os.tmpdir(), 'cb-key-')),
-            'key'
-        )
-        fs.writeFileSync(f, 'sk-from-file\n')
-        vi.stubEnv('CHATBASE_API_KEY_FILE', f)
-        vi.stubEnv('CHATBASE_API_KEY', 'sk-from-env')
-        const r = resolveApiKey()
-        expect(r?.value).toBe('sk-from-file')
-        expect(r?.source).toBe('CHATBASE_API_KEY_FILE')
-        expect(r?.warning).toMatch(/both/i)
-    })
-
-    it('falls back to CHATBASE_API_KEY, then user config, else undefined', () => {
+    it('resolves from CHATBASE_API_KEY, then user config, else undefined', () => {
         vi.stubEnv(
             'XDG_CONFIG_HOME',
             fs.mkdtempSync(path.join(os.tmpdir(), 'cb-x-'))
@@ -48,7 +23,7 @@ describe('resolveApiKey', () => {
     })
 })
 
-describe('resolveAgent precedence: flag > env > project > user config', () => {
+describe('resolveAgent precedence: flag > env > user config', () => {
     afterEach(() => vi.unstubAllEnvs())
 
     it('flag wins over everything', () => {
@@ -57,18 +32,19 @@ describe('resolveAgent precedence: flag > env > project > user config', () => {
         expect(resolveAgent('agt_flag')?.source).toBe('flag')
     })
 
-    it('env beats project config', () => {
-        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cb-r-'))
-        fs.writeFileSync(
-            path.join(root, 'chatbase.json'),
-            JSON.stringify({ agent: 'agt_proj' })
+    it('env beats user config', async () => {
+        vi.stubEnv(
+            'XDG_CONFIG_HOME',
+            fs.mkdtempSync(path.join(os.tmpdir(), 'cb-agent-'))
         )
+        const { writeUserConfig } = await import('../../src/config/store.js')
+        writeUserConfig({ agent: 'agt_cfg' })
         vi.stubEnv('CHATBASE_AGENT_ID', 'agt_env')
-        expect(resolveAgent(undefined, root)?.value).toBe('agt_env')
+        expect(resolveAgent(undefined)?.value).toBe('agt_env')
         vi.stubEnv('CHATBASE_AGENT_ID', '')
-        const r = resolveAgent(undefined, root)
-        expect(r?.value).toBe('agt_proj')
-        expect(r?.source).toContain('chatbase.json')
+        const r = resolveAgent(undefined)
+        expect(r?.value).toBe('agt_cfg')
+        expect(r?.source).toBe('user config')
     })
 })
 

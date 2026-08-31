@@ -20,9 +20,6 @@ export default class AgentsTrain extends AgentCommand {
 
     async run(): Promise<void> {
         const { args, flags } = await this.parse(AgentsTrain)
-        // The sources-summary retrain nudge says to run `chatbase agents
-        // train` bare, so the bare form must resolve the agent the same way
-        // every other command does. Positional and flag stay alternatives.
         if (args.agentId && flags.agent) {
             throw new UsageError(
                 'Pass the agent ID either positionally or via -a, not both.'

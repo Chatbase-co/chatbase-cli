@@ -256,40 +256,6 @@ describe('chatbase sources sync — failure path', () => {
     })
 })
 
-describe('chatbase sources sync — sync.dir from chatbase.json', () => {
-    it('is used when no positional dir is given, resolved relative to the file itself (not cwd)', async () => {
-        // oclif's own Config.load() needs a real path with a package.json
-        // above it (unrelated to our project-config lookup) — capture it
-        // BEFORE stubbing process.cwd() below, which is what our own
-        // findProjectConfig() call (inside the command) actually reads.
-        const realCwd = process.cwd()
-        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cb-sync-project-'))
-        fs.mkdirSync(path.join(root, 'kb'))
-        fs.writeFileSync(
-            path.join(root, 'kb', 'guide.txt'),
-            'hello there, padded well past the fifty byte upload minimum'
-        )
-        fs.writeFileSync(
-            path.join(root, 'chatbase.json'),
-            JSON.stringify({ agent: 'agt_proj', sync: { dir: 'kb' } })
-        )
-        const nestedCwd = path.join(root, 'sub', 'deeper')
-        fs.mkdirSync(nestedCwd, { recursive: true })
-        vi.spyOn(process, 'cwd').mockReturnValue(nestedCwd)
-        vi.stubEnv('CHATBASE_AGENT_ID', '')
-        mock.get(BASE)
-            .intercept({
-                path: '/api/v2/agents/agt_proj/sources',
-                method: 'GET'
-            })
-            .reply(200, sourcesPage([]))
-        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
-        await SourcesSync.run(['--dry-run'], realCwd)
-        const text = err.mock.calls.map((c) => String(c[0])).join('')
-        expect(text).toContain('guide.txt')
-    })
-})
-
 describe('chatbase sources sync — interactive confirmation', () => {
     it('applies after the user confirms y on a TTY', async () => {
         stubTTY()

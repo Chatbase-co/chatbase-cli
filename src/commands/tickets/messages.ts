@@ -1,6 +1,6 @@
 import { Args, Flags } from '@oclif/core'
 import { ListCommand } from '../../base/list-command.js'
-import { fetchAllPages } from '../../client/paginate.js'
+import { fetchPages } from '../../client/paginate.js'
 import { UsageError } from '../../errors/errors.js'
 import type { Column } from '../../output/render.js'
 
@@ -40,6 +40,14 @@ export default class TicketsMessages extends ListCommand {
         ...ListCommand.baseFlags,
         ticket: Flags.integer({
             description: 'Ticket number'
+        }),
+        types: Flags.string({
+            description:
+                'Message types to include (comma-separated): reply, note, event (default: reply,note)'
+        }),
+        order: Flags.string({
+            description: 'Sort direction',
+            options: ['asc', 'desc']
         })
     }
 
@@ -62,7 +70,11 @@ export default class TicketsMessages extends ListCommand {
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
 
-        const { pages, items } = await fetchAllPages<Record<string, unknown>>(
+        const extraQuery: Record<string, unknown> = {}
+        if (flags.types) extraQuery.types = flags.types
+        if (flags.order) extraQuery.order = flags.order
+
+        const { pages, items } = await fetchPages<Record<string, unknown>>(
             (query) =>
                 client.GET(
                     '/agents/{agentId}/helpdesk/tickets/{ticketNumber}/messages',
@@ -72,7 +84,7 @@ export default class TicketsMessages extends ListCommand {
                                 agentId,
                                 ticketNumber
                             },
-                            query
+                            query: { ...query, ...extraQuery }
                         }
                     }
                 ),

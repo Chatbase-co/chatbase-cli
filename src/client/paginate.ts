@@ -9,7 +9,7 @@ export type PaginatedResponse<T> = {
     pagination: { cursor: string | null; hasMore: boolean; total?: number }
 }
 
-/** What `fetchAllPages` asks its caller for on each page. */
+/** What `fetchPages` asks its caller for on each page. */
 export type PageQuery = { cursor?: string; limit?: number }
 
 /** What every generated `client.GET(...)` call resolves to — the exact
@@ -21,7 +21,7 @@ export type PageFetcher = (
     query: PageQuery
 ) => Promise<{ data?: unknown; error?: unknown; response: Response }>
 
-export type FetchAllPagesOptions = {
+export type FetchPagesOptions = {
     /** Maximum items per page; forwarded to the fetcher untouched. */
     limit?: number
     /** Cursor to resume from, e.g. a `--cursor` flag value. */
@@ -33,6 +33,13 @@ export type FetchAllPagesOptions = {
      * every page, so they pass `all: true` unconditionally. */
     all?: boolean
 }
+
+/** Pause between pages on `--all` so a long crawl is less likely to share
+ * a contested API key's rate-limit window with other traffic. Solo use is
+ * well under the v2 limit (1000/10s); this is a courtesy, not a hard pace. */
+const PAGE_DELAY_MS = 200
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 /**
  * Fetches one page — or, with `opts.all`, every page — of a cursor-paginated
@@ -49,14 +56,15 @@ export type FetchAllPagesOptions = {
  * templates or param shapes, only the `{cursor, limit}` query it asks for
  * and the `{data, error, response}` result every generated GET returns.
  */
-export async function fetchAllPages<T>(
+export async function fetchPages<T>(
     fetcher: PageFetcher,
-    opts: FetchAllPagesOptions = {}
+    opts: FetchPagesOptions = {}
 ): Promise<{ pages: PaginatedResponse<T>[]; items: T[] }> {
     const pages: PaginatedResponse<T>[] = []
     let cursor = opts.cursor
     let hasMore = false
     do {
+        if (pages.length > 0) await sleep(PAGE_DELAY_MS)
         const { data, error, response } = await fetcher({
             cursor,
             limit: opts.limit

@@ -14,8 +14,6 @@ export function colorEnabled(
     if (noColorFlag) return false
     const no = process.env.NO_COLOR
     if (no && no.length > 0) return false
-    const cbNo = process.env.CHATBASE_NO_COLOR
-    if (cbNo && cbNo.length > 0) return false
     if (process.env.TERM === 'dumb') return false
     return stream.isTTY === true
 }

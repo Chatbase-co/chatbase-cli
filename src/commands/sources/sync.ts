@@ -5,7 +5,7 @@ import { AgentCommand } from '../../base/agent-command.js'
 import type { BaseFlags } from '../../base/base-command.js'
 import { listAllSources } from '../../base/sources.js'
 import { filesHostMismatchWarning } from '../../client/files.js'
-import { findProjectConfig, type ProjectConfig } from '../../config/project.js'
+
 import { resolveApiKey } from '../../config/resolve.js'
 import { UsageError } from '../../errors/errors.js'
 import type { Palette } from '../../output/color.js'
@@ -53,23 +53,10 @@ function assertDirReadable(dir: string): void {
     }
 }
 
-/**
- * Resolution chain for the directory to sync: positional arg > chatbase.json
- * `sync.dir` (resolved RELATIVE TO the chatbase.json file's own directory,
- * not the current working directory — a project file committed at a repo's
- * root must keep pointing at the same folder no matter which subdirectory a
- * command happens to be run from) > UsageError.
- */
-function resolveSyncDir(
-    positional: string | undefined,
-    project: ProjectConfig | undefined
-): string {
+function resolveSyncDir(positional: string | undefined): string {
     if (positional) return path.resolve(positional)
-    if (project?.sync?.dir) {
-        return path.resolve(path.dirname(project.path), project.sync.dir)
-    }
     throw new UsageError(
-        'No directory specified. Pass one, e.g. `chatbase sources sync ./docs`, or set "sync.dir" in chatbase.json.'
+        'No directory specified. Pass one, e.g. `chatbase sources sync ./docs`.'
     )
 }
 
@@ -120,11 +107,10 @@ export default class SourcesSync extends AgentCommand {
 
     async run(): Promise<void> {
         const { args, flags } = await this.parse(SourcesSync)
-        const project = findProjectConfig()
-        const dir = resolveSyncDir(args.dir, project)
+        const dir = resolveSyncDir(args.dir)
         assertDirReadable(dir)
-        const include = flags.include ?? project?.sync?.include
-        const exclude = flags.exclude ?? project?.sync?.exclude
+        const include = flags.include
+        const exclude = flags.exclude
 
         // Local scan is pure filesystem work — do it before any network
         // call so a bad tree (permission errors, etc.) fails fast.

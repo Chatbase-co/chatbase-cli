@@ -29,7 +29,7 @@ export default class ConfigGet extends BaseCommand {
         const key = args.key.toLowerCase()
 
         if (key === 'agent') {
-            const resolved = resolveAgent(undefined, process.cwd())
+            const resolved = resolveAgent()
             if (!resolved) {
                 this.note(flags, 'agent is not set.')
                 return

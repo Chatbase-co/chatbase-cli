@@ -1,6 +1,6 @@
 import { Flags } from '@oclif/core'
 import { BaseCommand } from '../../base/base-command.js'
-import { fetchAllPages } from '../../client/paginate.js'
+import { fetchPages } from '../../client/paginate.js'
 import type { Column } from '../../output/render.js'
 
 const COLUMNS: Column[] = [
@@ -29,7 +29,7 @@ export default class AgentsList extends BaseCommand {
         const { flags } = await this.parse(AgentsList)
         const client = this.apiClient(flags)
 
-        const { pages, items } = await fetchAllPages<Record<string, unknown>>(
+        const { pages, items } = await fetchPages<Record<string, unknown>>(
             (query) => client.GET('/agents', { params: { query } }),
             { limit: flags.limit, cursor: flags.cursor, all: flags.all }
         )
