@@ -9,9 +9,16 @@ export type UserConfig = {
 }
 
 export function readUserConfig(): UserConfig {
+    let contents: string
     try {
-        return JSON.parse(fs.readFileSync(configFile(), 'utf8')) as UserConfig
+        contents = fs.readFileSync(configFile(), 'utf8')
     } catch {
+        return {}
+    }
+    try {
+        return JSON.parse(contents) as UserConfig
+    } catch {
+        fs.rmSync(configFile(), { force: true })
         return {}
     }
 }
