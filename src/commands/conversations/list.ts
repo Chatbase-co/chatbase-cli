@@ -39,7 +39,10 @@ export default class ConversationsList extends ListCommand {
             (query) =>
                 client.GET(fetcherPath as any, {
                     params: {
-                        path: { agentId, ...(flags.user ? { userId: flags.user } : {}) },
+                        path: {
+                            agentId,
+                            ...(flags.user ? { userId: flags.user } : {})
+                        },
                         query
                     }
                 }),
