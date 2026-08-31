@@ -23,7 +23,7 @@ describe('resolveApiKey', () => {
     })
 })
 
-describe('resolveAgent precedence: flag > env > project > user config', () => {
+describe('resolveAgent precedence: flag > env > user config', () => {
     afterEach(() => vi.unstubAllEnvs())
 
     it('flag wins over everything', () => {
@@ -32,18 +32,19 @@ describe('resolveAgent precedence: flag > env > project > user config', () => {
         expect(resolveAgent('agt_flag')?.source).toBe('flag')
     })
 
-    it('env beats project config', () => {
-        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cb-r-'))
-        fs.writeFileSync(
-            path.join(root, 'chatbase.json'),
-            JSON.stringify({ agent: 'agt_proj' })
+    it('env beats user config', async () => {
+        vi.stubEnv(
+            'XDG_CONFIG_HOME',
+            fs.mkdtempSync(path.join(os.tmpdir(), 'cb-agent-'))
         )
+        const { writeUserConfig } = await import('../../src/config/store.js')
+        writeUserConfig({ agent: 'agt_cfg' })
         vi.stubEnv('CHATBASE_AGENT_ID', 'agt_env')
-        expect(resolveAgent(undefined, root)?.value).toBe('agt_env')
+        expect(resolveAgent(undefined)?.value).toBe('agt_env')
         vi.stubEnv('CHATBASE_AGENT_ID', '')
-        const r = resolveAgent(undefined, root)
-        expect(r?.value).toBe('agt_proj')
-        expect(r?.source).toContain('chatbase.json')
+        const r = resolveAgent(undefined)
+        expect(r?.value).toBe('agt_cfg')
+        expect(r?.source).toBe('user config')
     })
 })
 

@@ -1,4 +1,3 @@
-import { findProjectConfig } from './project.js'
 import { readUserConfig } from './store.js'
 
 export type Resolved = {
@@ -14,16 +13,11 @@ export function resolveApiKey(): Resolved | undefined {
     return undefined
 }
 
-export function resolveAgent(
-    flag?: string,
-    cwd?: string
-): Resolved | undefined {
+export function resolveAgent(flag?: string): Resolved | undefined {
     if (flag) return { value: flag, source: 'flag' }
     const env = process.env.CHATBASE_AGENT_ID
     if (env && env.length > 0)
         return { value: env, source: 'CHATBASE_AGENT_ID' }
-    const project = findProjectConfig(cwd)
-    if (project?.agent) return { value: project.agent, source: project.path }
     const stored = readUserConfig().agent
     if (stored) return { value: stored, source: 'user config' }
     return undefined
