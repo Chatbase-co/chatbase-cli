@@ -125,7 +125,7 @@ export async function runChatTurn(opts: {
     json?: boolean
     call: (onText: (text: string) => void) => Promise<ChatResult>
 }): Promise<ChatResult> {
-    const stop = maybeSpinner(opts.stream || opts.quiet, 'Typing…', 300)
+    const stop = maybeSpinner(opts.stream || opts.quiet, 'Thinking…', 300)
     let result: ChatResult
     try {
         result = await opts.call(

@@ -7,5 +7,4 @@
  */
 delete process.env.FORCE_COLOR
 delete process.env.NO_COLOR
-delete process.env.CHATBASE_NO_COLOR
 if (process.env.TERM === 'dumb') process.env.TERM = 'xterm-256color'

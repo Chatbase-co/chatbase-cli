@@ -3,8 +3,6 @@ import os from 'node:os'
 import path from 'node:path'
 import { MockAgent, setGlobalDispatcher } from 'undici'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { listAllSources } from '../../src/base/sources.js'
-import { createApiClient } from '../../src/client/client.js'
 import SourcesGet from '../../src/commands/sources/get.js'
 import SourcesList from '../../src/commands/sources/list.js'
 import SourcesSummary from '../../src/commands/sources/summary.js'
@@ -229,36 +227,3 @@ describe('chatbase sources summary', () => {
     })
 })
 
-describe('listAllSources', () => {
-    it('follows pagination to the end and maps every item to SourceItem', async () => {
-        const pool = mock.get(BASE)
-        pool.intercept({
-            path: '/api/v2/agents/agt_1/sources',
-            method: 'GET'
-        }).reply(200, page1)
-        pool.intercept({
-            path: '/api/v2/agents/agt_1/sources',
-            method: 'GET',
-            query: { cursor: 'cur_2' }
-        }).reply(200, page2)
-        const client = createApiClient({ apiKey: 'sk-test' })
-        const items = await listAllSources(client, 'agt_1')
-        expect(items).toEqual([
-            {
-                id: 'src_1',
-                type: 'file',
-                name: 'guide.pdf',
-                size: 1024,
-                status: 'trained',
-                originalSize: 4096
-            },
-            {
-                id: 'src_2',
-                type: 'link',
-                name: 'https://example.com/docs',
-                size: 2048,
-                status: 'untrained'
-            }
-        ])
-    })
-})

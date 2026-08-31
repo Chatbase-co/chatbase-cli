@@ -29,7 +29,7 @@ export type FetchPagesOptions = {
     /** When true, keeps following `pagination.cursor` until `hasMore` is
      * false. When false/omitted, fetches exactly one page — the `--all`
      * flag's off position in every list command. Callers with no `--all`
-     * flag at all (resolveAgentRef, listAllSources, pickAgent) always want
+     * flag at all (resolveAgentRef, pickAgent) always want
      * every page, so they pass `all: true` unconditionally. */
     all?: boolean
 }

@@ -246,9 +246,9 @@ export abstract class BaseCommand extends Command {
         ) {
             const base = resolveBaseUrl()
             process.stderr.write(
-                `✗ The server returned an HTML page instead of JSON.\n` +
-                    `  This usually means CHATBASE_API_URL is wrong or the endpoint doesn't exist on this host.\n` +
-                    `  Current base: ${base}\n`
+                `✗ The API returned an unexpected response.\n` +
+                    `  Current base: ${base}\n` +
+                    `  Check that CHATBASE_API_URL is correct and the endpoint exists on this host.\n`
             )
             this.exit(1)
         }

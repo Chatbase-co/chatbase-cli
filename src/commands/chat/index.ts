@@ -155,7 +155,7 @@ export default class Chat extends AgentCommand {
         // Streaming still has time-to-first-token dead air — spin until the
         // first token arrives, then let the tokens themselves be the feedback.
         const spinUntilFirstToken = () => {
-            const stop = maybeSpinner(flags.quiet, 'Typing…', 300)
+            const stop = maybeSpinner(flags.quiet, 'Thinking…', 300)
             let stopped = false
             return () => {
                 if (stopped) return
