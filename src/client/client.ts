@@ -8,7 +8,7 @@ import {
     fetch as undiciFetch
 } from 'undici'
 import { resolveTimeoutMs } from '../config/resolve.js'
-import { ApiError, parseErrorResponse } from '../errors/errors.js'
+import { parseErrorResponse } from '../errors/errors.js'
 import type { paths } from '../generated/api.js'
 import { VERSION } from '../version.js'
 import { computeRetryDelayMs, shouldRetry } from './retry.js'
@@ -176,5 +176,3 @@ export async function rawApiFetch(
         body
     }
 }
-
-export { ApiError }
