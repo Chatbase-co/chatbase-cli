@@ -1,6 +1,6 @@
 import { ListCommand } from '../../base/list-command.js'
 import { SOURCE_COLUMNS, toSourceRow } from '../../base/sources.js'
-import { fetchAllPages } from '../../client/paginate.js'
+import { fetchPages } from '../../client/paginate.js'
 
 export default class SourcesList extends ListCommand {
     static override description = 'List sources for an agent'
@@ -16,7 +16,7 @@ export default class SourcesList extends ListCommand {
         const agentId = await this.agentId(flags, client)
         const mode = this.mode(flags)
 
-        const { pages, items } = await fetchAllPages<Record<string, unknown>>(
+        const { pages, items } = await fetchPages<Record<string, unknown>>(
             (query) =>
                 client.GET('/agents/{agentId}/sources', {
                     params: { path: { agentId }, query }

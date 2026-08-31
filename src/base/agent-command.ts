@@ -14,8 +14,7 @@ export abstract class AgentCommand extends BaseCommand {
             description: 'Agent ID (or set CHATBASE_AGENT_ID)'
         }),
         'agent-name': Flags.string({
-            description:
-                'Agent display name — resolves to an ID via GET /agents',
+            description: 'Agent display name (looked up to an ID)',
             exclusive: ['agent']
         })
     }

@@ -2,7 +2,7 @@ import { Args } from '@oclif/core'
 import type { BaseFlags } from '../../base/base-command.js'
 import { BaseCommand } from '../../base/base-command.js'
 import { createApiClient } from '../../client/client.js'
-import { fetchAllPages } from '../../client/paginate.js'
+import { fetchPages } from '../../client/paginate.js'
 import { resolveApiKey } from '../../config/resolve.js'
 import { readUserConfig, writeUserConfig } from '../../config/store.js'
 import { UsageError } from '../../errors/errors.js'
@@ -90,11 +90,11 @@ export default class ConfigSet extends BaseCommand {
                 'Not authenticated. Run `chatbase auth login`, or set CHATBASE_API_KEY.'
             )
         }
-        // Paginate through every page (fetchAllPages, same helper
+        // Paginate through every page (fetchPages, same helper
         // resolveAgentRef in agent-ref.ts uses) so the picker offers every
         // agent in the workspace, not just whatever fits on the first page.
         const client = createApiClient({ apiKey: resolved.value })
-        const { items: agents } = await fetchAllPages<{
+        const { items: agents } = await fetchPages<{
             id: string
             name?: string
         }>((query) => client.GET('/agents', { params: { query } }), {

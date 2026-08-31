@@ -1,5 +1,5 @@
 import { ListCommand } from '../../base/list-command.js'
-import { fetchAllPages } from '../../client/paginate.js'
+import { fetchPages } from '../../client/paginate.js'
 import type { Column } from '../../output/render.js'
 
 const COLUMNS: Column[] = [
@@ -23,7 +23,7 @@ export default class TicketsList extends ListCommand {
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
 
-        const { pages, items } = await fetchAllPages<Record<string, unknown>>(
+        const { pages, items } = await fetchPages<Record<string, unknown>>(
             (query) =>
                 client.GET('/agents/{agentId}/helpdesk/tickets', {
                     params: { path: { agentId }, query }
