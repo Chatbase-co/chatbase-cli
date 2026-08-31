@@ -32,7 +32,10 @@ export default class SourcesList extends ListCommand {
         const { pages, items } = await fetchPages<Record<string, unknown>>(
             (query) =>
                 client.GET('/agents/{agentId}/sources', {
-                    params: { path: { agentId }, query: { ...query, ...extraQuery } }
+                    params: {
+                        path: { agentId },
+                        query: { ...query, ...extraQuery }
+                    }
                 }),
             { limit: flags.limit, cursor: flags.cursor, all: flags.all }
         )

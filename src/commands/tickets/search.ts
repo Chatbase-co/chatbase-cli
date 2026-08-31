@@ -12,8 +12,7 @@ const COLUMNS: Column[] = [
 ]
 
 export default class TicketsSearch extends AgentCommand {
-    static override description =
-        'Search tickets by message content'
+    static override description = 'Search tickets by message content'
     static override examples = [
         '<%= config.bin %> tickets search "refund not received" -a agt_123',
         '<%= config.bin %> tickets search "refund" -a agt_123 --limit 10 --json'
@@ -21,7 +20,8 @@ export default class TicketsSearch extends AgentCommand {
     static override args = {
         query: Args.string({
             required: true,
-            description: 'Free-text search terms (matched against ticket messages)'
+            description:
+                'Free-text search terms (matched against ticket messages)'
         })
     }
     static override flags = {

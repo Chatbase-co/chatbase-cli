@@ -62,8 +62,10 @@ export default class TicketsList extends ListCommand {
         if (flags.channel) extraQuery.channel = flags.channel
         if (flags['assignee-id']) extraQuery.assigneeId = flags['assignee-id']
         if (flags['team-id']) extraQuery.teamId = flags['team-id']
-        if (flags['created-after']) extraQuery.createdAfter = flags['created-after']
-        if (flags['created-before']) extraQuery.createdBefore = flags['created-before']
+        if (flags['created-after'])
+            extraQuery.createdAfter = flags['created-after']
+        if (flags['created-before'])
+            extraQuery.createdBefore = flags['created-before']
         if (flags['sort-by']) extraQuery.sortBy = flags['sort-by']
         if (flags.order) extraQuery.order = flags.order
         if (flags['include-total']) extraQuery.includeTotal = true
@@ -71,7 +73,10 @@ export default class TicketsList extends ListCommand {
         const { pages, items } = await fetchPages<Record<string, unknown>>(
             (query) =>
                 client.GET('/agents/{agentId}/helpdesk/tickets', {
-                    params: { path: { agentId }, query: { ...query, ...extraQuery } }
+                    params: {
+                        path: { agentId },
+                        query: { ...query, ...extraQuery }
+                    }
                 }),
             { limit: flags.limit, cursor: flags.cursor, all: flags.all }
         )
