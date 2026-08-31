@@ -3,3 +3,4 @@ dist/
 oclif.manifest.json
 coverage/
 *.tsbuildinfo
+.env
