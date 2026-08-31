@@ -1,7 +1,7 @@
+import fs from 'node:fs'
 import { BaseCommand } from '../../base/base-command.js'
 import { configFile } from '../../config/paths.js'
 import { readUserConfig } from '../../config/store.js'
-import fs from 'node:fs'
 
 export default class AuthLogout extends BaseCommand {
     static override description = 'Remove the stored API key'
