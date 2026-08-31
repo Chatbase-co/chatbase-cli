@@ -34,6 +34,14 @@ export default class TicketsMessages extends ListCommand {
         ticket: Flags.integer({
             required: true,
             description: 'Ticket number'
+        }),
+        types: Flags.string({
+            description:
+                'Message types to include (comma-separated): reply, note, event (default: reply,note)'
+        }),
+        order: Flags.string({
+            description: 'Sort direction',
+            options: ['asc', 'desc']
         })
     }
 
@@ -41,6 +49,10 @@ export default class TicketsMessages extends ListCommand {
         const { flags } = await this.parse(TicketsMessages)
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
+
+        const extraQuery: Record<string, unknown> = {}
+        if (flags.types) extraQuery.types = flags.types
+        if (flags.order) extraQuery.order = flags.order
 
         const { pages, items } = await fetchPages<Record<string, unknown>>(
             (query) =>
@@ -52,7 +64,7 @@ export default class TicketsMessages extends ListCommand {
                                 agentId,
                                 ticketNumber: flags.ticket
                             },
-                            query
+                            query: { ...query, ...extraQuery }
                         }
                     }
                 ),

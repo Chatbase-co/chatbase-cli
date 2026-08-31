@@ -16,7 +16,7 @@ export default class ConfigList extends BaseCommand {
     async run(): Promise<void> {
         const { flags } = await this.parse(ConfigList)
 
-        const agent = resolveAgent(undefined, process.cwd())
+        const agent = resolveAgent()
         this.note(
             flags,
             `agent    ${agent ? agent.value : '<not set>'}  (from ${agent ? agent.source : 'default'})`
