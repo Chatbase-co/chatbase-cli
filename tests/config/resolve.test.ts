@@ -7,36 +7,11 @@ import {
     resolveApiKey,
     resolveTimeoutMs
 } from '../../src/config/resolve.js'
-import { UsageError } from '../../src/errors/errors.js'
 
 describe('resolveApiKey', () => {
     afterEach(() => vi.unstubAllEnvs())
 
-    it('throws a UsageError naming the path when CHATBASE_API_KEY_FILE is unreadable', () => {
-        const missing = path.join(
-            fs.mkdtempSync(path.join(os.tmpdir(), 'cb-key-missing-')),
-            'does-not-exist'
-        )
-        vi.stubEnv('CHATBASE_API_KEY_FILE', missing)
-        expect(() => resolveApiKey()).toThrow(UsageError)
-        expect(() => resolveApiKey()).toThrow(missing)
-    })
-
-    it('CHATBASE_API_KEY_FILE beats CHATBASE_API_KEY, with a warning', () => {
-        const f = path.join(
-            fs.mkdtempSync(path.join(os.tmpdir(), 'cb-key-')),
-            'key'
-        )
-        fs.writeFileSync(f, 'sk-from-file\n')
-        vi.stubEnv('CHATBASE_API_KEY_FILE', f)
-        vi.stubEnv('CHATBASE_API_KEY', 'sk-from-env')
-        const r = resolveApiKey()
-        expect(r?.value).toBe('sk-from-file')
-        expect(r?.source).toBe('CHATBASE_API_KEY_FILE')
-        expect(r?.warning).toMatch(/both/i)
-    })
-
-    it('falls back to CHATBASE_API_KEY, then user config, else undefined', () => {
+    it('resolves from CHATBASE_API_KEY, then user config, else undefined', () => {
         vi.stubEnv(
             'XDG_CONFIG_HOME',
             fs.mkdtempSync(path.join(os.tmpdir(), 'cb-x-'))

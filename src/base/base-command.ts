@@ -129,13 +129,8 @@ export abstract class BaseCommand extends Command {
         }
     }
 
-    protected apiClient(flags: BaseFlags): Client<paths> {
+    protected apiClient(_flags: BaseFlags): Client<paths> {
         const resolved = resolveApiKey()
-        if (resolved?.warning)
-            this.note(
-                flags,
-                this.palette(flags).yellow(`! ${resolved.warning}`)
-            )
         if (!resolved && this.requireAuth) {
             throw new UsageError(
                 'Not authenticated. Run `chatbase auth login`, or set CHATBASE_API_KEY.'
