@@ -32,7 +32,7 @@ function isFetchFailure(err: unknown): boolean {
 }
 
 function networkErrorCode(err: unknown): string | undefined {
-    const cause = (err as any)?.cause
+    const cause = (err as { cause?: { code?: string; errors?: { code?: string }[] } }).cause
     return cause?.code ?? cause?.errors?.[0]?.code
 }
 
