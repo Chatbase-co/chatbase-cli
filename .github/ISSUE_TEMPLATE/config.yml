@@ -1,0 +1,11 @@
+# blank_issues_enabled stays true: the CLI's crash handler links to
+# /issues/new?title=…&body=… with a pre-filled report, and disabling blank
+# issues would drop that pre-fill at the template chooser.
+blank_issues_enabled: true
+contact_links:
+    - name: Report a security vulnerability
+      url: https://github.com/Chatbase-co/chatbase-cli/security/advisories/new
+      about: Please report security issues privately, never as public issues.
+    - name: Chatbase support
+      url: https://www.chatbase.co/help
+      about: Questions about your Chatbase account, agents, or billing.

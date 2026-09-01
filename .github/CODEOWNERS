@@ -1,0 +1,3 @@
+# Default reviewers for everything in this repo. Only takes effect when
+# branch protection requires code-owner review (planned for the public flip).
+* @alyelnaggar @NayerHanyW
