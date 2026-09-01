@@ -8,6 +8,7 @@
  * These endpoints are internal (not under /api/v2) and unauthenticated.
  */
 import os from 'node:os'
+import { parseErrorResponse, UsageError } from '../errors/errors.js'
 import { rawApiFetch, resolveBaseUrl } from './client.js'
 import { wasInterrupted } from './signals.js'
 
@@ -36,7 +37,6 @@ export async function startPairing(opts?: { baseUrl?: string }): Promise<{
         body: { device_name: os.hostname() }
     })
     if (res.status >= 400) {
-        const { parseErrorResponse } = await import('../errors/errors.js')
         throw parseErrorResponse(res.status, res.body)
     }
     const d = res.body as {
@@ -88,7 +88,6 @@ export async function pollExchange(
             const name = (attempt.cause as { name?: string } | null)?.name
             if (name === 'AbortError' && wasInterrupted()) throw attempt.cause
             if (Date.now() >= deadline) {
-                const { UsageError } = await import('../errors/errors.js')
                 throw new UsageError(
                     'Pairing request expired. Run `chatbase auth login` to try again.'
                 )
@@ -115,7 +114,6 @@ export async function pollExchange(
 
         if (code === 'PAIRING_PENDING' || code === 'PAIRING_SLOW_DOWN') {
             if (Date.now() >= deadline) {
-                const { UsageError } = await import('../errors/errors.js')
                 throw new UsageError(
                     'Pairing request expired. Run `chatbase auth login` to try again.'
                 )
@@ -128,7 +126,6 @@ export async function pollExchange(
             continue
         }
 
-        const { parseErrorResponse } = await import('../errors/errors.js')
         throw parseErrorResponse(attempt.status, attempt.body)
     }
 }

@@ -6,7 +6,7 @@ import { rawApiFetch } from '../../client/client.js'
 import { pollExchange, startPairing } from '../../client/pairing.js'
 import { configFile } from '../../config/paths.js'
 import { writeUserConfig } from '../../config/store.js'
-import { UsageError } from '../../errors/errors.js'
+import { parseErrorResponse, UsageError } from '../../errors/errors.js'
 
 function tryOpenBrowser(url: string): void {
     try {
@@ -150,9 +150,6 @@ export default class AuthLogin extends BaseCommand {
                 'Key stored (verification unavailable — it will be checked on first use).'
             )
         } else {
-            const { parseErrorResponse } = await import(
-                '../../errors/errors.js'
-            )
             throw parseErrorResponse(res.status, res.body, res.requestId)
         }
         this.note(flags, `Saved to ${configFile()}`)
