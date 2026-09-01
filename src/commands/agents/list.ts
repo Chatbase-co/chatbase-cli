@@ -18,7 +18,11 @@ export default class AgentsList extends BaseCommand {
     ]
     static override flags = {
         ...BaseCommand.baseFlags,
-        limit: Flags.integer({ description: 'Maximum items per page' }),
+        limit: Flags.integer({
+            description: 'Maximum items per page',
+            min: 1,
+            max: 100
+        }),
         cursor: Flags.string({
             description: 'Pagination cursor from a previous page'
         }),

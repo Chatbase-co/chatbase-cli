@@ -45,6 +45,41 @@ describe('chatbase agents train', () => {
     })
 })
 
+describe('chatbase agents train agent resolution', () => {
+    it('falls back to the configured default agent when no ID is given', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', 'agt_1')
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/agents/agt_1/train', method: 'POST' })
+            .reply(200, { success: true })
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await AgentsTrain.run([], process.cwd())
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'agt_1'
+        )
+    })
+
+    it('accepts -a like every other agent-scoped command', async () => {
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/agents/agt_2/train', method: 'POST' })
+            .reply(200, { success: true })
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await AgentsTrain.run(['-a', 'agt_2'], process.cwd())
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'agt_2'
+        )
+    })
+
+    it('rejects positional and -a together', async () => {
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            AgentsTrain.run(['agt_1', '-a', 'agt_1'], process.cwd())
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'not both'
+        )
+    })
+})
+
 describe('chatbase agents auto-retrain', () => {
     it('agents auto-retrain --enabled sends the boolean', async () => {
         let sent = ''

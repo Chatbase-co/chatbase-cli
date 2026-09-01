@@ -3,69 +3,158 @@
 Living checklist of the non-code items around shipping the CLI. Nothing here
 blocks development; revisit before the public v1.0 launch.
 
-_Last updated: 2026-08-09_
+_Last updated: 2026-08-17_
+
+## Now (pre-merge, 2026-08-17)
+
+- [ ] **Review + merge PR #3** (`feat/workflows`) — all 24 review findings,
+      B1–B9, and C1–C11 fixed across 7 commits; full command surface
+      live-verified twice against the preview API (see the QA report).
+- [ ] **CI checkmark on `3b12b18`** — identical gate green locally
+      (345 tests, lint, typecheck, README drift); only blocked by the
+      GitHub Actions outage on 2026-08-17.
+- [ ] **Delete/archive the untracked review docs** in the repo root
+      (`feat-workflows_review.md`, `feat-workflows_solutions*`,
+      `feat-workflows_findings/`, `feat-workflows_summary.md`) — untracked,
+      so they can't ship or enter history; just clutter.
+
+## Release readiness (verified 2026-08-12; counts refreshed 2026-08-17)
+
+- [x] 345 unit/integration tests green (38 files)
+- [x] 5 e2e smoke tests written (skip cleanly when secrets absent; need
+      one live `workflow_dispatch` run with real secrets before trusting)
+- [x] CI: ubuntu/macos/windows × node 20/22 matrix with permissions +
+      concurrency; build before test; spec:check; README drift check;
+      startup budget (99ms vs 1000ms CI / 300ms product target)
+- [x] Release pipeline: release-please config + publish workflow with
+      provenance (needs NPM_TOKEN secret configured on GitHub)
+- [x] README auto-generated command reference (39 commands via oclif readme)
+- [x] LICENSE file committed (MIT)
+- [x] Tarball: 73 files, 77KB; docs/superpowers NOT included (only
+      bin/dist/spec/manifest ship); spec/openapi.json included (25 paths,
+      no /internal routes, no real credentials in examples)
+- [x] `repository` field in package.json set for provenance verification
 
 ## npm — done
 
-- [x] Package name `chatbase` claimed (placeholder 0.0.1 published by `dev-chatbase`, 2026-08-09)
+- [x] Package name `chatbase` claimed (placeholder 0.0.1 published by
+      `dev-chatbase`, 2026-08-09)
 
-## npm — backlog
+## npm — backlog (before launch)
 
 - [ ] **Ask internally** whether anyone at Chatbase owns the dormant npm user
       `chatbase` (npmjs.com/~chatbase — display name "Chatbase", 0 packages).
       If yes, recover it via password reset on the old email.
 - [ ] **File npm trademark ticket** (npmjs.com/support → user name dispute) to
       claim the dormant `chatbase` username/scope. Takes weeks; do it early.
-      Draft text: we own the Chatbase trademark + the `chatbase` package
-      (account `dev-chatbase`); the `chatbase` username is dormant with zero
-      packages; request transfer.
 - [ ] **Create the `chatbase-co` npm org** (free) — matches the GitHub org,
       gives an official scope, and is where the package should eventually live.
 - [ ] **Add a second package owner** (`npm owner add <user> chatbase`) —
       lockout insurance before launch.
-- [ ] **At Plan 4 (release pipeline):** transfer the package to the org
-      (npmjs.com/package/chatbase → Settings → Transfer), manage access via
-      teams, publish from GitHub Actions with trusted publishing (OIDC) +
-      provenance.
+- [ ] **Configure NPM_TOKEN** (or trusted publishing) on the GitHub repo so
+      the release workflow can publish. Transfer the package to the org once
+      created.
 
-## GitHub
+## GitHub secrets (Settings → Secrets → Actions)
 
-- [x] Create `github.com/Chatbase-co/chatbase-cli` — **private** ✓ (created 2026-08-09)
-- [ ] Before flipping public: LICENSE file (✓ committed 2026-08-10), SECURITY.md,
-      issue templates, branch protection on main, CODEOWNERS
+- [ ] **NPM_TOKEN** — npmjs.com → Access Tokens → Granular → Read+Write on
+      `chatbase` package. Used by release.yml to publish.
+- [ ] **CHATBASE_E2E_API_URL** — staging API base URL (e.g.
+      `https://staging.chatbase.co/api/v2`). E2E tests run against staging,
+      not production.
+- [ ] **CHATBASE_E2E_API_KEY** — API key for the staging workspace.
+- [ ] **CHATBASE_E2E_AGENT_ID** — a test agent in the staging workspace
+      (create a dedicated one; don't use a customer agent).
+
+## GitHub — before going public
+
+- [x] Create `github.com/Chatbase-co/chatbase-cli` — **private** ✓ (2026-08-09)
+- [ ] SECURITY.md (vulnerability reporting instructions)
+- [ ] Issue templates (matching the pre-filled bug URL in base-command.ts)
+- [ ] Branch protection on main (require CI, require review)
+- [ ] CODEOWNERS
 - [ ] **Public history strategy**: internal planning docs (docs/superpowers/,
-      this checklist) live in git history and would be exposed by flipping the
-      repo public. At launch, start the public history fresh: squash to a clean
-      initial commit (or re-root the tree) WITHOUT docs/superpowers/ and
-      launch-checklist.md, and keep those docs private-side from then on.
-      gitignoring them beforehand does NOT scrub history — only this does.
+      this checklist) live in git history. At launch, start the public history
+      fresh: squash to a clean initial commit (or re-root the tree) WITHOUT
+      docs/superpowers/ and launch-checklist.md. gitignoring them beforehand
+      does NOT scrub history — only this does.
 
 ## Decisions still open
 
-- [ ] **`CHATBASE_API_URL` documentation stance**: the env override exists for
-      local-server development and is visible in public source (Hyrum's law —
-      users WILL find it). Before launch, either document it in a README
-      "advanced" section with an explicit no-stability disclaimer, or leave it
-      code-only knowing it's discoverable. `auth status` already warns whenever
-      it's active.
-
-- [ ] **License:** MIT recommended (what `gh`/oclif use); Apache-2.0 if legal
-      wants the explicit patent grant. Confirm with legal before going public.
-- [ ] **Launch timing vs unreleased endpoints:** the CLI's vendored spec and
-      commands expose the agents + helpdesk endpoint groups, which are not yet
-      customer-released. Go public only after those ship publicly, or strip
-      them from the launch build.
+- [ ] **`CHATBASE_API_URL` documentation stance**: exists for local dev, visible
+      in public source. Document in a README "advanced" section with a
+      no-stability disclaimer, or leave code-only. `auth status` warns
+      whenever it's active.
+- [ ] **License:** MIT committed; Apache-2.0 if legal wants the patent grant.
+      Confirm with legal before going public.
+- [ ] **Launch timing vs unreleased endpoints:** the vendored spec + commands
+      expose agents + helpdesk, which are not yet customer-released. Go public
+      only after those ship, or strip them from the launch build.
 - [ ] **Public docs gap:** chatbase.co/docs documents 10 of 25 API paths.
       Partly intentional (unreleased features) — decide what to publish when
-      the API groups go GA, and whether to automate the private→docs spec sync.
+      those go GA.
+
+## Database / server-side (before launch)
+
+- [ ] **RLS on new tables** — `cli_pairing_requests` and any other tables
+      added by the pairing work must have Row-Level Security enabled and
+      policies scoped to `account_id`. Supabase tables default to no RLS;
+      a missing policy = publicly queryable via the PostgREST API.
+- [ ] **Migration committed + applied** — the pairing work's schema changes
+      (cli_pairing_requests table, api_keys source/expires_at/permissions
+      columns) need their migration merged and run on staging + production
+      before the CLI's browser login can work there.
+- [ ] **Helpdesk permissions for Member + Support Associate roles** —
+      HELPDESK_TICKETS_READ/WRITE/DELETE exist in permissions.ts and the
+      CLI-grantable list, but no role includes them yet. Users can only
+      grant scopes their own role has, so without this, support staff's
+      CLI keys can never touch helpdesk endpoints. (ref:
+      cmsq4zaks0hw80j089qm6pyjr)
+- [ ] **chatlogs:write for every role** — all roles need CHATLOGS_WRITE so
+      any user's CLI key can grant it (covers conversation-mutating
+      operations like message feedback). Same RBAC rule as above: a scope
+      missing from your role can never be granted to your key.
+- [ ] **LOOPS_CLI_PAIRING_APPROVED_TRANSACTIONAL_ID in prod env** — create
+      the "device paired" transactional email template in Loops and set its
+      ID. Without it, pairing works but users get no security notification
+      that a new CLI key was minted. (verification_uri needs nothing new —
+      it derives from the existing NEXT_PUBLIC_SITE_URL.)
+- [ ] **Document SUPABASE_JWT_SECRET in chatbase .env.example** — required
+      by getAccountOwnerToken (v2 train endpoint and anything minting owner
+      tokens). Not documented anywhere today; local dev fails with a bare
+      "Missing SUPABASE_JWT_SECRET" 500 without it.
+- [x] **Key self-revocation endpoint (`DELETE /me/credential`)** — shipped
+      on the pairing branch; `chatbase auth logout` revokes cli-sourced keys
+      through it (live-verified during the permission-phase QA, 2026-08-16).
+      Lands on staging/prod with the branch merge.
 
 ## Private-repo work items (parallel track)
 
-- [x] Routes-only OpenAPI generator — built 2026-08-06
-      (`scripts/generate-openapi-routes-only.ts` + `openapi-generator-stubs.ts`
-      in the `chatbase` repo; **still uncommitted there — commit them**)
-- [ ] `GET /api/v2/me` endpoint (upgrades `auth login` verification; shape in
-      the pairing-login design doc §3)
-- [ ] Pairing login (design done: `chatbase` repo,
-      `docs/superpowers/specs/2026-08-05-cli-pairing-login-design.md`; ~2–3
-      days server-side)
+- [x] Routes-only OpenAPI generator — built 2026-08-06; now up as
+      chatbase PR #4586 (with the explicit tintedGrayscale API schema) —
+      merge it there
+- [x] `GET /api/v2/me` endpoint — live on the pairing branch; `auth status`
+      uses it (verified against preview + localhost, 2026-08-16/17)
+- [x] Pairing login — implemented and live-tested end to end on the preview
+      (approve, poll, scoped keys, 90-day expiry, `auth status` shows
+      scopes/expiry, logout revokes via `DELETE /me/credential`); spec
+      refreshed. Backend branch `feat/cli-pairing-login` still needs to land
+      on main (see Database section)
+- [ ] API v2 fixes from QA — design doc handed over at
+      `chatbase/api-v2-fixes-design.md` (train-with-0-sources 500,
+      404 for nonexistent agents on sources/conversations lists, preview
+      upload 500, + decisions/polish)
+
+## Post-v1 backlog
+
+- [ ] MCP server mode (`chatbase mcp`) — descoped from v1 (2026-08-11);
+      design + plan written and ready in Plan 4 Tasks 1-3
+- [ ] Homebrew distribution via `oclif pack`
+- [ ] `--all` pagination loop cap (harden against cycling cursors)
+- [ ] `?name=` query filter on GET /agents (simplifies --agent-name to
+      one request instead of fetching all pages)
+- [ ] Emoji polish for status glyphs and success/error lines
+- [ ] `chatbase docs` command (add back when CLI docs pages exist)
+- [ ] Tool-call event rendering in chat streams (dim annotation lines)
+- [ ] `as never` body casts — replace with proper typed helpers (10 commands)
+- [ ] Man pages (revisit on user demand)

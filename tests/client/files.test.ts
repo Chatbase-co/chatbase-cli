@@ -42,7 +42,7 @@ describe('uploadFileSource', () => {
                 sentName = String(form.get('name'))
                 const file = form.get('file') as File
                 sentFileName = file.name
-                return { data: { id: 'src_new' } }
+                return { id: 'src_new', type: 'file', status: 'untrained' }
             })
         const res = await uploadFileSource({
             agentId: 'agt_1',
@@ -63,7 +63,7 @@ describe('uploadFileSource', () => {
             .reply(201, (opts) => {
                 const form = opts.body as unknown as FormData
                 sentName = String(form.get('name'))
-                return { data: { id: 'src_a' } }
+                return { id: 'src_a', type: 'file', status: 'untrained' }
             })
         await uploadFileSource({ agentId: 'agt_1', filePath: f, apiKey: 'sk' })
         expect(sentName).toBe('report.md')
@@ -73,7 +73,7 @@ describe('uploadFileSource', () => {
             .reply(201, (opts) => {
                 const form = opts.body as unknown as FormData
                 sentName = String(form.get('name'))
-                return { data: { id: 'src_b' } }
+                return { id: 'src_b', type: 'file', status: 'untrained' }
             })
         await uploadFileSource({
             agentId: 'agt_1',
@@ -93,7 +93,7 @@ describe('uploadFileSource', () => {
                 const form = opts.body as unknown as FormData
                 const file = form.get('file') as File
                 text = await file.text()
-                return { data: { id: 'src_new' } }
+                return { id: 'src_new', type: 'file', status: 'untrained' }
             })
         await uploadFileSource({ agentId: 'agt_1', filePath: f, apiKey: 'sk' })
         expect(text).toBe('hello world')
@@ -106,7 +106,7 @@ describe('uploadFileSource', () => {
                 path: '/api/v2/agents/agt_1/sources/src_9',
                 method: 'PUT'
             })
-            .reply(200, { data: { id: 'src_9' } })
+            .reply(200, { id: 'src_9', type: 'file', status: 'untrained' })
         const res = await uploadFileSource({
             agentId: 'agt_1',
             filePath: f,
@@ -140,7 +140,7 @@ describe('uploadFileSource', () => {
         const f = tmpFile('slow.pdf', 'x')
         mock.get('https://files.chatbase.co')
             .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'POST' })
-            .reply(201, { data: { id: 'src_slow' } })
+            .reply(201, { id: 'src_slow', type: 'file', status: 'untrained' })
             .delay(200)
         const err = await uploadFileSource({
             agentId: 'agt_1',
@@ -166,7 +166,7 @@ describe('uploadFileSource', () => {
         pool.intercept({
             path: '/api/v2/agents/agt_1/sources',
             method: 'POST'
-        }).reply(201, { data: { id: 'src_retried' } })
+        }).reply(201, { id: 'src_retried', type: 'file', status: 'untrained' })
         const res = await uploadFileSource({
             agentId: 'agt_1',
             filePath: f,
@@ -197,7 +197,7 @@ describe('uploadFileSource', () => {
         const f = tmpFile('dev.txt', 'y')
         mock.get('https://files.dev.local')
             .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'POST' })
-            .reply(201, { data: { id: 'src_dev' } })
+            .reply(201, { id: 'src_dev', type: 'file', status: 'untrained' })
         const res = await uploadFileSource({
             agentId: 'agt_1',
             filePath: f,

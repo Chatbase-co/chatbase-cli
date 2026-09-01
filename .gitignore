@@ -4,3 +4,4 @@ oclif.manifest.json
 coverage/
 *.tsbuildinfo
 .env
+*.tgz

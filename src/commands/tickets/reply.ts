@@ -1,6 +1,7 @@
-import { Flags } from '@oclif/core'
+import { Args, Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
 import { throwIfError } from '../../client/client.js'
+import { UsageError } from '../../errors/errors.js'
 import type { components } from '../../generated/api.js'
 
 type CreateTicketMessageBody = components['schemas']['CreateTicketMessageBody']
@@ -9,12 +10,17 @@ export default class TicketsReply extends AgentCommand {
     static override description =
         "Post an agent reply to a ticket's message thread"
     static override examples = [
-        '<%= config.bin %> tickets reply --ticket 42 -m "On it" --author-email sam@example.com -a agt_123'
+        '<%= config.bin %> tickets reply 42 -m "On it" --author-email sam@example.com -a agt_123'
     ]
+    static override args = {
+        ticketNumber: Args.integer({
+            required: false,
+            description: 'Ticket number (alternative to --ticket)'
+        })
+    }
     static override flags = {
         ...AgentCommand.baseFlags,
         ticket: Flags.integer({
-            required: true,
             description: 'Ticket number'
         }),
         message: Flags.string({
@@ -35,7 +41,21 @@ export default class TicketsReply extends AgentCommand {
     }
 
     async run(): Promise<void> {
-        const { flags } = await this.parse(TicketsReply)
+        const { args, flags } = await this.parse(TicketsReply)
+        // Positional and flag are alternatives — `tickets get <n>` and
+        // `tickets update <n>` set the positional convention, the flag
+        // predates it and stays supported.
+        const ticketNumber = args.ticketNumber ?? flags.ticket
+        if (ticketNumber === undefined) {
+            throw new UsageError(
+                'Missing ticket number. Pass it positionally (`tickets reply <number>`) or via --ticket.'
+            )
+        }
+        if (args.ticketNumber !== undefined && flags.ticket !== undefined) {
+            throw new UsageError(
+                'Pass the ticket number either positionally or via --ticket, not both.'
+            )
+        }
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
         const body: CreateTicketMessageBody = {
@@ -50,12 +70,12 @@ export default class TicketsReply extends AgentCommand {
             '/agents/{agentId}/helpdesk/tickets/{ticketNumber}/messages',
             {
                 params: {
-                    path: { agentId, ticketNumber: flags.ticket }
+                    path: { agentId, ticketNumber }
                 },
                 body
             }
         )
         throwIfError(response, error)
-        this.success(flags, `Reply posted to ticket ${flags.ticket}`)
+        this.success(flags, `Reply posted to ticket ${ticketNumber}`)
     }
 }

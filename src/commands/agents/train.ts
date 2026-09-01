@@ -12,16 +12,17 @@ export default class AgentsTrain extends AgentCommand {
     static override args = {
         agentId: Args.string({
             required: false,
-            description: 'Agent ID to train'
+            description:
+                'Agent ID to train (defaults to the configured agent, like other commands)'
         })
     }
     static override flags = { ...AgentCommand.baseFlags }
 
     async run(): Promise<void> {
         const { args, flags } = await this.parse(AgentsTrain)
-        if (args.agentId && flags.agent) {
+        if (args.agentId && (flags.agent || flags['agent-name'])) {
             throw new UsageError(
-                'Pass the agent ID either positionally or via -a, not both.'
+                'Pass the agent ID either positionally or via -a/--agent-name, not both.'
             )
         }
         const client = this.apiClient(flags)

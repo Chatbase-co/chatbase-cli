@@ -35,9 +35,9 @@ const REMEDIATIONS: Record<string, string> = {
         'Run `chatbase auth login`, or set CHATBASE_API_KEY. Keys live in chatbase.co → Workspace Settings → API Keys.',
     AUTH_INVALID_API_KEY:
         'Your key was rejected. Run `chatbase auth login` with a fresh key, or check CHATBASE_API_KEY.',
-    API_KEY_EXPIRED:
+    AUTH_EXPIRED_API_KEY:
         'This API key has expired. Run `chatbase auth login` to authenticate again.',
-    PERMISSION_DENIED:
+    AUTH_INSUFFICIENT_PERMISSIONS:
         'This API key does not have permission for this operation. Check its scopes with `chatbase auth status`, re-pair with broader access via `chatbase auth login`, or ask a workspace admin.',
     SUBSCRIPTION_API_RESTRICTED_PLAN:
         'API access requires the Standard plan or higher — upgrade at chatbase.co.',

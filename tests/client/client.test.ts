@@ -138,6 +138,92 @@ describe('CHATBASE_API_URL override', () => {
     })
 })
 
+describe('--verbose diagnostics', () => {
+    it('logs the request line and response status with request id to stderr', async () => {
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/health', method: 'GET' })
+            .reply(
+                200,
+                { status: 'ok', timestamp: 1 },
+                { headers: { 'x-request-id': 'req_verbose_1' } }
+            )
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        const client = createApiClient({ apiKey: 'sk-test', verbose: true })
+        await client.GET('/health')
+        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(text).toContain('» GET')
+        expect(text).toContain('/api/v2/health')
+        expect(text).toContain('« 200')
+        expect(text).toContain('req_verbose_1')
+        err.mockRestore()
+    })
+
+    it('stays silent without the option', async () => {
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/health', method: 'GET' })
+            .reply(200, { status: 'ok', timestamp: 1 })
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        const client = createApiClient({ apiKey: 'sk-test' })
+        await client.GET('/health')
+        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(text).not.toContain('» GET')
+        err.mockRestore()
+    })
+})
+
+describe('per-call AbortSignal', () => {
+    it('honors a signal passed to client.GET, rejecting without touching the network', async () => {
+        // No interceptor registered — if the abort didn't short-circuit
+        // before dispatch, MockAgent's own "no matching interceptor" error
+        // would fail this just as loudly, so this also pins that the abort
+        // happens pre-dispatch rather than merely being ignored.
+        const client = createApiClient({ apiKey: 'sk-test' })
+        const controller = new AbortController()
+        controller.abort()
+        await expect(
+            client.GET('/health', { signal: controller.signal })
+        ).rejects.toMatchObject({ name: 'AbortError' })
+    })
+
+    it('interrupts a 429 backoff wait immediately when the signal aborts', async () => {
+        // x-ratelimit-reset 10s out forces a long backoff sleep; the abort
+        // 50ms in must cut it short instead of waiting out the full delay.
+        const resetEpochSeconds = Math.ceil(Date.now() / 1000) + 10
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/health', method: 'GET' })
+            .reply(
+                429,
+                { error: { code: 'RATE_LIMITED', message: 'slow down' } },
+                {
+                    headers: {
+                        'x-ratelimit-reset': String(resetEpochSeconds)
+                    }
+                }
+            )
+        const client = createApiClient({ apiKey: 'sk-test' })
+        const controller = new AbortController()
+        setTimeout(() => controller.abort(), 50)
+        const started = Date.now()
+        await expect(
+            client.GET('/health', { signal: controller.signal })
+        ).rejects.toMatchObject({ name: 'AbortError' })
+        expect(Date.now() - started).toBeLessThan(2000)
+    })
+
+    it('an unaborted signal has no effect on an otherwise-normal request', async () => {
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/health', method: 'GET' })
+            .reply(200, { status: 'ok', timestamp: 1 })
+        const client = createApiClient({ apiKey: 'sk-test' })
+        const controller = new AbortController()
+        const { data, response } = await client.GET('/health', {
+            signal: controller.signal
+        })
+        expect(response.status).toBe(200)
+        expect(data?.status).toBe('ok')
+    })
+})
+
 describe('rawApiFetch', () => {
     it('returns status, parsed body, and x-request-id', async () => {
         mock.get(BASE)

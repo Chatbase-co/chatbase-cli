@@ -1,5 +1,6 @@
 import { Args, Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
+import { bodyFieldFlags } from '../../base/base-command.js'
 import { readBodyData } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
 import { UsageError } from '../../errors/errors.js'
@@ -21,6 +22,7 @@ export default class AgentsStyles extends AgentCommand {
     }
     static override flags = {
         ...AgentCommand.baseFlags,
+        ...bodyFieldFlags,
         data: Flags.string({
             required: true,
             description:
@@ -30,9 +32,9 @@ export default class AgentsStyles extends AgentCommand {
 
     async run(): Promise<void> {
         const { args, flags } = await this.parse(AgentsStyles)
-        if (args.agentId && flags.agent) {
+        if (args.agentId && (flags.agent || flags['agent-name'])) {
             throw new UsageError(
-                'Pass the agent ID either positionally or via -a, not both.'
+                'Pass the agent ID either positionally or via -a/--agent-name, not both.'
             )
         }
         const stylesData = await readBodyData(flags.data, flags.field)

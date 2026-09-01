@@ -1,5 +1,6 @@
 import { Args, Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
+import { bodyFieldFlags } from '../../base/base-command.js'
 import { readBodyData } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
 import type { components } from '../../generated/api.js'
@@ -20,9 +21,10 @@ export default class TicketsUpdate extends AgentCommand {
     }
     static override flags = {
         ...AgentCommand.baseFlags,
+        ...bodyFieldFlags,
         data: Flags.string({
             description:
-                'JSON body (@file, @-, or inline). Fields: statusId, statusCategory, assigneeId, teamId'
+                'JSON body (@file, @-, or inline). Fields: statusId, statusCategory, assigneeId, assigneeEmail, teamId'
         })
     }
 

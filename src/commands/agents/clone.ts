@@ -22,9 +22,12 @@ export default class AgentsClone extends BaseCommand {
             { params: { path: { agentId: args.agentId } } }
         )
         throwIfError(response, error)
-        // Note: POST /agents/{agentId}/clone returns AgentCreatedResponse directly ({ id, pendingSteps? }), not wrapped in { data: ... }
         const id = (data as { id: string }).id
-        this.success(flags, `Cloned agent ${args.agentId} → ${id}`)
-        process.stdout.write(`${id}\n`)
+        if (flags.json) {
+            process.stdout.write(`${JSON.stringify(data, null, 2)}\n`)
+        } else {
+            this.success(flags, `Cloned agent ${args.agentId} → ${id}`)
+            process.stdout.write(`${id}\n`)
+        }
     }
 }

@@ -72,24 +72,31 @@ describe('config set apiKey is refused', () => {
 describe('config list names each value source', () => {
     it('names CHATBASE_AGENT_ID as the agent source', async () => {
         vi.stubEnv('CHATBASE_AGENT_ID', 'agt_env')
-        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await ConfigList.run([], process.cwd())
-        expect(err.mock.calls.join('')).toContain('CHATBASE_AGENT_ID')
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'CHATBASE_AGENT_ID'
+        )
     })
 
     it('names the timeout source', async () => {
         vi.stubEnv('CHATBASE_TIMEOUT', '9999')
-        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await ConfigList.run([], process.cwd())
-        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        const text = out.mock.calls.map((c) => String(c[0])).join('')
         expect(text).toContain('CHATBASE_TIMEOUT')
         expect(text).toContain('9999')
     })
 
     it('reports <not set> when the agent has no source at all', async () => {
-        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await ConfigList.run([], process.cwd())
-        expect(err.mock.calls.join('')).toContain('<not set>')
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            '<not set>'
+        )
     })
 })
 
@@ -152,6 +159,28 @@ describe('config set + get round trip', () => {
         await expect(
             ConfigSet.run(['bogus', 'x'], process.cwd())
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
+    })
+})
+
+describe('config set agent warns when the stored value is shadowed', () => {
+    it('warns when CHATBASE_AGENT_ID takes precedence', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', 'agt_env')
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConfigSet.run(['agent', 'agt_123'], process.cwd())
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'CHATBASE_AGENT_ID'
+        )
+    })
+
+    it('stays quiet when nothing shadows the stored value', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', '')
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConfigSet.run(['agent', 'agt_123'], process.cwd())
+        const printed = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(printed).not.toContain('CHATBASE_AGENT_ID')
+        expect(printed).not.toContain('chatbase.json')
     })
 })
 
@@ -242,5 +271,18 @@ describe('config set agent (no value)', () => {
         await expect(
             ConfigSet.run(['agent'], process.cwd())
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
+    })
+})
+
+describe('chatbase config set — clearing', () => {
+    it('an empty value removes the key and says "cleared", not "set to "', async () => {
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        await ConfigSet.run(['agent', 'agt_1'], process.cwd())
+        await ConfigSet.run(['agent', ''], process.cwd())
+        expect(readUserConfig().agent).toBeUndefined()
+        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(text).toContain('agent cleared')
+        expect(text).not.toContain('set to \n')
     })
 })

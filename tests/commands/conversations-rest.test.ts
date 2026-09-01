@@ -180,6 +180,78 @@ describe('chatbase conversations export', () => {
             JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
         ).toEqual(exportResponse)
     })
+
+    // The export endpoint caps `limit` at 20, so any agent with real traffic
+    // spans many pages — --all is what makes a whole-agent export one command.
+    const exportPage1 = {
+        data: [{ id: 'conv_1', title: 'Refunds', messages: [] }],
+        pagination: { cursor: 'cur_2', hasMore: true, total: 2 }
+    }
+    const exportPage2 = {
+        data: [{ id: 'conv_2', title: 'Hello', messages: [] }],
+        pagination: { cursor: null, hasMore: false, total: 2 }
+    }
+
+    function mockExportPages() {
+        const pool = mock.get(BASE)
+        pool.intercept({
+            path: '/api/v2/agents/agt_1/conversations/export',
+            method: 'GET'
+        }).reply(200, exportPage1)
+        pool.intercept({
+            path: '/api/v2/agents/agt_1/conversations/export',
+            method: 'GET',
+            query: { cursor: 'cur_2' }
+        }).reply(200, exportPage2)
+    }
+
+    it('--all follows the cursor and merges every page into one envelope', async () => {
+        mockExportPages()
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsExport.run(['--all'], process.cwd())
+        expect(
+            JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
+        ).toEqual({
+            data: [...exportPage1.data, ...exportPage2.data],
+            pagination: exportPage2.pagination
+        })
+    })
+
+    it('--all -o writes the merged multi-page export to the file', async () => {
+        mockExportPages()
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        const tmpFile = path.join(
+            fs.mkdtempSync(path.join(os.tmpdir(), 'cb-export-all-')),
+            'out.json'
+        )
+        await ConversationsExport.run(['--all', '-o', tmpFile], process.cwd())
+        expect(out.mock.calls.length).toBe(0)
+        expect(JSON.parse(fs.readFileSync(tmpFile, 'utf8')).data).toEqual([
+            ...exportPage1.data,
+            ...exportPage2.data
+        ])
+    })
+
+    it('without --all, a truncated export points at --all on stderr', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/export',
+                method: 'GET'
+            })
+            .reply(200, exportPage1)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsExport.run([], process.cwd())
+        const stderr = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(stderr).toContain('--all')
+        expect(stderr).toContain('cur_2')
+        // The hint is stderr-only; stdout stays valid JSON for piping.
+        expect(
+            JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
+        ).toEqual(exportPage1)
+    })
 })
 
 describe('chatbase messages list', () => {
@@ -265,6 +337,62 @@ describe('chatbase messages list', () => {
         expect(
             JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
         ).toEqual(page1)
+    })
+})
+
+describe('positional IDs (match agents/sources get ergonomics)', () => {
+    it('conversations get accepts the conversation ID positionally', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/conv_9',
+                method: 'GET'
+            })
+            .reply(200, {
+                data: {
+                    id: 'conv_9',
+                    title: 'T',
+                    status: 'ongoing',
+                    createdAt: 1,
+                    updatedAt: 2
+                },
+                pagination: { cursor: null, hasMore: false }
+            })
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsGet.run(['conv_9', '-a', 'agt_1'], process.cwd())
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'conv_9'
+        )
+    })
+
+    it('messages feedback accepts the message ID positionally', async () => {
+        let sent = ''
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/conv_1/messages/msg_7/feedback',
+                method: 'PATCH'
+            })
+            .reply(200, (o) => {
+                sent =
+                    o.body instanceof Uint8Array
+                        ? Buffer.from(o.body).toString('utf8')
+                        : String(o.body)
+                return { data: { ok: true } }
+            })
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await MessagesFeedback.run(
+            [
+                'msg_7',
+                '--conversation',
+                'conv_1',
+                '--rating',
+                'positive',
+                '-a',
+                'agt_1'
+            ],
+            process.cwd()
+        )
+        expect(JSON.parse(sent)).toEqual({ feedback: 'positive' })
     })
 })
 

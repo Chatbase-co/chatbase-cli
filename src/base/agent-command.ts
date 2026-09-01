@@ -40,4 +40,17 @@ export abstract class AgentCommand extends BaseCommand {
         }
         return resolved.value
     }
+
+    /** The "resume with: ..." trailer both chat commands print after a turn. */
+    protected printConversationHint(
+        flags: { quiet?: boolean },
+        agentId: string,
+        conversationId?: string
+    ): void {
+        if (!conversationId) return
+        this.note(
+            flags,
+            `Conversation: ${conversationId} — resume with: chatbase chat -a ${agentId} --conversation ${conversationId} --resume`
+        )
+    }
 }

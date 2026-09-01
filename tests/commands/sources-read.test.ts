@@ -3,8 +3,6 @@ import os from 'node:os'
 import path from 'node:path'
 import { MockAgent, setGlobalDispatcher } from 'undici'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { listAllSources } from '../../src/base/sources.js'
-import { createApiClient } from '../../src/client/client.js'
 import SourcesGet from '../../src/commands/sources/get.js'
 import SourcesList from '../../src/commands/sources/list.js'
 import SourcesSummary from '../../src/commands/sources/summary.js'
@@ -21,7 +19,7 @@ const src1 = {
     size: 1024,
     createdAt: '2026-01-01T00:00:00Z',
     status: 'trained',
-    metadata: null
+    metadata: { originalSize: 4096 }
 }
 const src2 = {
     id: 'src_2',
@@ -189,7 +187,7 @@ describe('chatbase sources summary', () => {
         shouldRetrain: true
     }
 
-    it('renders a metric/value table in pretty mode', async () => {
+    it('renders a flattened type/count/size table instead of raw JSON cells', async () => {
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/sources/summary',
@@ -197,18 +195,21 @@ describe('chatbase sources summary', () => {
             })
             .reply(200, summary)
         const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         Object.defineProperty(process.stdout, 'isTTY', {
             value: true,
             configurable: true
         })
         await SourcesSummary.run([], process.cwd())
         const printed = out.mock.calls.map((c) => String(c[0])).join('')
-        expect(printed).toContain('METRIC')
-        expect(printed).toContain('VALUE')
+        expect(printed).toContain('TYPE')
+        expect(printed).toContain('COUNT')
+        expect(printed).toContain('SIZE')
         expect(printed).toContain('links')
-        expect(printed).toContain('"count":2')
-        expect(printed).toContain('shouldRetrain')
-        expect(printed).toContain('true')
+        expect(printed).not.toContain('"count":2')
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toMatch(
+            /retrain/i
+        )
     })
 
     it('--json emits the raw summary object', async () => {
@@ -223,38 +224,5 @@ describe('chatbase sources summary', () => {
         expect(
             JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
         ).toEqual(summary)
-    })
-})
-
-describe('listAllSources', () => {
-    it('follows pagination to the end and maps every item to SourceItem', async () => {
-        const pool = mock.get(BASE)
-        pool.intercept({
-            path: '/api/v2/agents/agt_1/sources',
-            method: 'GET'
-        }).reply(200, page1)
-        pool.intercept({
-            path: '/api/v2/agents/agt_1/sources',
-            method: 'GET',
-            query: { cursor: 'cur_2' }
-        }).reply(200, page2)
-        const client = createApiClient({ apiKey: 'sk-test' })
-        const items = await listAllSources(client, 'agt_1')
-        expect(items).toEqual([
-            {
-                id: 'src_1',
-                type: 'file',
-                name: 'guide.pdf',
-                size: 1024,
-                status: 'trained'
-            },
-            {
-                id: 'src_2',
-                type: 'link',
-                name: 'https://example.com/docs',
-                size: 2048,
-                status: 'untrained'
-            }
-        ])
     })
 })

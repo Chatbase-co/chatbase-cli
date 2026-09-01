@@ -17,7 +17,7 @@ export default class SourcesDelete extends AgentCommand {
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
 
-        const { error, response } = await client.DELETE(
+        const { data, error, response } = await client.DELETE(
             '/agents/{agentId}/sources/{sourceId}',
             {
                 params: { path: { agentId, sourceId: args.sourceId } }
@@ -25,9 +25,14 @@ export default class SourcesDelete extends AgentCommand {
         )
         throwIfError(response, error)
         this.success(flags, `Deleted source ${args.sourceId}`)
-        this.note(
-            flags,
-            `↩ restore with: chatbase sources restore ${args.sourceId} -a ${agentId}`
-        )
+        // Never-trained sources are hard-deleted (status "deleted") — only
+        // trained ones get the restorable "toBeDeleted" mark.
+        const status = (data as { status?: string } | undefined)?.status
+        if (status === 'toBeDeleted') {
+            this.note(
+                flags,
+                `↩ restore with: chatbase sources restore ${args.sourceId} -a ${agentId}`
+            )
+        }
     }
 }

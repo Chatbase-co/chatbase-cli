@@ -31,6 +31,9 @@ export type ApiClientOptions = {
     apiKey?: string
     timeoutMs?: number
     baseUrl?: string
+    /** --verbose: log each request/response line to stderr for diagnosis
+     * (resolved host, method, status, request id, timing). */
+    verbose?: boolean
 }
 
 export function buildUserAgent(): string {
@@ -55,7 +58,21 @@ export function dispatcher() {
     return proxyAgent
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+/** setTimeout that also rejects the moment `signal` aborts — the retry
+ * backoff must honor Ctrl-C / per-call cancels, not wait out the delay. */
+const sleep = (ms: number, signal?: AbortSignal) =>
+    new Promise<void>((resolve, reject) => {
+        if (signal?.aborted) return reject(signal.reason)
+        const timer = setTimeout(() => resolve(), ms)
+        signal?.addEventListener(
+            'abort',
+            () => {
+                clearTimeout(timer)
+                reject(signal.reason)
+            },
+            { once: true }
+        )
+    })
 
 /**
  * Node's global `Request` and the undici package's `Request` are two copies
@@ -73,10 +90,20 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 async function toPlainRequestInit(
     input: string | URL | Request,
     init: UndiciRequestInit | undefined
-): Promise<{ url: string; method: string; requestInit: UndiciRequestInit }> {
+): Promise<{
+    url: string
+    method: string
+    requestInit: UndiciRequestInit
+    signal?: AbortSignal
+}> {
     if (typeof input === 'string' || input instanceof URL) {
         const method = (init?.method ?? 'GET').toUpperCase()
-        return { url: String(input), method, requestInit: { ...init, method } }
+        return {
+            url: String(input),
+            method,
+            requestInit: { ...init, method },
+            signal: init?.signal as AbortSignal | undefined
+        }
     }
     const method = (init?.method ?? input.method ?? 'GET').toUpperCase()
     const headers: Record<string, string> = {}
@@ -85,7 +112,10 @@ async function toPlainRequestInit(
     return {
         url: input.url,
         method,
-        requestInit: { headers, body, ...init, method }
+        requestInit: { headers, body, ...init, method },
+        // Per-request cancel (e.g. Ctrl-C cancels one chat response without
+        // killing the interactive session). Always defined, inert when unused.
+        signal: input.signal
     }
 }
 
@@ -95,30 +125,46 @@ export function makeFetch(opts: ApiClientOptions) {
         input: string | URL | Request,
         init?: UndiciRequestInit
     ): Promise<UndiciResponse> => {
-        const { url, method, requestInit } = await toPlainRequestInit(
+        const { url, method, requestInit, signal } = await toPlainRequestInit(
             input,
             init
         )
         for (let attempt = 1; ; attempt++) {
+            const attemptSignal = AbortSignal.any([
+                getSigintSignal(),
+                ...(signal ? [signal] : [AbortSignal.timeout(timeoutMs)])
+            ]) as AbortSignal
+            if (opts.verbose) {
+                const retryTag = attempt > 1 ? ` (attempt ${attempt})` : ''
+                process.stderr.write(`» ${method} ${url}${retryTag}\n`)
+            }
+            const started = Date.now()
             const response = await undiciFetch(url, {
                 ...requestInit,
                 dispatcher: dispatcher(),
-                signal: AbortSignal.any([
-                    AbortSignal.timeout(timeoutMs),
-                    getSigintSignal()
-                ]) as AbortSignal
+                signal: attemptSignal
             })
+            if (opts.verbose) {
+                const requestId = response.headers.get('x-request-id')
+                process.stderr.write(
+                    `« ${response.status}${requestId ? ` (request-id: ${requestId})` : ''} in ${Date.now() - started}ms\n`
+                )
+            }
             if (response.ok || !shouldRetry(response.status, method, attempt))
                 return response
             // Draining before the retry avoids leaking the unread response
             // body's underlying connection while we sleep and loop.
             await response.body?.cancel()
+            // Same signal as the fetch above, so Ctrl-C (or the REPL's
+            // per-call cancel) interrupts the backoff wait too instead of
+            // only taking effect on the next attempt.
             await sleep(
                 computeRetryDelayMs(
                     attempt,
                     response.headers.get('x-ratelimit-reset'),
                     Date.now()
-                )
+                ),
+                attemptSignal
             )
         }
     }
@@ -151,20 +197,24 @@ export function throwIfError(response: Response, errorBody: unknown): void {
 
 export type RawFetchOptions = ApiClientOptions & {
     /** Appended as URL search params. */
-    query?: Record<string, string>
+    query?: [string, string][]
     /** JSON-stringified as the request body. Omit to send no body. */
     body?: unknown
 }
 
-/** Untyped fetch — used by `chatbase api`, auth login/status, and the pairing flow. */
+/**
+ * Untyped HTTP call — the `chatbase api` escape hatch (like `gh api` in
+ * GitHub's CLI: any method, any path, JSON in/out). Uses the same
+ * proxy/timeout/retry/SIGINT wrappers as the typed client.
+ */
 export async function rawApiFetch(
     method: string,
     path: string,
     opts: RawFetchOptions = {}
 ): Promise<{ status: number; requestId?: string; body: unknown }> {
     const url = new URL(`${resolveBaseUrl(opts.baseUrl)}${path}`)
-    for (const [key, value] of Object.entries(opts.query ?? {})) {
-        url.searchParams.set(key, value)
+    for (const [key, value] of opts.query ?? []) {
+        url.searchParams.append(key, value)
     }
     const hasBody = opts.body !== undefined
     const response = await makeFetch(opts)(url.toString(), {

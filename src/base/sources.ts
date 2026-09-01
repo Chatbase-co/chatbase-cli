@@ -1,17 +1,5 @@
-import type { Client } from 'openapi-fetch'
-import { fetchPages } from '../client/paginate.js'
-import type { paths } from '../generated/api.js'
 import type { OutputMode } from '../output/mode.js'
 import type { Column } from '../output/render.js'
-
-/** Minimal source shape shared by display commands and `sources sync`. */
-export type SourceItem = {
-    id: string
-    type: string
-    name: string
-    size: number
-    status: string
-}
 
 export const SOURCE_COLUMNS: Column[] = [
     { key: 'id', header: 'ID' },
@@ -22,14 +10,16 @@ export const SOURCE_COLUMNS: Column[] = [
 ]
 
 const READY = new Set(['trained'])
-const PENDING = new Set(['untrained', 'updated'])
+const PENDING = new Set(['untrained', 'updated', 'toBeDeleted'])
+const REMOVED = new Set(['deleted'])
 
-/** Pretty-mode glyph: ✓ trained, … untrained/updated, raw text for everything else. */
+/** Pretty-mode glyph: ✓ trained, … in progress, ✗ deleted. */
 export function renderStatus(status: string, mode: OutputMode): string {
     if (mode !== 'pretty') return status
     const key = status.toLowerCase()
     if (READY.has(key)) return `✓ ${status}`
     if (PENDING.has(key)) return `… ${status}`
+    if (REMOVED.has(key)) return `✗ ${status}`
     return status
 }
 
@@ -45,25 +35,4 @@ export function toSourceRow(
         status: renderStatus(String(s.status ?? ''), mode),
         size: String(s.size ?? '')
     }
-}
-
-/** Fetch all sources for an agent, mapped to SourceItem. Used by `sources sync`. */
-export async function listAllSources(
-    client: Client<paths>,
-    agentId: string
-): Promise<SourceItem[]> {
-    const { items } = await fetchPages<Record<string, unknown>>(
-        (query) =>
-            client.GET('/agents/{agentId}/sources', {
-                params: { path: { agentId }, query }
-            }),
-        { all: true }
-    )
-    return items.map((s) => ({
-        id: String(s.id ?? ''),
-        type: String(s.type ?? ''),
-        name: String(s.name ?? ''),
-        size: Number(s.size ?? 0),
-        status: String(s.status ?? '')
-    }))
 }

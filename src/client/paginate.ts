@@ -29,7 +29,7 @@ export type FetchPagesOptions = {
     /** When true, keeps following `pagination.cursor` until `hasMore` is
      * false. When false/omitted, fetches exactly one page — the `--all`
      * flag's off position in every list command. Callers with no `--all`
-     * flag at all (resolveAgentRef, listAllSources, pickAgent) always want
+     * flag at all (resolveAgentRef, pickAgent) always want
      * every page, so they pass `all: true` unconditionally. */
     all?: boolean
 }
@@ -62,6 +62,7 @@ export async function fetchPages<T>(
 ): Promise<{ pages: PaginatedResponse<T>[]; items: T[] }> {
     const pages: PaginatedResponse<T>[] = []
     let cursor = opts.cursor
+    let hasMore = false
     do {
         if (pages.length > 0) await sleep(PAGE_DELAY_MS)
         const { data, error, response } = await fetcher({
@@ -72,6 +73,7 @@ export async function fetchPages<T>(
         const page = data as unknown as PaginatedResponse<T>
         pages.push(page)
         cursor = page.pagination.cursor ?? undefined
-    } while (opts.all && pages.at(-1)!.pagination.hasMore && cursor)
+        hasMore = page.pagination.hasMore
+    } while (opts.all && hasMore && cursor)
     return { pages, items: pages.flatMap((p) => p.data) }
 }

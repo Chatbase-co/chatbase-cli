@@ -43,10 +43,19 @@ export default class ConfigSet extends BaseCommand {
         }
 
         if (key === 'agent') {
+            if (args.value === '') {
+                // Empty value clears — remove the key entirely instead of
+                // storing "" and printing the awkward "set to " message.
+                const { agent: _cleared, ...rest } = readUserConfig()
+                writeUserConfig(rest)
+                this.success(flags, 'agent cleared')
+                return
+            }
             const agentId = args.value ?? (await this.pickAgent(flags))
             writeUserConfig({ ...readUserConfig(), agent: agentId })
             process.stdout.write(`${agentId}\n`)
             this.success(flags, `agent set to ${agentId}`)
+            this.warnIfShadowed(flags)
             return
         }
 
@@ -74,6 +83,19 @@ export default class ConfigSet extends BaseCommand {
         throw new UsageError(
             `Unknown config key "${args.key}". Valid keys: agent, timeout.`
         )
+    }
+
+    private warnIfShadowed(flags: BaseFlags): void {
+        const yellow = this.palette(flags).yellow
+        const env = process.env.CHATBASE_AGENT_ID
+        if (env && env.length > 0) {
+            this.note(
+                flags,
+                yellow(
+                    `! CHATBASE_AGENT_ID=${env} is set and takes precedence — unset it for this value to apply.`
+                )
+            )
+        }
     }
 
     /** No value given for `config set agent`: prompt with a picker over

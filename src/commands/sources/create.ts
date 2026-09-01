@@ -1,12 +1,17 @@
 import { Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
 import { assertFileReadable } from '../../base/assert-file.js'
+import { bodyFieldFlags } from '../../base/base-command.js'
 import { readBodyData, readTextInput } from '../../base/body-input.js'
 import { throwIfError } from '../../client/client.js'
-import { uploadFileSource } from '../../client/files.js'
+import {
+    filesHostMismatchWarning,
+    uploadFileSource
+} from '../../client/files.js'
 import { resolveApiKey } from '../../config/resolve.js'
 import { UsageError } from '../../errors/errors.js'
 import type { components } from '../../generated/api.js'
+import { maybeSpinner } from '../../output/spinner.js'
 
 type CreateSourceBody = components['schemas']['CreateSourceBody']
 
@@ -56,6 +61,7 @@ export default class SourcesCreate extends AgentCommand {
     ]
     static override flags = {
         ...AgentCommand.baseFlags,
+        ...bodyFieldFlags,
         type: Flags.string({
             options: ['text', 'qna', 'link'],
             description: 'JSON source type (mutually exclusive with --file)',
@@ -64,7 +70,7 @@ export default class SourcesCreate extends AgentCommand {
         file: Flags.string({
             description:
                 'Path to a file to upload as a source (mutually exclusive with --type)',
-            exclusive: ['type']
+            exclusive: ['type', 'data', 'content', 'url', 'link-type']
         }),
         name: Flags.string({
             description: 'Source name (--type text/qna, or a file upload)'
@@ -106,15 +112,32 @@ export default class SourcesCreate extends AgentCommand {
                     'Not authenticated. Run `chatbase auth login`, or set CHATBASE_API_KEY.'
                 )
             }
-            const uploaded = await uploadFileSource({
-                agentId,
-                filePath: flags.file,
-                name: flags.name,
-                apiKey: resolved.value
-            })
-            id = uploaded.id
+            const mismatch = filesHostMismatchWarning()
+            if (mismatch) {
+                this.note(flags, this.palette(flags).yellow(mismatch))
+            }
+            const stop = maybeSpinner(flags.quiet, `Uploading ${flags.file}…`)
+            try {
+                const uploaded = await uploadFileSource({
+                    agentId,
+                    filePath: flags.file,
+                    name: flags.name,
+                    apiKey: resolved.value,
+                    verbose: flags.verbose
+                })
+                id = uploaded.id
+            } finally {
+                stop()
+            }
         } else {
             const body = await buildSourceBody(flags)
+            // The API requires a name for qna sources (unlike text, which
+            // defaults one) — fail fast locally instead of a server 400.
+            if (flags.type === 'qna' && !body.name) {
+                throw new UsageError(
+                    '--name is required for --type qna (or include "name" in --data).'
+                )
+            }
             const { data, error, response } = await client.POST(
                 '/agents/{agentId}/sources',
                 {
@@ -126,8 +149,12 @@ export default class SourcesCreate extends AgentCommand {
             id = (data as { id: string }).id
         }
 
-        this.success(flags, `Created source ${id} (untrained)`)
-        this.note(flags, `→ chatbase sources get ${id} -a ${agentId}`)
-        process.stdout.write(`${id}\n`)
+        if (flags.json) {
+            process.stdout.write(`${JSON.stringify({ id }, null, 2)}\n`)
+        } else {
+            this.success(flags, `Created source ${id} (untrained)`)
+            this.note(flags, `→ chatbase sources get ${id} -a ${agentId}`)
+            process.stdout.write(`${id}\n`)
+        }
     }
 }
