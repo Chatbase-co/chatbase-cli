@@ -75,6 +75,19 @@ export async function runChatRepl(
         rl.close()
     })
 
+    // Readline closes the moment its input ends (Ctrl-D, or a piped stream
+    // finishing), but the `for await` loop below may still be draining lines
+    // readline buffered before that. prompt() on a closed interface is a
+    // silent no-op on Node 20/22 but throws ERR_USE_AFTER_CLOSE on Node 24+,
+    // so every prompt goes through this close-aware wrapper.
+    let closed = false
+    rl.once('close', () => {
+        closed = true
+    })
+    const prompt = () => {
+        if (!closed) rl.prompt()
+    }
+
     /** Runs `fn` under a fresh per-call AbortController wired to the
      * readline-level Ctrl-C above. Swallows the resulting AbortError (and
      * any other failure) so one bad turn never crashes the whole REPL —
@@ -103,12 +116,12 @@ export async function runChatRepl(
     }
 
     info(GREETING)
-    rl.prompt()
+    prompt()
 
     for await (const rawLine of rl) {
         const line = rawLine.trim()
         if (line === '') {
-            rl.prompt()
+            prompt()
             continue
         }
 
@@ -132,7 +145,7 @@ export async function runChatRepl(
             } else {
                 info(`Unknown command: ${cmd} — type /help for a list.`)
             }
-            rl.prompt()
+            prompt()
             continue
         }
 
@@ -140,7 +153,7 @@ export async function runChatRepl(
             send(line, conversationId, signal)
         )
         if (result?.conversationId) conversationId = result.conversationId
-        rl.prompt()
+        prompt()
     }
 
     rl.close()
