@@ -32,9 +32,9 @@ export default class AgentsStyles extends AgentCommand {
 
     async run(): Promise<void> {
         const { args, flags } = await this.parse(AgentsStyles)
-        if (args.agentId && flags.agent) {
+        if (args.agentId && (flags.agent || flags['agent-name'])) {
             throw new UsageError(
-                'Pass the agent ID either positionally or via -a, not both.'
+                'Pass the agent ID either positionally or via -a/--agent-name, not both.'
             )
         }
         const stylesData = await readBodyData(flags.data, flags.field)

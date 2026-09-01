@@ -57,7 +57,7 @@ export default class Api extends BaseCommand {
             )
         }
 
-        const query = Object.fromEntries((flags.query ?? []).map(parseField))
+        const query = (flags.query ?? []).map(parseField)
         const bodyData = flags.body
             ? await readBodyData(flags.body, flags.field)
             : parseFields(flags.field)

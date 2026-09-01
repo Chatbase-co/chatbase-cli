@@ -131,9 +131,8 @@ export function makeFetch(opts: ApiClientOptions) {
         )
         for (let attempt = 1; ; attempt++) {
             const attemptSignal = AbortSignal.any([
-                AbortSignal.timeout(timeoutMs),
                 getSigintSignal(),
-                ...(signal ? [signal] : [])
+                ...(signal ? [signal] : [AbortSignal.timeout(timeoutMs)])
             ]) as AbortSignal
             if (opts.verbose) {
                 const retryTag = attempt > 1 ? ` (attempt ${attempt})` : ''
@@ -198,7 +197,7 @@ export function throwIfError(response: Response, errorBody: unknown): void {
 
 export type RawFetchOptions = ApiClientOptions & {
     /** Appended as URL search params. */
-    query?: Record<string, string>
+    query?: [string, string][]
     /** JSON-stringified as the request body. Omit to send no body. */
     body?: unknown
 }
@@ -214,8 +213,8 @@ export async function rawApiFetch(
     opts: RawFetchOptions = {}
 ): Promise<{ status: number; requestId?: string; body: unknown }> {
     const url = new URL(`${resolveBaseUrl(opts.baseUrl)}${path}`)
-    for (const [key, value] of Object.entries(opts.query ?? {})) {
-        url.searchParams.set(key, value)
+    for (const [key, value] of opts.query ?? []) {
+        url.searchParams.append(key, value)
     }
     const hasBody = opts.body !== undefined
     const response = await makeFetch(opts)(url.toString(), {

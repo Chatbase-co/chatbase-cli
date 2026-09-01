@@ -72,24 +72,31 @@ describe('config set apiKey is refused', () => {
 describe('config list names each value source', () => {
     it('names CHATBASE_AGENT_ID as the agent source', async () => {
         vi.stubEnv('CHATBASE_AGENT_ID', 'agt_env')
-        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await ConfigList.run([], process.cwd())
-        expect(err.mock.calls.join('')).toContain('CHATBASE_AGENT_ID')
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'CHATBASE_AGENT_ID'
+        )
     })
 
     it('names the timeout source', async () => {
         vi.stubEnv('CHATBASE_TIMEOUT', '9999')
-        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await ConfigList.run([], process.cwd())
-        const text = err.mock.calls.map((c) => String(c[0])).join('')
+        const text = out.mock.calls.map((c) => String(c[0])).join('')
         expect(text).toContain('CHATBASE_TIMEOUT')
         expect(text).toContain('9999')
     })
 
     it('reports <not set> when the agent has no source at all', async () => {
-        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await ConfigList.run([], process.cwd())
-        expect(err.mock.calls.join('')).toContain('<not set>')
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            '<not set>'
+        )
     })
 })
 

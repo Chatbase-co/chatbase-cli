@@ -70,7 +70,7 @@ export default class SourcesCreate extends AgentCommand {
         file: Flags.string({
             description:
                 'Path to a file to upload as a source (mutually exclusive with --type)',
-            exclusive: ['type']
+            exclusive: ['type', 'data', 'content', 'url', 'link-type']
         }),
         name: Flags.string({
             description: 'Source name (--type text/qna, or a file upload)'
@@ -149,8 +149,12 @@ export default class SourcesCreate extends AgentCommand {
             id = (data as { id: string }).id
         }
 
-        this.success(flags, `Created source ${id} (untrained)`)
-        this.note(flags, `→ chatbase sources get ${id} -a ${agentId}`)
-        process.stdout.write(`${id}\n`)
+        if (flags.json) {
+            process.stdout.write(`${JSON.stringify({ id }, null, 2)}\n`)
+        } else {
+            this.success(flags, `Created source ${id} (untrained)`)
+            this.note(flags, `→ chatbase sources get ${id} -a ${agentId}`)
+            process.stdout.write(`${id}\n`)
+        }
     }
 }

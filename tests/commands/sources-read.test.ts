@@ -226,4 +226,3 @@ describe('chatbase sources summary', () => {
         ).toEqual(summary)
     })
 })
-

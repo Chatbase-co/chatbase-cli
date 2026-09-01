@@ -58,13 +58,28 @@ export async function readBodyData(
     let base: Record<string, unknown> = {}
     if (data) {
         const raw = await resolveInput(data, '--data')
+        let parsed: unknown
         try {
-            base = JSON.parse(raw) as Record<string, unknown>
+            parsed = JSON.parse(raw)
         } catch {
             throw new UsageError(
                 '--data must be valid JSON (inline, @file, or @-).'
             )
         }
+        if (
+            typeof parsed !== 'object' ||
+            parsed === null ||
+            Array.isArray(parsed)
+        ) {
+            const extra = parseFields(fields)
+            if (Object.keys(extra).length > 0) {
+                throw new UsageError(
+                    '-f cannot be combined with a non-object --data value.'
+                )
+            }
+            return parsed as Record<string, unknown>
+        }
+        base = parsed as Record<string, unknown>
     }
     return { ...base, ...parseFields(fields) }
 }

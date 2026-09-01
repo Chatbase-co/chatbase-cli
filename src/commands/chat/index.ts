@@ -62,7 +62,7 @@ export default class Chat extends AgentCommand {
     async run(): Promise<void> {
         const { flags } = await this.parse(Chat)
 
-        if (!flags.message && process.stdin.isTTY) {
+        if (!flags.message && process.stdin.isTTY && !flags['no-input']) {
             await this.runInteractive(flags)
             return
         }

@@ -37,9 +37,12 @@ export default class AgentsCreate extends BaseCommand {
             body: body as CreateAgentBody
         })
         throwIfError(response, error)
-        // Note: POST /agents returns AgentCreatedResponse directly ({ id, pendingSteps? }), not wrapped in { data: ... }
         const id = (data as { id: string }).id
-        this.success(flags, `Created agent ${id}`)
-        process.stdout.write(`${id}\n`)
+        if (flags.json) {
+            process.stdout.write(`${JSON.stringify(data, null, 2)}\n`)
+        } else {
+            this.success(flags, `Created agent ${id}`)
+            process.stdout.write(`${id}\n`)
+        }
     }
 }

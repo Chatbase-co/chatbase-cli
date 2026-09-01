@@ -36,7 +36,7 @@ export default class SourcesUpdate extends AgentCommand {
         file: Flags.string({
             description:
                 'Path to a file to upload as a replacement (mutually exclusive with --data)',
-            exclusive: ['data']
+            exclusive: ['data', 'field']
         })
     }
 

@@ -17,15 +17,34 @@ export default class ConfigList extends BaseCommand {
         const { flags } = await this.parse(ConfigList)
 
         const agent = resolveAgent()
-        this.note(
-            flags,
-            `agent    ${agent ? agent.value : '<not set>'}  (from ${agent ? agent.source : 'default'})`
-        )
-
         const timeoutMs = resolveTimeoutMs()
-        this.note(
+
+        const rows = [
+            {
+                key: 'agent',
+                value: agent ? agent.value : '<not set>',
+                source: agent ? agent.source : 'default'
+            },
+            {
+                key: 'timeout',
+                value: `${timeoutMs}ms`,
+                source: resolveTimeoutSource()
+            }
+        ]
+
+        this.printData(
             flags,
-            `timeout  ${timeoutMs}ms  (from ${resolveTimeoutSource()})`
+            rows,
+            rows.map((r) => ({
+                key: r.key,
+                value: r.value,
+                source: r.source
+            })),
+            [
+                { key: 'key', header: 'KEY' },
+                { key: 'value', header: 'VALUE' },
+                { key: 'source', header: 'SOURCE' }
+            ]
         )
     }
 }

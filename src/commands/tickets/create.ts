@@ -58,7 +58,11 @@ export default class TicketsCreate extends AgentCommand {
         )
         throwIfError(response, error)
         const ticketNumber = (data as { ticketNumber: number }).ticketNumber
-        this.success(flags, `Created ticket ${ticketNumber}`)
-        process.stdout.write(`${ticketNumber}\n`)
+        if (flags.json) {
+            process.stdout.write(`${JSON.stringify(data, null, 2)}\n`)
+        } else {
+            this.success(flags, `Created ticket ${ticketNumber}`)
+            process.stdout.write(`${ticketNumber}\n`)
+        }
     }
 }

@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import { Flags } from '@oclif/core'
 import { AgentCommand } from '../../base/agent-command.js'
 import { fetchPages } from '../../client/paginate.js'
+import { UsageError } from '../../errors/errors.js'
 
 export default class ConversationsExport extends AgentCommand {
     static override summary =
@@ -68,7 +69,13 @@ export default class ConversationsExport extends AgentCommand {
         const json = `${JSON.stringify(raw, null, 2)}\n`
 
         if (flags.output) {
-            fs.writeFileSync(flags.output, json)
+            try {
+                fs.writeFileSync(flags.output, json)
+            } catch (e) {
+                throw new UsageError(
+                    `Cannot write to ${flags.output}: ${(e as NodeJS.ErrnoException).code ?? (e as Error).message}`
+                )
+            }
             this.success(flags, `Exported conversations to ${flags.output}`)
         } else {
             process.stdout.write(json)
