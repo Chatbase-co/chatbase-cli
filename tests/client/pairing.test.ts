@@ -18,10 +18,10 @@ afterEach(async () => {
 it('keeps polling through a transient network failure instead of aborting the login', async () => {
     // First poll: network-level failure (connection reset). Second: success.
     mock.get(BASE)
-        .intercept({ path: '/api/v2/cli/pairing/exchange', method: 'POST' })
+        .intercept({ path: '/api/cli-pairing/exchange', method: 'POST' })
         .replyWithError(new Error('socket hang up'))
     mock.get(BASE)
-        .intercept({ path: '/api/v2/cli/pairing/exchange', method: 'POST' })
+        .intercept({ path: '/api/cli-pairing/exchange', method: 'POST' })
         .reply(200, {
             api_key: 'sk-after-blip',
             workspace: { id: 'w1', name: 'Acme' }
@@ -36,7 +36,7 @@ it('keeps polling through a transient network failure instead of aborting the lo
 
 it('still gives up at the deadline when the network keeps failing', async () => {
     mock.get(BASE)
-        .intercept({ path: '/api/v2/cli/pairing/exchange', method: 'POST' })
+        .intercept({ path: '/api/cli-pairing/exchange', method: 'POST' })
         .replyWithError(new Error('socket hang up'))
         .persist()
 

@@ -135,7 +135,7 @@ describe('auth login --with-token', () => {
 describe('auth login --browser', () => {
     it('opens the browser via `cmd /c start "" <url>` on Windows, not the bare `start` executable', async () => {
         mock.get(BASE)
-            .intercept({ path: '/api/v2/cli/pairing', method: 'POST' })
+            .intercept({ path: '/api/cli-pairing/create', method: 'POST' })
             .reply(200, {
                 device_code: 'dev_1',
                 user_code: 'ABCD-1234',
@@ -144,7 +144,7 @@ describe('auth login --browser', () => {
                 interval: 1
             })
         mock.get(BASE)
-            .intercept({ path: '/api/v2/cli/pairing/exchange', method: 'POST' })
+            .intercept({ path: '/api/cli-pairing/exchange', method: 'POST' })
             .reply(200, {
                 api_key: 'sk-live-browser',
                 workspace: { id: 'w1', name: 'Acme' }
@@ -179,7 +179,7 @@ describe('auth login --browser', () => {
 describe('auth login --browser (opener failures)', () => {
     it('attaches an error listener to the browser-opener child so a missing opener binary cannot crash the login', async () => {
         mock.get(BASE)
-            .intercept({ path: '/api/v2/cli/pairing', method: 'POST' })
+            .intercept({ path: '/api/cli-pairing/create', method: 'POST' })
             .reply(200, {
                 device_code: 'dev_2',
                 user_code: 'EFGH-5678',
@@ -188,7 +188,7 @@ describe('auth login --browser (opener failures)', () => {
                 interval: 1
             })
         mock.get(BASE)
-            .intercept({ path: '/api/v2/cli/pairing/exchange', method: 'POST' })
+            .intercept({ path: '/api/cli-pairing/exchange', method: 'POST' })
             .reply(200, {
                 api_key: 'sk-live-browser-2',
                 workspace: { id: 'w1', name: 'Acme' }
