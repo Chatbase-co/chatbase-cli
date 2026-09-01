@@ -1,0 +1,30 @@
+name: CI
+on:
+    push: { branches: [main] }
+    pull_request:
+permissions:
+    contents: read
+concurrency:
+    group: ci-${{ github.ref }}
+    cancel-in-progress: true
+jobs:
+    test:
+        strategy:
+            matrix:
+                os: [ubuntu-latest, macos-latest, windows-latest]
+                node: [20, 22, 24]
+        runs-on: ${{ matrix.os }}
+        env:
+            STARTUP_BUDGET_MS: ${{ matrix.os == 'windows-latest' && '2000' || '1000' }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with: { node-version: '${{ matrix.node }}' }
+            - run: npm ci
+            - run: npm run lint
+            - run: npm run typecheck
+            - run: npm run spec:check
+            - run: npm run build
+            - run: npx oclif readme && git diff --exit-code README.md
+            - run: npm test
+            - run: node scripts/check-startup.mjs

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+oclif.manifest.json
+coverage/
+*.tsbuildinfo
+.env
+*.tgz

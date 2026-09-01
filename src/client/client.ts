@@ -1,0 +1,240 @@
+import os from 'node:os'
+import createClient, { type Client } from 'openapi-fetch'
+import {
+    EnvHttpProxyAgent,
+    getGlobalDispatcher,
+    type RequestInit as UndiciRequestInit,
+    type Response as UndiciResponse,
+    fetch as undiciFetch
+} from 'undici'
+import { resolveTimeoutMs } from '../config/resolve.js'
+import { parseErrorResponse } from '../errors/errors.js'
+import type { paths } from '../generated/api.js'
+import { VERSION } from '../version.js'
+import { computeRetryDelayMs, shouldRetry } from './retry.js'
+import { getSigintSignal } from './signals.js'
+
+export const DEFAULT_BASE_URL = 'https://www.chatbase.co/api/v2'
+
+/**
+ * Base-URL resolution: explicit option > CHATBASE_API_URL env > production.
+ * The env override exists for developing against a local API server.
+ */
+export function resolveBaseUrl(explicit?: string): string {
+    if (explicit) return explicit
+    const env = process.env.CHATBASE_API_URL
+    if (env && env.length > 0) return env
+    return DEFAULT_BASE_URL
+}
+
+export type ApiClientOptions = {
+    apiKey?: string
+    timeoutMs?: number
+    baseUrl?: string
+    /** --verbose: log each request/response line to stderr for diagnosis
+     * (resolved host, method, status, request id, timing). */
+    verbose?: boolean
+}
+
+export function buildUserAgent(): string {
+    return `chatbase-cli/${VERSION} (${os.platform()}-${os.arch()}; node/${process.versions.node})`
+}
+
+const hasProxyEnv = () =>
+    [
+        'HTTP_PROXY',
+        'HTTPS_PROXY',
+        'http_proxy',
+        'https_proxy',
+        'ALL_PROXY'
+    ].some((k) => process.env[k] && (process.env[k] as string).length > 0)
+
+let proxyAgent: EnvHttpProxyAgent | undefined
+
+export function dispatcher() {
+    // Node's fetch ignores HTTP(S)_PROXY by default; EnvHttpProxyAgent honors it.
+    if (!hasProxyEnv()) return getGlobalDispatcher()
+    proxyAgent ??= new EnvHttpProxyAgent()
+    return proxyAgent
+}
+
+/** setTimeout that also rejects the moment `signal` aborts — the retry
+ * backoff must honor Ctrl-C / per-call cancels, not wait out the delay. */
+const sleep = (ms: number, signal?: AbortSignal) =>
+    new Promise<void>((resolve, reject) => {
+        if (signal?.aborted) return reject(signal.reason)
+        const timer = setTimeout(() => resolve(), ms)
+        signal?.addEventListener(
+            'abort',
+            () => {
+                clearTimeout(timer)
+                reject(signal.reason)
+            },
+            { once: true }
+        )
+    })
+
+/**
+ * Node's global `Request` and the undici package's `Request` are two copies
+ * of the same class — and undici rejects objects made by the other copy
+ * (it stringifies them and tries to use "[object Request]" as the URL).
+ * openapi-fetch hands us Node-flavored Request objects, so we unpack them
+ * into plain values (url, method, headers, body) that can't fail any
+ * identity check. Also accepts plain URL strings (the rawApiFetch path),
+ * normalizing both shapes into one.
+ *
+ * When touching this: url, METHOD, headers, and body must ALL survive the
+ * unpacking — method was once dropped here, silently turning every request
+ * into a GET (caught by review; wire-level tests now pin it).
+ */
+async function toPlainRequestInit(
+    input: string | URL | Request,
+    init: UndiciRequestInit | undefined
+): Promise<{
+    url: string
+    method: string
+    requestInit: UndiciRequestInit
+    signal?: AbortSignal
+}> {
+    if (typeof input === 'string' || input instanceof URL) {
+        const method = (init?.method ?? 'GET').toUpperCase()
+        return {
+            url: String(input),
+            method,
+            requestInit: { ...init, method },
+            signal: init?.signal as AbortSignal | undefined
+        }
+    }
+    const method = (init?.method ?? input.method ?? 'GET').toUpperCase()
+    const headers: Record<string, string> = {}
+    for (const [key, value] of input.headers) headers[key] = value
+    const body = input.body ? Buffer.from(await input.arrayBuffer()) : undefined
+    return {
+        url: input.url,
+        method,
+        requestInit: { headers, body, ...init, method },
+        // Per-request cancel (e.g. Ctrl-C cancels one chat response without
+        // killing the interactive session). Always defined, inert when unused.
+        signal: input.signal
+    }
+}
+
+export function makeFetch(opts: ApiClientOptions) {
+    const timeoutMs = opts.timeoutMs ?? resolveTimeoutMs()
+    return async (
+        input: string | URL | Request,
+        init?: UndiciRequestInit
+    ): Promise<UndiciResponse> => {
+        const { url, method, requestInit, signal } = await toPlainRequestInit(
+            input,
+            init
+        )
+        for (let attempt = 1; ; attempt++) {
+            const attemptSignal = AbortSignal.any([
+                getSigintSignal(),
+                ...(signal ? [signal] : [AbortSignal.timeout(timeoutMs)])
+            ]) as AbortSignal
+            if (opts.verbose) {
+                const retryTag = attempt > 1 ? ` (attempt ${attempt})` : ''
+                process.stderr.write(`» ${method} ${url}${retryTag}\n`)
+            }
+            const started = Date.now()
+            const response = await undiciFetch(url, {
+                ...requestInit,
+                dispatcher: dispatcher(),
+                signal: attemptSignal
+            })
+            if (opts.verbose) {
+                const requestId = response.headers.get('x-request-id')
+                process.stderr.write(
+                    `« ${response.status}${requestId ? ` (request-id: ${requestId})` : ''} in ${Date.now() - started}ms\n`
+                )
+            }
+            if (response.ok || !shouldRetry(response.status, method, attempt))
+                return response
+            // Draining before the retry avoids leaking the unread response
+            // body's underlying connection while we sleep and loop.
+            await response.body?.cancel()
+            // Same signal as the fetch above, so Ctrl-C (or the REPL's
+            // per-call cancel) interrupts the backoff wait too instead of
+            // only taking effect on the next attempt.
+            await sleep(
+                computeRetryDelayMs(
+                    attempt,
+                    response.headers.get('x-ratelimit-reset'),
+                    Date.now()
+                ),
+                attemptSignal
+            )
+        }
+    }
+}
+
+export function createApiClient(opts: ApiClientOptions = {}): Client<paths> {
+    const client = createClient<paths>({
+        baseUrl: resolveBaseUrl(opts.baseUrl),
+        fetch: makeFetch(opts) as unknown as typeof globalThis.fetch
+    })
+    client.use({
+        onRequest({ request }) {
+            request.headers.set('User-Agent', buildUserAgent())
+            if (opts.apiKey)
+                request.headers.set('Authorization', `Bearer ${opts.apiKey}`)
+            return request
+        }
+    })
+    return client
+}
+
+export function throwIfError(response: Response, errorBody: unknown): void {
+    if (response.ok) return
+    throw parseErrorResponse(
+        response.status,
+        errorBody,
+        response.headers.get('x-request-id') ?? undefined
+    )
+}
+
+export type RawFetchOptions = ApiClientOptions & {
+    /** Appended as URL search params. */
+    query?: [string, string][]
+    /** JSON-stringified as the request body. Omit to send no body. */
+    body?: unknown
+}
+
+/**
+ * Untyped HTTP call — the `chatbase api` escape hatch (like `gh api` in
+ * GitHub's CLI: any method, any path, JSON in/out). Uses the same
+ * proxy/timeout/retry/SIGINT wrappers as the typed client.
+ */
+export async function rawApiFetch(
+    method: string,
+    path: string,
+    opts: RawFetchOptions = {}
+): Promise<{ status: number; requestId?: string; body: unknown }> {
+    const url = new URL(`${resolveBaseUrl(opts.baseUrl)}${path}`)
+    for (const [key, value] of opts.query ?? []) {
+        url.searchParams.append(key, value)
+    }
+    const hasBody = opts.body !== undefined
+    const response = await makeFetch(opts)(url.toString(), {
+        method,
+        headers: {
+            'User-Agent': buildUserAgent(),
+            ...(opts.apiKey ? { Authorization: `Bearer ${opts.apiKey}` } : {}),
+            ...(hasBody ? { 'Content-Type': 'application/json' } : {})
+        },
+        ...(hasBody ? { body: JSON.stringify(opts.body) } : {})
+    })
+    let body: unknown
+    try {
+        body = await response.json()
+    } catch {
+        body = undefined
+    }
+    return {
+        status: response.status,
+        requestId: response.headers.get('x-request-id') ?? undefined,
+        body
+    }
+}
