@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import { BaseCommand } from '../../base/base-command.js'
 import { rawApiFetch } from '../../client/client.js'
+import { pairingBaseUrl } from '../../client/pairing.js'
 import { configFile } from '../../config/paths.js'
 import { readUserConfig } from '../../config/store.js'
 
@@ -23,8 +24,9 @@ export default class AuthLogout extends BaseCommand {
 
         if (config.apiKeySource === 'pairing') {
             try {
-                const res = await rawApiFetch('DELETE', '/me/credential', {
-                    apiKey: config.apiKey
+                const res = await rawApiFetch('DELETE', '/api/cli-pairing/me', {
+                    apiKey: config.apiKey,
+                    baseUrl: pairingBaseUrl()
                 })
                 if (res.status >= 200 && res.status < 300) {
                     this.note(flags, 'CLI session revoked server-side.')

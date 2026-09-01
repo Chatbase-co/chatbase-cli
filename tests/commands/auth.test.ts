@@ -65,7 +65,7 @@ function stubPlatform(value: NodeJS.Platform): { restore: () => void } {
 describe('auth login --with-token', () => {
     it('verifies via /me and stores the key', async () => {
         mock.get(BASE)
-            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .intercept({ path: '/api/cli-pairing/me', method: 'GET' })
             .reply(200, {
                 workspace: { id: 'w1', name: 'Acme' },
                 plan: 'standard'
@@ -81,7 +81,7 @@ describe('auth login --with-token', () => {
 
     it('stores unverified when /me does not exist yet (404)', async () => {
         mock.get(BASE)
-            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .intercept({ path: '/api/cli-pairing/me', method: 'GET' })
             .reply(404, { error: { code: 'NOT_FOUND', message: 'no' } })
         stubStdinToken('sk-live-x')
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
@@ -94,7 +94,7 @@ describe('auth login --with-token', () => {
 
     it('rejects and does NOT store on 401', async () => {
         mock.get(BASE)
-            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .intercept({ path: '/api/cli-pairing/me', method: 'GET' })
             .reply(401, {
                 error: {
                     code: 'AUTH_INVALID_API_KEY',
@@ -221,7 +221,7 @@ describe('auth status with CHATBASE_API_URL override', () => {
         vi.stubEnv('CHATBASE_API_URL', 'http://localhost:3000/api/v2')
         vi.stubEnv('CHATBASE_API_KEY', 'sk-env-abcd')
         mock.get('http://localhost:3000')
-            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .intercept({ path: '/api/cli-pairing/me', method: 'GET' })
             .reply(404, {})
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await Status.run([], process.cwd())
@@ -244,7 +244,7 @@ describe('auth logout / status', () => {
         const { writeUserConfig } = await import('../../src/config/store.js')
         writeUserConfig({ apiKey: 'sk-paired', apiKeySource: 'pairing' })
         mock.get(BASE)
-            .intercept({ path: '/api/v2/me/credential', method: 'DELETE' })
+            .intercept({ path: '/api/cli-pairing/me', method: 'DELETE' })
             .reply(200, { data: { revoked: true } })
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await Logout.run([], process.cwd())
@@ -259,7 +259,7 @@ describe('auth logout / status', () => {
         const { writeUserConfig } = await import('../../src/config/store.js')
         writeUserConfig({ apiKey: 'sk-paired', apiKeySource: 'pairing' })
         mock.get(BASE)
-            .intercept({ path: '/api/v2/me/credential', method: 'DELETE' })
+            .intercept({ path: '/api/cli-pairing/me', method: 'DELETE' })
             .reply(503, {})
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await Logout.run([], process.cwd())
@@ -285,7 +285,7 @@ describe('auth logout / status', () => {
     it('status names the credential source and masks the key', async () => {
         vi.stubEnv('CHATBASE_API_KEY', 'sk-env-abcd')
         mock.get(BASE)
-            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .intercept({ path: '/api/cli-pairing/me', method: 'GET' })
             .reply(404, {})
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await Status.run([], process.cwd())
@@ -298,7 +298,7 @@ describe('auth logout / status', () => {
     it('reports an already-expired credential instead of "Expires in 0 days"', async () => {
         vi.stubEnv('CHATBASE_API_KEY', 'sk-env-abcd')
         mock.get(BASE)
-            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .intercept({ path: '/api/cli-pairing/me', method: 'GET' })
             .reply(200, {
                 workspace: { id: 'w1', name: 'Acme' },
                 plan: 'standard',
@@ -318,7 +318,7 @@ describe('auth logout / status', () => {
     it('warns instead of printing "Expires in NaN days" for an unparseable expiry', async () => {
         vi.stubEnv('CHATBASE_API_KEY', 'sk-env-abcd')
         mock.get(BASE)
-            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .intercept({ path: '/api/cli-pairing/me', method: 'GET' })
             .reply(200, {
                 workspace: { id: 'w1', name: 'Acme' },
                 plan: 'standard',
@@ -348,7 +348,7 @@ describe('auth logout / status', () => {
     it('recognizes the real expired-key error code (AUTH_EXPIRED_API_KEY)', async () => {
         vi.stubEnv('CHATBASE_API_KEY', 'sk-env-abcd')
         mock.get(BASE)
-            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .intercept({ path: '/api/cli-pairing/me', method: 'GET' })
             .reply(401, {
                 error: {
                     code: 'AUTH_EXPIRED_API_KEY',
@@ -365,7 +365,7 @@ describe('auth logout / status', () => {
     it('explains a plan-restricted 403 instead of blaming key scopes', async () => {
         vi.stubEnv('CHATBASE_API_KEY', 'sk-env-abcd')
         mock.get(BASE)
-            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .intercept({ path: '/api/cli-pairing/me', method: 'GET' })
             .reply(403, {
                 error: {
                     code: 'SUBSCRIPTION_API_RESTRICTED_PLAN',
@@ -384,7 +384,7 @@ describe('auth logout / status', () => {
         // 5xx GETs are retried once by makeFetch (src/client/retry.ts) —
         // persist() so the retried request is served too, not just the first.
         mock.get(BASE)
-            .intercept({ path: '/api/v2/me', method: 'GET' })
+            .intercept({ path: '/api/cli-pairing/me', method: 'GET' })
             .reply(503, {})
             .persist()
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)

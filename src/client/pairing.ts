@@ -5,7 +5,6 @@
  *   3. Poll POST /api/cli-pairing/exchange until approved
  *   4. Receive the minted API key + workspace info
  *
- * These endpoints are internal (not under /api/v2) and unauthenticated.
  */
 import os from 'node:os'
 import { parseErrorResponse, UsageError } from '../errors/errors.js'
@@ -21,7 +20,7 @@ type ExchangeAttempt =
     | { ok: true; status: number; body: unknown }
     | { ok: false; cause: unknown }
 
-function pairingBaseUrl(baseUrl?: string): string {
+export function pairingBaseUrl(baseUrl?: string): string {
     return new URL(resolveBaseUrl(baseUrl)).origin
 }
 

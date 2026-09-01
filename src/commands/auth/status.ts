@@ -4,6 +4,7 @@ import {
     rawApiFetch,
     resolveBaseUrl
 } from '../../client/client.js'
+import { pairingBaseUrl } from '../../client/pairing.js'
 import { resolveApiKey } from '../../config/resolve.js'
 
 type MeBody = {
@@ -39,8 +40,9 @@ export default class AuthStatus extends BaseCommand {
             resolved.value.length > 8 ? `…${resolved.value.slice(-4)}` : '…****'
         this.note(flags, `Credential: ${tail} (from ${resolved.source})`)
 
-        const res = await rawApiFetch('GET', '/me', {
-            apiKey: resolved.value
+        const res = await rawApiFetch('GET', '/api/cli-pairing/me', {
+            apiKey: resolved.value,
+            baseUrl: pairingBaseUrl()
         })
         if (res.status === 200) {
             this.renderMe(flags, res.body as MeBody)

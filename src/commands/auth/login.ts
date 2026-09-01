@@ -3,7 +3,11 @@ import { Flags } from '@oclif/core'
 import { BaseCommand } from '../../base/base-command.js'
 import { readStdinToEnd } from '../../base/body-input.js'
 import { rawApiFetch } from '../../client/client.js'
-import { pollExchange, startPairing } from '../../client/pairing.js'
+import {
+    pairingBaseUrl,
+    pollExchange,
+    startPairing
+} from '../../client/pairing.js'
 import { configFile } from '../../config/paths.js'
 import { writeUserConfig } from '../../config/store.js'
 import { parseErrorResponse, UsageError } from '../../errors/errors.js'
@@ -133,7 +137,10 @@ export default class AuthLogin extends BaseCommand {
         flags: Record<string, unknown>,
         key: string
     ): Promise<void> {
-        const res = await rawApiFetch('GET', '/me', { apiKey: key })
+        const res = await rawApiFetch('GET', '/api/cli-pairing/me', {
+            apiKey: key,
+            baseUrl: pairingBaseUrl()
+        })
         if (res.status === 200) {
             const body = res.body as {
                 workspace?: { name?: string }
