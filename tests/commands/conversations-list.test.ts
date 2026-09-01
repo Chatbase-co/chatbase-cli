@@ -13,7 +13,7 @@ const page1 = {
         {
             id: 'c_1',
             title: 'Refunds',
-            createdAt: 1785542400,
+            createdAt: 1785542400, // 2026-08-01T00:00:00.000Z
             updatedAt: 1785628800,
             userId: 'u1',
             status: 'ongoing'
@@ -33,6 +33,36 @@ const page2 = {
         }
     ],
     pagination: { hasMore: false, total: 2 }
+}
+
+// GET /agents response used by --agent-name resolution tests only.
+const agentsPage = {
+    data: [{ id: 'agt_1', name: 'Support Bot' }],
+    pagination: { cursor: null, hasMore: false, total: 1 }
+}
+
+function mockAgentsList() {
+    mock.get(BASE)
+        .intercept({ path: '/api/v2/agents', method: 'GET' })
+        .reply(200, agentsPage)
+}
+
+/** Forces stdout to report as a TTY so printData picks pretty mode. */
+function stubStdoutTTY(): { restore: () => void } {
+    const original = Object.getOwnPropertyDescriptor(process.stdout, 'isTTY')
+    Object.defineProperty(process.stdout, 'isTTY', {
+        value: true,
+        configurable: true
+    })
+    return {
+        restore: () => {
+            if (original) {
+                Object.defineProperty(process.stdout, 'isTTY', original)
+            } else {
+                delete (process.stdout as { isTTY?: boolean }).isTTY
+            }
+        }
+    }
 }
 
 beforeEach(() => {
@@ -136,7 +166,7 @@ describe('chatbase conversations list', () => {
         })
     })
 
-    it('renders pretty/table mode with aligned headers and numeric timestamps', async () => {
+    it('renders pretty/table mode with aligned headers', async () => {
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/conversations',
@@ -166,5 +196,192 @@ describe('chatbase conversations list', () => {
         await expect(
             ConversationsList.run(['--plain'], '/tmp')
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
+    })
+
+    it('-a with an ID makes no GET /agents call (no name resolution)', async () => {
+        // No mockAgentsList() — disableNetConnect means any stray GET /agents
+        // request would throw, proving -a stays ID-only.
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, page1)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run(['-a', 'agt_1', '--plain'], process.cwd())
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'c_1'
+        )
+    })
+
+    it('--agent-name resolves a name and notes the resolved id', async () => {
+        mockAgentsList()
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, page1)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run(
+            ['--agent-name', 'Support Bot', '--plain'],
+            process.cwd()
+        )
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            '→ agt_1'
+        )
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'c_1'
+        )
+    })
+
+    it('--agent-name rejects an ambiguous name with candidates', async () => {
+        mock.get(BASE)
+            .intercept({ path: '/api/v2/agents', method: 'GET' })
+            .reply(200, {
+                data: [
+                    { id: 'agt_1', name: 'Support Bot' },
+                    { id: 'agt_3', name: 'Support Bot' }
+                ],
+                pagination: { cursor: null, hasMore: false, total: 2 }
+            })
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            ConversationsList.run(
+                ['--agent-name', 'Support Bot', '--plain'],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        const stderr = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(stderr).toContain('agt_1')
+        expect(stderr).toContain('agt_3')
+    })
+
+    it('--agent-name rejects an unknown name suggesting agents list', async () => {
+        mockAgentsList()
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            ConversationsList.run(
+                ['--agent-name', 'Nope Bot', '--plain'],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'chatbase agents list'
+        )
+    })
+
+    it('CHATBASE_AGENT_ID is used as-is: no GET /agents lookup happens', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', 'agt_1')
+        // No mockAgentsList() call: MockAgent.disableNetConnect() means any
+        // stray GET /agents request would throw and fail this test, which
+        // is exactly how we assert only the conversations endpoint was hit.
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, page1)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run(['--plain'], process.cwd())
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'c_1'
+        )
+    })
+})
+
+describe('chatbase conversations list — human-mode niceties', () => {
+    it('formats epoch timestamps as ISO in pretty mode (plain keeps epoch)', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', 'agt_1')
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, {
+                data: page1.data,
+                pagination: { cursor: null, hasMore: false, total: 1 }
+            })
+        const tty = stubStdoutTTY()
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        try {
+            await ConversationsList.run([], process.cwd())
+        } finally {
+            tty.restore()
+        }
+        const printed = out.mock.calls.map((c) => String(c[0])).join('')
+        expect(printed).toContain('2026-08-01T00:00:00')
+        expect(printed).not.toContain('1785542400')
+    })
+
+    // The v2 API serves this endpoint from API-created conversations only, so
+    // an agent with hundreds of widget chats legitimately lists 0 rows. Saying
+    // so is the difference between "the CLI is broken" and "wrong endpoint".
+    it('always notes the API-source-only scope and points at export', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', 'agt_1')
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, {
+                data: page1.data,
+                pagination: { cursor: null, hasMore: false, total: 1 }
+            })
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run(['--plain'], process.cwd())
+        const stderr = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(stderr).toContain('API-created conversations')
+        expect(stderr).toContain('conversations export')
+        // Never on stdout — --plain output must stay parseable.
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).not.toContain(
+            'API-created'
+        )
+    })
+
+    it('--quiet suppresses the scope note', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', 'agt_1')
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, {
+                data: page1.data,
+                pagination: { cursor: null, hasMore: false, total: 1 }
+            })
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run(['--plain', '--quiet'], process.cwd())
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).not.toContain(
+            'API-created'
+        )
+    })
+
+    it('notes "No results." on stderr for an empty list instead of pure silence', async () => {
+        vi.stubEnv('CHATBASE_AGENT_ID', 'agt_1')
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET'
+            })
+            .reply(200, {
+                data: [],
+                pagination: { cursor: null, hasMore: false, total: 0 }
+            })
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run([], process.cwd())
+        expect(out.mock.calls.length).toBe(0)
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'No results'
+        )
     })
 })

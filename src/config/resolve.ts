@@ -28,3 +28,12 @@ export function resolveTimeoutMs(): number {
     if (env && /^\d+$/.test(env)) return Number(env)
     return readUserConfig().timeoutMs ?? 30000
 }
+
+/** Where resolveTimeoutMs()'s value came from — split out for `config get/list`,
+ * which need to name the source without duplicating the precedence logic above. */
+export function resolveTimeoutSource(): string {
+    const env = process.env.CHATBASE_TIMEOUT
+    if (env && /^\d+$/.test(env)) return 'CHATBASE_TIMEOUT'
+    if (readUserConfig().timeoutMs !== undefined) return 'user config'
+    return 'default'
+}

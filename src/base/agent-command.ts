@@ -1,7 +1,10 @@
 import { Flags } from '@oclif/core'
+import type { Client } from 'openapi-fetch'
 import { resolveAgent } from '../config/resolve.js'
 import { UsageError } from '../errors/errors.js'
-import { BaseCommand } from './base-command.js'
+import type { paths } from '../generated/api.js'
+import { resolveAgentRef } from './agent-ref.js'
+import { BaseCommand, type BaseFlags } from './base-command.js'
 
 export abstract class AgentCommand extends BaseCommand {
     static override baseFlags = {
@@ -9,16 +12,45 @@ export abstract class AgentCommand extends BaseCommand {
         agent: Flags.string({
             char: 'a',
             description: 'Agent ID (or set CHATBASE_AGENT_ID)'
+        }),
+        'agent-name': Flags.string({
+            description: 'Agent display name (looked up to an ID)',
+            exclusive: ['agent']
         })
     }
 
-    protected agentId(flags: { agent?: string }): string {
+    /**
+     * -a is always an ID (no API call). --agent-name resolves via the
+     * agents list. The two flags are mutually exclusive.
+     */
+    protected async agentId(
+        flags: BaseFlags & { agent?: string; 'agent-name'?: string },
+        client: Client<paths>
+    ): Promise<string> {
+        if (flags['agent-name']) {
+            const id = await resolveAgentRef(client, flags['agent-name'])
+            this.note(flags, `→ ${id}`)
+            return id
+        }
         const resolved = resolveAgent(flags.agent)
         if (!resolved) {
             throw new UsageError(
-                'No agent specified. Pass -a <agentId> or set CHATBASE_AGENT_ID.'
+                'No agent specified. Pass -a <agentId>, --agent-name <name>, or set CHATBASE_AGENT_ID.'
             )
         }
         return resolved.value
+    }
+
+    /** The "resume with: ..." trailer both chat commands print after a turn. */
+    protected printConversationHint(
+        flags: { quiet?: boolean },
+        agentId: string,
+        conversationId?: string
+    ): void {
+        if (!conversationId) return
+        this.note(
+            flags,
+            `Conversation: ${conversationId} — resume with: chatbase chat -a ${agentId} --conversation ${conversationId} --resume`
+        )
     }
 }

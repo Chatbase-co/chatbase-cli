@@ -57,12 +57,6 @@ export type ClassifiedError =
     | { kind: 'network'; code?: string }
     | { kind: 'unexpected'; error: unknown }
 
-/**
- * Sorts a caught error into how BaseCommand#catch should present it. Kept
- * separate from catch() so the classification logic — which error types get
- * which exit code and message shape — can be unit-tested without going
- * through oclif's Command lifecycle.
- */
 export function classifyError(err: unknown): ClassifiedError {
     if (err instanceof UsageError) return { kind: 'usage', error: err }
     if (err instanceof ApiError) return { kind: 'api', error: err }
@@ -77,13 +71,24 @@ export function classifyError(err: unknown): ClassifiedError {
     return { kind: 'unexpected', error: err }
 }
 
-type BaseFlags = {
+export type BaseFlags = {
     json?: boolean
     plain?: boolean
     quiet?: boolean
     verbose?: boolean
     'no-input'?: boolean
     'no-color'?: boolean
+}
+
+/** -f key=value body fields — spread into the flags of commands that send a
+ * JSON request body (not part of baseFlags: advertising -f on body-less
+ * commands like `health` was just noise in --help). */
+export const bodyFieldFlags = {
+    field: Flags.string({
+        char: 'f',
+        multiple: true,
+        description: 'Set a body field: -f key=value (repeatable)'
+    })
 }
 
 export abstract class BaseCommand extends Command {
@@ -139,28 +144,51 @@ export abstract class BaseCommand extends Command {
         const mode = this.mode(flags)
         if (mode === 'json') {
             process.stdout.write(`${JSON.stringify(raw, null, 2)}\n`)
-        } else if (mode === 'plain') {
-            if (rows.length > 0)
-                process.stdout.write(`${renderPlain(rows, columns)}\n`)
+            return
+        }
+        if (rows.length === 0) {
+            this.note(flags, 'No results.')
+            return
+        }
+        if (mode === 'plain') {
+            process.stdout.write(`${renderPlain(rows, columns)}\n`)
         } else {
             process.stdout.write(`${renderTable(rows, columns)}\n`)
         }
     }
 
-    protected apiClient(_flags: BaseFlags): Client<paths> {
+    protected printDetail(
+        flags: BaseFlags,
+        raw: unknown,
+        row: Record<string, string>,
+        columns: Column[],
+        detail: Array<[string, string]>
+    ): void {
+        if (this.mode(flags) !== 'pretty') {
+            this.printData(flags, raw, [row], columns)
+            return
+        }
+        const shown = detail.filter(([, value]) => value !== '')
+        const width = Math.max(...shown.map(([label]) => label.length))
+        process.stdout.write(
+            `${shown.map(([label, value]) => `${label.padEnd(width + 2)}${value}`).join('\n')}\n`
+        )
+    }
+
+    protected apiClient(flags: BaseFlags): Client<paths> {
         const resolved = resolveApiKey()
         if (!resolved && this.requireAuth) {
             throw new UsageError(
                 'Not authenticated. Run `chatbase auth login`, or set CHATBASE_API_KEY.'
             )
         }
-        return createApiClient({ apiKey: resolved?.value })
+        return createApiClient({
+            apiKey: resolved?.value,
+            verbose: flags.verbose
+        })
     }
 
     override async catch(err: unknown): Promise<never> {
-        // catch() runs before flags are parsed (or parsing itself is what
-        // failed), so there's no `flags` object yet — sniff argv directly,
-        // same trick already used for --json below.
         const flags = {
             'no-color': process.argv.includes('--no-color')
         } as BaseFlags
@@ -172,8 +200,10 @@ export abstract class BaseCommand extends Command {
         }
         if (classified.kind === 'api') {
             if (process.argv.includes('--json')) {
+                const { code, message, details, requestId, status } =
+                    classified.error
                 process.stderr.write(
-                    `${JSON.stringify({ error: { code: classified.error.code, message: classified.error.message, details: classified.error.details } }, null, 2)}\n`
+                    `${JSON.stringify({ error: { code, message, details }, requestId, status }, null, 2)}\n`
                 )
             } else {
                 process.stderr.write(
@@ -183,20 +213,10 @@ export abstract class BaseCommand extends Command {
             this.exit(1)
         }
         if (classified.kind === 'cli') {
-            // An oclif parser/validation error (unknown flag, bad value,
-            // etc). Let oclif's own handling print and exit — it already
-            // knows the right exit code (usage errors are 2) and message;
-            // treating it as "unexpected" would be misleading and would
-            // send the user to file a bug report for their own typo.
             await super.catch(classified.error)
-            // super.catch() always throws when err.message is set (true for
-            // every CLIError), so this is unreachable in practice — kept as
-            // a defensive fallback that still honors the error's exit code.
             this.exit(classified.error.oclif?.exit ?? 2)
         }
         if (classified.kind === 'interrupted') {
-            // installSigintHandler() already printed "Interrupted" — say
-            // nothing further, just exit 130 as the signal convention expects.
             this.exit(130)
         }
         if (classified.kind === 'timeout') {
@@ -214,6 +234,21 @@ export abstract class BaseCommand extends Command {
                 base === DEFAULT_BASE_URL
                     ? '  Check your internet connection and retry.\n'
                     : '  CHATBASE_API_URL is overriding the API base — check that value first.\n'
+            )
+            this.exit(1)
+        }
+        // Server returned HTML instead of JSON — usually a wrong base URL
+        // hitting a web page instead of the API.
+        const msg = (err as Error)?.message ?? ''
+        if (
+            err instanceof SyntaxError &&
+            (msg.includes('<!DOCTYPE') || msg.includes('is not valid JSON'))
+        ) {
+            const base = resolveBaseUrl()
+            process.stderr.write(
+                `✗ The API returned an unexpected response.\n` +
+                    `  Current base: ${base}\n` +
+                    `  Check that CHATBASE_API_URL is correct and the endpoint exists on this host.\n`
             )
             this.exit(1)
         }
