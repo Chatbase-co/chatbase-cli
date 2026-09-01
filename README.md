@@ -679,18 +679,19 @@ _See code: [src/commands/config/set.ts](https://github.com/Chatbase-co/chatbase-
 
 ## `chatbase conversations export`
 
-Export conversations with full message history
+Export conversations from every source, with full message history
 
 ```
 USAGE
   $ chatbase conversations export [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
-    <value>] [--cursor <value>] [--limit <value>] [-o <value>]
+    <value>] [--cursor <value>] [--limit <value>] [--all] [-o <value>]
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID / chatbase.json)
   -o, --output=<value>      Write export JSON to a file instead of stdout
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name — resolves to an ID via GET /agents
+      --all                 Fetch every page
       --cursor=<value>      Opaque cursor from a previous response
       --limit=<value>       Items per page (1-20, default 20)
       --no-color            Disable colored output
@@ -702,12 +703,20 @@ OUTPUT FLAGS
   --plain  Tab-separated output for scripts
 
 DESCRIPTION
-  Export conversations with full message history
+  Export conversations from every source, with full message history
+
+  Export conversations with full message history, newest first.
+
+  This is the only endpoint that returns conversations from every source — the chat bubble and external integrations
+  (Slack, WhatsApp, Instagram, Messenger, and the like) as well as API-created ones. Prefer it over `conversations list`
+  whenever you need real traffic rather than just programmatically created conversations. Each item embeds its own
+  `messages` array, so no follow-up `conversations get` or `messages list` call is needed (and neither works for
+  bubble/integration conversations).
 
 EXAMPLES
   $ chatbase conversations export -a agt_123
 
-  $ chatbase conversations export -a agt_123 -o export.json
+  $ chatbase conversations export -a agt_123 --all -o export.json
 ```
 
 _See code: [src/commands/conversations/export.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/conversations/export.ts)_
@@ -750,7 +759,7 @@ _See code: [src/commands/conversations/get.ts](https://github.com/Chatbase-co/ch
 
 ## `chatbase conversations list`
 
-List conversations for an agent
+List an agent’s API-created conversations
 
 ```
 USAGE
@@ -773,7 +782,15 @@ OUTPUT FLAGS
   --plain  Tab-separated output for scripts
 
 DESCRIPTION
-  List conversations for an agent
+  List an agent’s API-created conversations
+
+  List conversations for an agent, newest first.
+
+  Scope: the API v2 list endpoint returns only conversations created programmatically through the API. Conversations
+  from the chat bubble and external integrations (Slack, WhatsApp, Instagram, Messenger, and the like) are not
+  accessible here and are not counted in `total`. Use `chatbase conversations export` to read conversations from every
+  source — it also embeds full message history, which `conversations get` and `messages list` cannot retrieve for those
+  conversations.
 
 EXAMPLES
   $ chatbase conversations list -a agt_123
@@ -1216,8 +1233,6 @@ EXAMPLES
 
   $ chatbase sources sync ./docs --force
 ```
-
-_See code: [src/commands/sources/sync.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/sources/sync.ts)_
 
 ## `chatbase sources update SOURCEID`
 
