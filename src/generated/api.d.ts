@@ -15,36 +15,7 @@ export interface paths {
          * Health check
          * @description Returns the API health status. No authentication required.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description API is healthy */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "status": "ok",
-                         *       "timestamp": 1770681600
-                         *     }
-                         */
-                        "application/json": {
-                            /** @enum {string} */
-                            status: "ok";
-                            timestamp: components["schemas"]["UnixTimestamp"];
-                        };
-                    };
-                };
-            };
-        };
+        get: operations["getHealth"];
         put?: never;
         post?: never;
         delete?: never;
@@ -64,264 +35,21 @@ export interface paths {
          * List agents
          * @description Returns a paginated list of all agents for the authenticated account.
          */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description Opaque cursor from a previous response to fetch the next page */
-                    cursor?: string;
-                    /** @description Number of items per page (1 to 100, default 20) */
-                    limit?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Paginated list of agents */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ListAgentsResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["listAgents"];
         put?: never;
         /**
          * Create agent
-         * @description Creates a new agent. If `url` is provided, a link source is created from that URL and training is queued automatically — this may take several seconds.
+         * @description Creates a new agent. If `url` is provided, a link source is created from that URL and training is queued automatically.
+         *
+         *     The agent is always created even if source setup or training fails — `id` is always returned. Check `pendingSteps` in the response to see which steps need to be retried:
+         *     - `ADD_SOURCE` — the URL could not be added as a source. Add sources manually via the Sources API.
+         *     - `TRAIN_AGENT` — training could not be started. Trigger it manually via `POST /agents/{agentId}/train`.
+         *
+         *     When `pendingSteps` is absent, all steps succeeded.
+         *
+         *     Subject to plan agent limits — returns `AGENT_LIMIT_REACHED` (403) when the account has reached its maximum number of agents.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["CreateAgentBody"];
-                };
-            };
-            responses: {
-                /** @description Agent created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["AgentCreatedResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["createAgent"];
         delete?: never;
         options?: never;
         head?: never;
@@ -339,411 +67,18 @@ export interface paths {
          * Get agent
          * @description Returns a single agent by ID.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Agent details */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Agent"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["getAgent"];
         /**
          * Update agent
          * @description Partially updates an agent. Only provided fields are changed.
          */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["UpdateAgentBody"];
-                };
-            };
-            responses: {
-                /** @description Agent updated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        put: operations["updateAgent"];
         post?: never;
         /**
          * Delete agent
          * @description Permanently deletes an agent and all its sources. Also disconnects any active integrations (Slack, WhatsApp, etc.). This action is irreversible.
          */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Agent deleted */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        delete: operations["deleteAgent"];
         options?: never;
         head?: never;
         patch?: never;
@@ -761,152 +96,7 @@ export interface paths {
          * Update agent styles
          * @description Updates the visual styles for an agent.
          */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["UpdateAgentStylesBody"];
-                };
-            };
-            responses: {
-                /** @description Styles updated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        put: operations["updateAgentStyles"];
         post?: never;
         delete?: never;
         options?: never;
@@ -924,171 +114,13 @@ export interface paths {
         get?: never;
         /**
          * Toggle auto-retrain
-         * @description Enables or disables automatic retraining. When enabled, the agent automatically retrains every 7 days and checks for the latest updates.
+         * @description Enables or disables automatic retraining. When enabled, the agent retrains every 7 days to reflect any source changes.
+         *
+         *     Requirements:
+         *     - The agent must have been trained at least once — returns `AGENT_NOT_TRAINED` (409) otherwise.
+         *     - Requires the Standard plan or higher — returns `PLAN_FEATURE_NOT_AVAILABLE` (403) on unsupported plans.
          */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["UpdateAgentAutoRetrainBody"];
-                };
-            };
-            responses: {
-                /** @description Auto-retrain setting updated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Auto-retrain requires the agent to have completed at least one training run. */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_TRAINED",
-                         *         "message": "Agent has not been trained yet. Train the agent before enabling auto-retrain."
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        put: operations["updateAgentAutoRetrain"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1108,132 +140,12 @@ export interface paths {
         /**
          * Clone agent
          * @description Creates a full deep-clone of an agent, including all its sources (excluding Notion). Returns the new agent ID.
+         *
+         *     Same response shape as Create Agent — `pendingSteps` indicates if training could not start automatically. The clone is a new, independent agent; changes to the original do not affect it.
+         *
+         *     Subject to plan agent limits — returns `AGENT_LIMIT_REACHED` (403) when the account has reached its maximum number of agents.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Agent cloned — returns the new agent ID */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["AgentCreatedResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["cloneAgent"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1253,148 +165,7 @@ export interface paths {
          * Train agent
          * @description Queues a training job for the agent. Training is asynchronous — use GET /agents/{agentId} to poll `status` for completion.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Training job queued */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description A training run is already in progress for this agent. Wait for it to complete before starting another. */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_ALREADY_TRAINING",
-                         *         "message": "Agent is already training, please wait for it to finish"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["trainAgent"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1414,172 +185,7 @@ export interface paths {
          * Chat with an agent
          * @description Send a message to an agent and receive a response. Supports streaming responses when `stream: true` is set in the request body.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ChatRequest"];
-                };
-            };
-            responses: {
-                /** @description Successful response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/event-stream": components["schemas"]["StreamFinishMetadata"];
-                        "application/json": {
-                            data: components["schemas"]["ChatResponse"];
-                        };
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description The account's message credit balance is zero. Upgrade the plan or wait for credits to reset at the next billing cycle. */
-                402: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "CHAT_CREDITS_EXHAUSTED",
-                         *         "message": "Message limit reached"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["chatWithAgent"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1599,174 +205,7 @@ export interface paths {
          * Retry a message
          * @description Retry generating an assistant response for a given message. Truncates the conversation at the target message, then re-sends the preceding user message through the chat service.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The conversation ID */
-                    conversationId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["RetryRequest"];
-                };
-            };
-            responses: {
-                /** @description Successful response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/event-stream": string;
-                        "application/json": {
-                            data: components["schemas"]["ChatResponse"];
-                        };
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description The account's message credit balance is zero. Upgrade the plan or wait for credits to reset at the next billing cycle. */
-                402: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "CHAT_CREDITS_EXHAUSTED",
-                         *         "message": "Message limit reached"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description The provided `messageId` does not exist in the conversation. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "CHAT_RETRY_MESSAGE_NOT_FOUND",
-                         *         "message": "Message not found in conversation"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["retryMessage"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1782,138 +221,9 @@ export interface paths {
         };
         /**
          * List conversations
-         * @description List conversations for an agent, ordered by createdAt date. Supports cursor-based pagination.
+         * @description List conversations for an agent, ordered by createdAt date. Supports cursor-based pagination. Pass `startDate` and/or `endDate` to restrict the results to a createdAt window.
          */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description Opaque cursor from a previous response to fetch the next page */
-                    cursor?: string;
-                    /** @description Number of items per page (1 to 100, default 20) */
-                    limit?: number;
-                };
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Paginated list of conversations */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ListConversationsResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["listConversations"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1931,140 +241,9 @@ export interface paths {
         };
         /**
          * Export conversations
-         * @description Export all conversations with full message history for an agent. Includes conversations from all sources. Tool results are sanitized to remove internal data. Supports cursor-based pagination. Pass `conversationId` to fetch a single conversation from any source (widget, API, WhatsApp, etc.).
+         * @description Export all conversations with full message history for an agent. Includes conversations from all sources. Tool results are sanitized to remove internal data. Supports cursor-based pagination. Pass `conversationId` to fetch a single conversation from any source (widget, API, WhatsApp, etc.). Pass `include=summary` to omit message bodies for a cheaper triage pass, `source` to restrict to one or more conversation sources, and `startDate` / `endDate` to restrict to a createdAt window.
          */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description Opaque cursor from a previous response to fetch the next page */
-                    cursor?: string;
-                    /** @description Number of items per page (1–20, default 20) */
-                    limit?: number;
-                    /** @description Return only the conversation with this ID. Use this to fetch a single conversation from any source (widget, API, WhatsApp, etc.). */
-                    conversationId?: string;
-                };
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Paginated list of conversations with full message history */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ExportConversationsResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["exportConversations"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2084,133 +263,7 @@ export interface paths {
          * Get a conversation
          * @description Get conversation metadata and its most recent messages. The pagination cursor can be used with the list messages endpoint to fetch older messages. Only returns conversations created through the API. To fetch a conversation from any source (widget, WhatsApp, etc.), use GET /agents/{agentId}/conversations/export?conversationId={conversationId} instead.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The conversation ID */
-                    conversationId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Conversation metadata with recent messages */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["GetConversationResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No resource matches the provided ID, or it has been deleted. Verify the resource ID in the request path. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RESOURCE_NOT_FOUND",
-                         *         "message": "The requested item could not be found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["getConversation"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2230,155 +283,7 @@ export interface paths {
          * List conversation messages
          * @description List all messages in a conversation with cursor-based pagination. Messages are returned in chronological order within each page, paginating backward from newest. The cursor from the get-conversation endpoint works here.
          */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description Opaque cursor from a previous response to fetch the next page */
-                    cursor?: string;
-                    /** @description Number of items per page (1 to 100, default 20) */
-                    limit?: number;
-                };
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The conversation ID */
-                    conversationId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Paginated list of messages */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ListMessagesResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No resource matches the provided ID, or it has been deleted. Verify the resource ID in the request path. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RESOURCE_NOT_FOUND",
-                         *         "message": "The requested item could not be found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["listConversationMessages"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2398,138 +303,7 @@ export interface paths {
          * List conversations for a user
          * @description List conversations for a specific user under an agent, ordered by last activity. Supports cursor-based pagination.
          */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description Opaque cursor from a previous response to fetch the next page */
-                    cursor?: string;
-                    /** @description Number of items per page (1 to 100, default 20) */
-                    limit?: number;
-                };
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The user ID (URL-safe characters only: letters, digits, hyphens, underscores, dots) */
-                    userId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Paginated list of user conversations */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ListUserConversationsResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["listUserConversations"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2555,173 +329,7 @@ export interface paths {
          * Update message feedback
          * @description Set or clear feedback on an assistant message. Use "positive" or "negative" to set feedback, or null to remove existing feedback.
          */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The conversation ID */
-                    conversationId: string;
-                    /** @description The message ID */
-                    messageId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["UpdateMessageFeedbackRequest"];
-                };
-            };
-            responses: {
-                /** @description Updated message with feedback */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["UpdateMessageFeedbackResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No message matches the provided ID in this conversation. Verify the message ID. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RESOURCE_MESSAGE_NOT_FOUND",
-                         *         "message": "The specified message could not be found in this conversation"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description The specified message is not an assistant message. Metadata updates are only supported on assistant text messages. */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RESOURCE_MESSAGE_NOT_ASSISTANT",
-                         *         "message": "Only assistant messages support metadata updates"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        patch: operations["updateMessageFeedback"];
         trace?: never;
     };
     "/agents/{agentId}/conversations/{conversationId}/tool-result": {
@@ -2737,154 +345,7 @@ export interface paths {
          * Submit a tool result
          * @description Submit the result of a client-side tool call. Use the toolCallId from the tool-call part in the chat response to identify the tool call.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The conversation ID */
-                    conversationId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["SubmitToolResultRequest"];
-                };
-            };
-            responses: {
-                /** @description Tool result submitted successfully */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SubmitToolResultResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No pending tool call matches the provided `toolCallId`. It may have expired or already been resolved. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RESOURCE_TOOL_CALL_NOT_FOUND",
-                         *         "message": "Tool call not found or expired"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["submitToolResult"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2902,114 +363,7 @@ export interface paths {
          * Get sources summary
          * @description Returns aggregated counts and sizes for each source type, plus a flag if the chatbot knowledge base requires a retrain to reflect any changes
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Sources summary by type */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SourcesSummaryResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["getSourcesSummary"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3029,140 +383,7 @@ export interface paths {
          * List sources
          * @description Returns a paginated list of sources for an agent. Ticket sources are excluded. For link sources only individual or sitemap/crawl parent links are returned with aggregated children metadata.
          */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description Opaque cursor from a previous response to fetch the next page */
-                    cursor?: string;
-                    /** @description Number of items per page (1 to 100, default 20) */
-                    limit?: number;
-                    /** @description Comma-separated source types to filter by. Allowed values: link, file, qna, notionPage, text */
-                    type?: string;
-                    /** @description Partial (case-insensitive) name match */
-                    name?: string;
-                };
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Paginated list of sources */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ListSourcesResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["listSources"];
         put?: never;
         /**
          * Create source
@@ -3170,169 +391,7 @@ export interface paths {
          *
          *     **Q&A request body limit:** The total request body must not exceed 4.5 MB for Q&A sources.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["CreateSourceBody"];
-                };
-            };
-            responses: {
-                /** @description Source created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SourceListItem"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description A parent link with this URL and link type already exists for this agent. */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SOURCE_DUPLICATE",
-                         *         "message": "A source with this URL and type already exists"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Adding or updating this source would exceed the storage limit for your plan. Remove existing sources or upgrade your plan. */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SOURCE_SIZE_LIMIT_EXCEEDED",
-                         *         "message": "Chatbot storage limit exceeded"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["createSource"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3350,470 +409,20 @@ export interface paths {
          * Get source
          * @description Returns a single source by ID.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The source ID */
-                    sourceId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Source details */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SourceListItem"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["getSource"];
         /**
          * Update source
-         * @description Updates an existing source. Accepts text, qna, and link sources.File sources require a dedicated endpoint. Link URL is immutable — to change it, delete and recreate the source. Ticket and Notion sources are not accepted.
+         * @description Updates an existing source. Accepts text, qna, and link sources. File sources require a dedicated endpoint. Link URL is immutable — to change it, delete and recreate the source. Ticket and Notion sources are not accepted.
          *
          *     **Q&A request body limit:** The total request body must not exceed 4.5 MB for Q&A sources.
          */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The source ID */
-                    sourceId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["UpdateSourceBody"];
-                };
-            };
-            responses: {
-                /** @description Updated source */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SourceListItem"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Restore the source before making changes to it. */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SOURCE_PENDING_DELETION",
-                         *         "message": "Source is pending deletion and cannot be edited"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Adding or updating this source would exceed the storage limit for your plan. Remove existing sources or upgrade your plan. */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SOURCE_SIZE_LIMIT_EXCEEDED",
-                         *         "message": "Chatbot storage limit exceeded"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        put: operations["updateSource"];
         post?: never;
         /**
          * Delete source
          * @description Marks a source for deletion. Returns the source in its final state.
          */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The source ID */
-                    sourceId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Source in its final state after marking for deletion */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["DeletedSourceListItem"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description This source is already marked for deletion. Call the restore endpoint to undo the pending deletion first. */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SOURCE_ALREADY_PENDING_DELETION",
-                         *         "message": "Source is already pending deletion"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        delete: operations["deleteSource"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3832,167 +441,7 @@ export interface paths {
          * Restore source
          * @description Restores a source that is pending deletion back to its previous active state.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The source ID */
-                    sourceId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Source restored to its previous active state */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SourceListItem"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Only sources with status to_be_deleted can be restored. */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SOURCE_NOT_RESTORABLE",
-                         *         "message": "Source is not pending deletion"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Restoring this link would exceed the maximum number of crawl and sitemap links allowed per agent. */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SOURCE_LINK_LIMIT_EXCEEDED",
-                         *         "message": "Crawl/sitemap link limit reached"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["restoreSource"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4010,114 +459,7 @@ export interface paths {
          * List WhatsApp templates
          * @description Lists the approved WhatsApp templates available to the agent, across all of its connected WhatsApp Business Accounts. Each template's `variables` object is the shape a send request must provide. A template can only be sent from a number on its own Business Account, so pair its `wabaId` with a matching entry in `senders` to pick the `from` value. Check `complete` before treating the list as exhaustive: it is `false` when one of the agent’s Business Accounts could not be read.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description The available templates */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ListWhatsAppTemplatesResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description The agent exists but has no WhatsApp phone number connected. Connect a number from the deploy page before calling WhatsApp endpoints. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "WHATSAPP_NOT_CONNECTED",
-                         *         "message": "WhatsApp is not connected for this agent"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["listWhatsAppTemplates"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4139,146 +481,7 @@ export interface paths {
          * Send a WhatsApp template message
          * @description Sends an approved WhatsApp template to a recipient from one of the agent's connected phone numbers. Recipients are identified by phone number only — no user ID is required. A Chatbase user is resolved or created from the `to` number automatically, and their reply flows through the agent's regular WhatsApp pipeline. The message is also appended to that conversation, unless a human has taken it over or it has ended — see `conversationId` in the response.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["SendWhatsAppTemplateBody"];
-                };
-            };
-            responses: {
-                /** @description The message was accepted by WhatsApp */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SendWhatsAppTemplateResponse"];
-                    };
-                };
-                /** @description Invalid request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description The agent exists but has no WhatsApp phone number connected. Connect a number from the deploy page before calling WhatsApp endpoints. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "WHATSAPP_NOT_CONNECTED",
-                         *         "message": "WhatsApp is not connected for this agent"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Resource not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Cannot send in the current state */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Unprocessable message */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Upstream WhatsApp API failure */
-                502: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["sendWhatsAppTemplateMessage"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4296,131 +499,7 @@ export interface paths {
          * List ticket statuses
          * @description Returns the active (non-archived) ticket statuses configured for an agent, ordered by category then position. Each category has exactly one default status.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of ticket statuses */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["TicketStatusList"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["listTicketStatuses"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4440,131 +519,7 @@ export interface paths {
          * List teams
          * @description Returns the teams configured for an agent, ordered by creation date. Exactly one team is marked as the default for the agent.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of teams */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["TeamListResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["listHelpdeskTeams"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4584,322 +539,13 @@ export interface paths {
          * List tickets
          * @description Returns tickets for an agent, sorted by `updatedAt` descending by default. Supports filtering and cursor-based pagination. Filters combine with AND across parameters.
          */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description Opaque cursor from a previous response to fetch the next page */
-                    cursor?: string;
-                    /** @description Number of items per page (1 to 100, default 20) */
-                    limit?: number;
-                    /** @description Comma-separated status categories (is-any-of). Categories: new, on_you, on_customer, on_hold, closed, cancelled. */
-                    status?: string;
-                    /** @description Comma-separated channels (is-any-of). */
-                    channel?: string;
-                    /** @description Filter by assigned agent user id. Pass `none` for unassigned tickets. */
-                    assigneeId?: "none" | string;
-                    /** @description Filter by team id. Pass `none` for tickets with no team. */
-                    teamId?: "none" | string;
-                    /** @description Only tickets created at or after this ISO 8601 timestamp. */
-                    createdAfter?: string;
-                    /** @description Only tickets created at or before this ISO 8601 timestamp. */
-                    createdBefore?: string;
-                    /** @description Sort field. `updatedAt` and `lastMessageAt` fall back to `createdAt` when unset. Sorting by a mutable field means a page window is not a snapshot. Pollers should use `sortBy=updatedAt&order=asc` with a high-water mark. */
-                    sortBy?: "createdAt" | "updatedAt" | "lastMessageAt";
-                    /** @description Sort direction. Defaults to `desc`, newest first. A cursor is only valid for the `sortBy`/`order` it was issued with; changing either mid-walk is a 400. */
-                    order?: "asc" | "desc";
-                    /** @description When `true`, the response includes `pagination.total` (costs an extra count query). */
-                    includeTotal?: "true" | "false";
-                };
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Paginated list of tickets */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ListTicketsResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["listTickets"];
         put?: never;
         /**
          * Create a ticket
          * @description Creates a ticket on behalf of a customer. Unless an assignee is provided, the ticket is auto-assigned via the agent's routing rules.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["CreateTicketBody"];
-                };
-            };
-            responses: {
-                /** @description The created ticket */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Ticket"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description `statusId` does not belong to a status for this agent. Discover valid ids via GET /ticket-statuses. */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "TICKET_INVALID_STATUS",
-                         *         "message": "The requested status could not be applied"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["createTicket"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4919,152 +565,7 @@ export interface paths {
          * Search tickets
          * @description Searches ticket messages with a free-text query and returns matching tickets ranked by relevance. Results are capped and not paginated.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["SearchTicketsBody"];
-                };
-            };
-            responses: {
-                /** @description Ranked search results */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SearchTicketsResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AGENT_NOT_FOUND",
-                         *         "message": "Agent not found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["searchTickets"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5082,125 +583,7 @@ export interface paths {
          * Get a ticket
          * @description Returns a single ticket by its per-agent ticket number.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The ticket number */
-                    ticketNumber: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description The ticket */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Ticket"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description The agent could not be found (or does not belong to the authenticated account), or the ticket number does not exist for it. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["getTicket"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5210,138 +593,7 @@ export interface paths {
          * Update a ticket
          * @description Partially updates a ticket's status, assignee, or team. Only provided fields are changed. Fields are validated together but written independently, so a 500 can leave a partial update.
          */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The ticket number */
-                    ticketNumber: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["UpdateTicketBody"];
-                };
-            };
-            responses: {
-                /** @description The updated ticket */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Ticket"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description The agent could not be found (or does not belong to the authenticated account), or the ticket number does not exist for it. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description The requested statusId/assignee/teamId either doesn't belong to this agent or account, or (for the assignee) was not found. */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        patch: operations["updateTicket"];
         trace?: never;
     };
     "/agents/{agentId}/helpdesk/tickets/{ticketNumber}/messages": {
@@ -5355,338 +607,57 @@ export interface paths {
          * List ticket messages
          * @description Returns a ticket's message thread in chronological order. Supports cursor-based pagination.
          */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description Opaque cursor from a previous response to fetch the next page */
-                    cursor?: string;
-                    /** @description Number of items per page (1 to 100, default 20) */
-                    limit?: number;
-                    /** @description Comma-separated message types. Defaults to `reply,note`; system `event` messages are opt-in. */
-                    types?: string;
-                    /** @description Chronological direction. Defaults to `asc`, so a thread reads oldest-first. A cursor is only valid for the direction it was issued with. */
-                    order?: "asc" | "desc";
-                };
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The ticket number */
-                    ticketNumber: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Paginated list of messages */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ListTicketMessagesResponse"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description The agent could not be found (or does not belong to the authenticated account), or the ticket number does not exist for it. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["listTicketMessages"];
         put?: never;
         /**
          * Add a message to a ticket
          * @description Posts an agent reply to a ticket on behalf of a team member. Delivery to the customer is asynchronous; a 201 confirms the reply was recorded, not delivered. Posting a reply may transition the ticket status, matching dashboard behavior.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description The agent ID */
-                    agentId: string;
-                    /** @description The ticket number */
-                    ticketNumber: number;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["CreateTicketMessageBody"];
-                };
-            };
-            responses: {
-                /** @description The created message */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["CreatedTicketMessage"];
-                    };
-                };
-                /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_INVALID_BODY",
-                         *         "message": "Invalid request"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "AUTH_MISSING_API_KEY",
-                         *         "message": "Authentication required"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                         *         "message": "A Standard plan or higher is required to access the API"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description No ticket matches the provided ticket number for this agent. Verify the ticket number in the request path. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "TICKET_NOT_FOUND",
-                         *         "message": "The requested ticket could not be found"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description This ticket is linked to a live conversation that has not been taken over from the AI agent, so a human reply cannot be posted. Take over the conversation from the dashboard first. */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "CONVERSATION_NOT_TAKEN_OVER",
-                         *         "message": "The linked conversation is not taken over"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description The authorId or authorEmail does not resolve to a member of your account. Authors must be existing team members. Also returned with code `MESSAGE_CONTENT_NOT_RENDERABLE` when the message body renders to empty HTML. */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "TEAM_MEMBER_NOT_FOUND",
-                         *         "message": "No team member matches the provided author"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
-                         *         "message": "Too many requests, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INTERNAL_SERVER_ERROR",
-                         *         "message": "Something went wrong, please try again"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "SERVICE_UNDER_MAINTENANCE",
-                         *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
-                         *       }
-                         *     }
-                         */
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
+        post: operations["createTicketMessage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/agents/{agentId}/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
+        get?: never;
+        put?: never;
+        /**
+         * Create file source
+         * @description Upload a file as a knowledge source for an agent. Accepts PDF, DOC, DOCX, and TXT files up to 20 MB.
+         *
+         *     **Base URL:** `https://files.chatbase.co/api/v2` — this endpoint uses a different host from all other Sources endpoints.
+         */
+        post: operations["createFileSource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/agents/{agentId}/sources/{sourceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update file source
+         * @description Replace a file source's content, rename it, or both. At least one of `name` or `file` must be provided.
+         *
+         *     **Base URL:** `https://files.chatbase.co/api/v2` — this endpoint uses a different host from all other Sources endpoints.
+         */
+        put: operations["updateFileSource"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -6744,8 +1715,8 @@ export interface components {
              * @enum {string}
              */
             status: "ongoing" | "ended" | "taken_over";
-            /** @description Conversation messages */
-            messages: components["schemas"]["ExportMessage"][];
+            /** @description Conversation messages. Present unless `include=summary` was requested. */
+            messages?: components["schemas"]["ExportMessage"][];
         };
         ExportMessage: {
             /** @description Message ID */
@@ -7565,4 +2536,5482 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
-export type operations = Record<string, never>;
+export interface operations {
+    getHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description API is healthy */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "status": "ok",
+                     *       "timestamp": 1770681600
+                     *     }
+                     */
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "ok";
+                        timestamp: components["schemas"]["UnixTimestamp"];
+                    };
+                };
+            };
+        };
+    };
+    listAgents: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from a previous response to fetch the next page */
+                cursor?: string;
+                /** @description Number of items per page (1 to 100, default 20) */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of agents */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListAgentsResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAgentBody"];
+            };
+        };
+        responses: {
+            /** @description Agent created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentCreatedResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agent details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Agent"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAgentBody"];
+            };
+        };
+        responses: {
+            /** @description Agent updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agent deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateAgentStyles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAgentStylesBody"];
+            };
+        };
+        responses: {
+            /** @description Styles updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateAgentAutoRetrain: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAgentAutoRetrainBody"];
+            };
+        };
+        responses: {
+            /** @description Auto-retrain setting updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Auto-retrain requires the agent to have completed at least one training run. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_TRAINED",
+                     *         "message": "Agent has not been trained yet. Train the agent before enabling auto-retrain."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cloneAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agent cloned — returns the new agent ID */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentCreatedResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    trainAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Training job queued */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A training run is already in progress for this agent. Wait for it to complete before starting another. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_ALREADY_TRAINING",
+                     *         "message": "Agent is already training, please wait for it to finish"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    chatWithAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": components["schemas"]["StreamFinishMetadata"];
+                    "application/json": {
+                        data: components["schemas"]["ChatResponse"];
+                    };
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The account's message credit balance is zero. Upgrade the plan or wait for credits to reset at the next billing cycle. */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "CHAT_CREDITS_EXHAUSTED",
+                     *         "message": "Message limit reached"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    retryMessage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The conversation ID */
+                conversationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                    "application/json": {
+                        data: components["schemas"]["ChatResponse"];
+                    };
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The account's message credit balance is zero. Upgrade the plan or wait for credits to reset at the next billing cycle. */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "CHAT_CREDITS_EXHAUSTED",
+                     *         "message": "Message limit reached"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The provided `messageId` does not exist in the conversation. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "CHAT_RETRY_MESSAGE_NOT_FOUND",
+                     *         "message": "Message not found in conversation"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listConversations: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from a previous response to fetch the next page */
+                cursor?: string;
+                /** @description Number of items per page (1 to 100, default 20) */
+                limit?: number;
+                /** @description Only return conversations created at or after this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the start of that day in UTC) or an ISO 8601 date-time. */
+                startDate?: string;
+                /** @description Only return conversations created at or before this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the *end* of that day in UTC, so the day itself is included) or an ISO 8601 date-time. */
+                endDate?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of conversations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListConversationsResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    exportConversations: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from a previous response to fetch the next page */
+                cursor?: string;
+                /** @description Number of items per page (1–20, default 20) */
+                limit?: number;
+                /** @description Only return conversations created at or after this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the start of that day in UTC) or an ISO 8601 date-time. */
+                startDate?: string;
+                /** @description Only return conversations created at or before this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the *end* of that day in UTC, so the day itself is included) or an ISO 8601 date-time. */
+                endDate?: string;
+                /** @description Return only the conversation with this ID. Use this to fetch a single conversation from any source (widget, API, WhatsApp, etc.). */
+                conversationId?: string;
+                /** @description Whether to include message bodies. `summary` omits them and skips reading them from the database — use it to triage a page cheaply, then re-request a specific conversation with `conversationId`. Defaults to `messages`. */
+                include?: "summary" | "messages";
+                /** @description Comma-separated conversation sources to include, e.g. `API,WhatsApp`. Omit for all sources. */
+                source?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of conversations with full message history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportConversationsResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getConversation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The conversation ID */
+                conversationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Conversation metadata with recent messages */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetConversationResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No resource matches the provided ID, or it has been deleted. Verify the resource ID in the request path. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RESOURCE_NOT_FOUND",
+                     *         "message": "The requested item could not be found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listConversationMessages: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from a previous response to fetch the next page */
+                cursor?: string;
+                /** @description Number of items per page (1 to 100, default 20) */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The conversation ID */
+                conversationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of messages */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListMessagesResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No resource matches the provided ID, or it has been deleted. Verify the resource ID in the request path. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RESOURCE_NOT_FOUND",
+                     *         "message": "The requested item could not be found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listUserConversations: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from a previous response to fetch the next page */
+                cursor?: string;
+                /** @description Number of items per page (1 to 100, default 20) */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The user ID (URL-safe characters only: letters, digits, hyphens, underscores, dots) */
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of user conversations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListUserConversationsResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateMessageFeedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The conversation ID */
+                conversationId: string;
+                /** @description The message ID */
+                messageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateMessageFeedbackRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated message with feedback */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateMessageFeedbackResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No message matches the provided ID in this conversation. Verify the message ID. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RESOURCE_MESSAGE_NOT_FOUND",
+                     *         "message": "The specified message could not be found in this conversation"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The specified message is not an assistant message. Metadata updates are only supported on assistant text messages. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RESOURCE_MESSAGE_NOT_ASSISTANT",
+                     *         "message": "Only assistant messages support metadata updates"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    submitToolResult: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The conversation ID */
+                conversationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SubmitToolResultRequest"];
+            };
+        };
+        responses: {
+            /** @description Tool result submitted successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubmitToolResultResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No pending tool call matches the provided `toolCallId`. It may have expired or already been resolved. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RESOURCE_TOOL_CALL_NOT_FOUND",
+                     *         "message": "Tool call not found or expired"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getSourcesSummary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sources summary by type */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourcesSummaryResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listSources: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from a previous response to fetch the next page */
+                cursor?: string;
+                /** @description Number of items per page (1 to 100, default 20) */
+                limit?: number;
+                /** @description Comma-separated source types to filter by. Allowed values: link, file, qna, notionPage, text */
+                type?: string;
+                /** @description Partial (case-insensitive) name match */
+                name?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of sources */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListSourcesResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateSourceBody"];
+            };
+        };
+        responses: {
+            /** @description Source created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceListItem"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A parent link with this URL and link type already exists for this agent. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SOURCE_DUPLICATE",
+                     *         "message": "A source with this URL and type already exists"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Adding or updating this source would exceed the storage limit for your plan. Remove existing sources or upgrade your plan. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SOURCE_SIZE_LIMIT_EXCEEDED",
+                     *         "message": "Chatbot storage limit exceeded"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The source ID */
+                sourceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Source details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceListItem"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The source ID */
+                sourceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateSourceBody"];
+            };
+        };
+        responses: {
+            /** @description Updated source */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceListItem"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Restore the source before making changes to it. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SOURCE_PENDING_DELETION",
+                     *         "message": "Source is pending deletion and cannot be edited"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Adding or updating this source would exceed the storage limit for your plan. Remove existing sources or upgrade your plan. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SOURCE_SIZE_LIMIT_EXCEEDED",
+                     *         "message": "Chatbot storage limit exceeded"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The source ID */
+                sourceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Source in its final state after marking for deletion */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletedSourceListItem"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description This source is already marked for deletion. Call the restore endpoint to undo the pending deletion first. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SOURCE_ALREADY_PENDING_DELETION",
+                     *         "message": "Source is already pending deletion"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    restoreSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The source ID */
+                sourceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Source restored to its previous active state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceListItem"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Only sources with status to_be_deleted can be restored. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SOURCE_NOT_RESTORABLE",
+                     *         "message": "Source is not pending deletion"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Restoring this link would exceed the maximum number of crawl and sitemap links allowed per agent. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SOURCE_LINK_LIMIT_EXCEEDED",
+                     *         "message": "Crawl/sitemap link limit reached"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listWhatsAppTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The available templates */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListWhatsAppTemplatesResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The agent exists but has no WhatsApp phone number connected. Connect a number from the deploy page before calling WhatsApp endpoints. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "WHATSAPP_NOT_CONNECTED",
+                     *         "message": "WhatsApp is not connected for this agent"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    sendWhatsAppTemplateMessage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SendWhatsAppTemplateBody"];
+            };
+        };
+        responses: {
+            /** @description The message was accepted by WhatsApp */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SendWhatsAppTemplateResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The agent exists but has no WhatsApp phone number connected. Connect a number from the deploy page before calling WhatsApp endpoints. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "WHATSAPP_NOT_CONNECTED",
+                     *         "message": "WhatsApp is not connected for this agent"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Cannot send in the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable message */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream WhatsApp API failure */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listTicketStatuses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of ticket statuses */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketStatusList"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listHelpdeskTeams: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of teams */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamListResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listTickets: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from a previous response to fetch the next page */
+                cursor?: string;
+                /** @description Number of items per page (1 to 100, default 20) */
+                limit?: number;
+                /** @description Comma-separated status categories (is-any-of). Categories: new, on_you, on_customer, on_hold, closed, cancelled. */
+                status?: string;
+                /** @description Comma-separated channels (is-any-of). */
+                channel?: string;
+                /** @description Filter by assigned agent user id. Pass `none` for unassigned tickets. */
+                assigneeId?: "none" | string;
+                /** @description Filter by team id. Pass `none` for tickets with no team. */
+                teamId?: "none" | string;
+                /** @description Only tickets created at or after this ISO 8601 timestamp. */
+                createdAfter?: string;
+                /** @description Only tickets created at or before this ISO 8601 timestamp. */
+                createdBefore?: string;
+                /** @description Sort field. `updatedAt` and `lastMessageAt` fall back to `createdAt` when unset. Sorting by a mutable field means a page window is not a snapshot. Pollers should use `sortBy=updatedAt&order=asc` with a high-water mark. */
+                sortBy?: "createdAt" | "updatedAt" | "lastMessageAt";
+                /** @description Sort direction. Defaults to `desc`, newest first. A cursor is only valid for the `sortBy`/`order` it was issued with; changing either mid-walk is a 400. */
+                order?: "asc" | "desc";
+                /** @description When `true`, the response includes `pagination.total` (costs an extra count query). */
+                includeTotal?: "true" | "false";
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of tickets */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListTicketsResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createTicket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateTicketBody"];
+            };
+        };
+        responses: {
+            /** @description The created ticket */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ticket"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description `statusId` does not belong to a status for this agent. Discover valid ids via GET /ticket-statuses. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "TICKET_INVALID_STATUS",
+                     *         "message": "The requested status could not be applied"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    searchTickets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SearchTicketsBody"];
+            };
+        };
+        responses: {
+            /** @description Ranked search results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchTicketsResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getTicket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The ticket number */
+                ticketNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The ticket */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ticket"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The agent could not be found (or does not belong to the authenticated account), or the ticket number does not exist for it. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateTicket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The ticket number */
+                ticketNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateTicketBody"];
+            };
+        };
+        responses: {
+            /** @description The updated ticket */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ticket"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The agent could not be found (or does not belong to the authenticated account), or the ticket number does not exist for it. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested statusId/assignee/teamId either doesn't belong to this agent or account, or (for the assignee) was not found. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listTicketMessages: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from a previous response to fetch the next page */
+                cursor?: string;
+                /** @description Number of items per page (1 to 100, default 20) */
+                limit?: number;
+                /** @description Comma-separated message types. Defaults to `reply,note`; system `event` messages are opt-in. */
+                types?: string;
+                /** @description Chronological direction. Defaults to `asc`, so a thread reads oldest-first. A cursor is only valid for the direction it was issued with. */
+                order?: "asc" | "desc";
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The ticket number */
+                ticketNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of messages */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListTicketMessagesResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The agent could not be found (or does not belong to the authenticated account), or the ticket number does not exist for it. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createTicketMessage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The ticket number */
+                ticketNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTicketMessageBody"];
+            };
+        };
+        responses: {
+            /** @description The created message */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatedTicketMessage"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No ticket matches the provided ticket number for this agent. Verify the ticket number in the request path. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "TICKET_NOT_FOUND",
+                     *         "message": "The requested ticket could not be found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description This ticket is linked to a live conversation that has not been taken over from the AI agent, so a human reply cannot be posted. Take over the conversation from the dashboard first. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "CONVERSATION_NOT_TAKEN_OVER",
+                     *         "message": "The linked conversation is not taken over"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authorId or authorEmail does not resolve to a member of your account. Authors must be existing team members. Also returned with code `MESSAGE_CONTENT_NOT_RENDERABLE` when the message body renders to empty HTML. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "TEAM_MEMBER_NOT_FOUND",
+                     *         "message": "No team member matches the provided author"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createFileSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * @description Display name for the source.
+                     * @example Employee Handbook
+                     */
+                    name: string;
+                    /**
+                     * Format: binary
+                     * @description File to upload. Formats: .pdf, .doc, .docx, .txt. Max 20 MB.
+                     */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description File source created. Status is `untrained` until the agent is retrained. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "a63a69a5-e7a9-4757-b73b-2041854d435d",
+                     *       "type": "file",
+                     *       "name": "Employee Handbook",
+                     *       "size": 245760,
+                     *       "createdAt": "2025-01-15T10:30:00.000Z",
+                     *       "status": "untrained",
+                     *       "metadata": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["SourceListItem"];
+                };
+            };
+            /** @description Missing required field, unsupported file type, or a file outside the allowed size range. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Missing required field, unsupported file type, or a file outside the allowed size range."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "No Authorization header present."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Standard plan or higher required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "Standard plan or higher required."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Agent not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Adding this file would exceed the plan storage limit for this agent. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SOURCE_SIZE_LIMIT_EXCEEDED",
+                     *         "message": "Adding this file would exceed the plan storage limit for this agent."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Rate limit exceeded."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unhandled server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Unhandled server error."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateFileSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The source ID */
+                sourceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * @description New display name. If omitted, the existing name is preserved.
+                     * @example Employee Handbook v2
+                     */
+                    name?: string;
+                    /**
+                     * Format: binary
+                     * @description Replacement file. Same constraints as create. If omitted, existing content is preserved.
+                     */
+                    file?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Updated file source. If the file was replaced and previously `trained`, status becomes `updated`. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "a63a69a5-e7a9-4757-b73b-2041854d435d",
+                     *       "type": "file",
+                     *       "name": "Employee Handbook v2",
+                     *       "size": 261120,
+                     *       "createdAt": "2025-01-15T10:30:00.000Z",
+                     *       "status": "updated",
+                     *       "metadata": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["SourceListItem"];
+                };
+            };
+            /** @description No fields provided, unsupported file type, or a file outside the allowed size range. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "No fields provided, unsupported file type, or a file outside the allowed size range."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "No Authorization header present."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Standard plan or higher required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "Standard plan or higher required."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Agent or source not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SOURCE_NOT_FOUND",
+                     *         "message": "Agent or source not found."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Source is pending deletion. Restore it before editing. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SOURCE_PENDING_DELETION",
+                     *         "message": "Source is pending deletion. Restore it before editing."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Adding this file would exceed the plan storage limit for this agent. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SOURCE_SIZE_LIMIT_EXCEEDED",
+                     *         "message": "Adding this file would exceed the plan storage limit for this agent."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Rate limit exceeded."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unhandled server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Unhandled server error."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+}

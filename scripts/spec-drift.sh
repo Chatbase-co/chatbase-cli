@@ -5,8 +5,11 @@ set -euo pipefail
 # spec is behind — the fix is a spec sync, not a code change here.
 #
 # Comparison is structural: doc-prose `description` strings are stripped
-# (hand-polished on the docs side, expected to differ) and the docs copy's
-# duplicate "/api/v2/..."-prefixed path keys are dropped (known docs quirk).
+# (hand-polished on the docs side, expected to differ). Paths are compared in
+# full, including the two "/api/v2/..."-prefixed keys — those are the real
+# multipart file endpoints (createFileSource, updateFileSource), which carry a
+# `servers` override for files.chatbase.co and so must spell out the full path.
+# They are not duplicates of the unprefixed source routes.
 DOCS_URL="${SPEC_DRIFT_URL:-https://www.chatbase.co/docs/api-v2-openapi.json}"
 
 command -v jq >/dev/null || { echo "jq is required" >&2; exit 2; }
@@ -30,8 +33,7 @@ NORMALIZE='del(.info, .servers)
     then del(.description) else . end)'
 
 jq -S "$NORMALIZE" spec/openapi.json > "$tmp/local.json"
-jq -S '.paths |= with_entries(select(.key | startswith("/api/v2/") | not))
-    | '"$NORMALIZE" "$tmp/docs.json" > "$tmp/remote.json"
+jq -S "$NORMALIZE" "$tmp/docs.json" > "$tmp/remote.json"
 
 if diff -q "$tmp/local.json" "$tmp/remote.json" >/dev/null; then
     echo "spec/openapi.json matches the docs spec" \

@@ -181,6 +181,87 @@ describe('chatbase conversations export', () => {
         ).toEqual(exportResponse)
     })
 
+    it('maps the date window flags to startDate/endDate query params', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/export',
+                method: 'GET',
+                query: { startDate: '2024-01-01', endDate: '2024-01-31' }
+            })
+            .reply(200, exportResponse)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        await ConversationsExport.run(
+            ['--start-date', '2024-01-01', '--end-date', '2024-01-31'],
+            process.cwd()
+        )
+        expect(
+            JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
+        ).toEqual(exportResponse)
+    })
+
+    it('maps --conversation to conversationId, and --include/--source through', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/export',
+                method: 'GET',
+                query: {
+                    conversationId: 'conv_9',
+                    include: 'summary',
+                    source: 'Widget or Iframe,WhatsApp'
+                }
+            })
+            .reply(200, exportResponse)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        await ConversationsExport.run(
+            [
+                '--conversation',
+                'conv_9',
+                '--include',
+                'summary',
+                '--source',
+                'Widget or Iframe,WhatsApp'
+            ],
+            process.cwd()
+        )
+        expect(
+            JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
+        ).toEqual(exportResponse)
+    })
+
+    it('rejects an --include value outside the spec enum', async () => {
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            ConversationsExport.run(['--include', 'bodies'], process.cwd())
+        ).rejects.toThrow(/bodies/)
+    })
+
+    it('surfaces the API error when the date window is inverted', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/export',
+                method: 'GET',
+                query: { startDate: '2024-02-01', endDate: '2024-01-01' }
+            })
+            .reply(400, {
+                error: {
+                    code: 'VALIDATION_INVALID_DATE_RANGE',
+                    message: 'startDate must not be after endDate'
+                }
+            })
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            ConversationsExport.run(
+                ['--start-date', '2024-02-01', '--end-date', '2024-01-01'],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 1 } })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'VALIDATION_INVALID_DATE_RANGE'
+        )
+    })
+
     // The export endpoint caps `limit` at 20, so any agent with real traffic
     // spans many pages — --all is what makes a whole-agent export one command.
     const exportPage1 = {

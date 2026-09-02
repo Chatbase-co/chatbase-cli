@@ -30,10 +30,16 @@ elif [ ! -f "$SRC" ]; then
 fi
 
 command -v jq >/dev/null || { echo "jq is required" >&2; exit 2; }
-# Drop the docs copy's duplicate "/api/v2/..."-prefixed path keys (known
-# quirk). Harmless no-op for a clean API-generated file.
-jq '.paths |= with_entries(select(.key | startswith("/api/v2/") | not))' \
-    "$SRC" >spec/openapi.json
+# Vendor the source verbatim.
+#
+# This used to strip every "/api/v2/..."-prefixed path key as a docs-copy
+# quirk. That was wrong: the two prefixed keys are the real multipart file
+# endpoints (createFileSource, updateFileSource), which carry their own
+# `servers` override pointing at files.chatbase.co and so must spell out the
+# full path. They are not duplicates of the unprefixed source routes — those
+# are the JSON create/update operations. Stripping them silently dropped two
+# operations from the vendored spec and from the generated types.
+jq '.' "$SRC" >spec/openapi.json
 
 npm run spec:generate
 echo "vendored $(node -e "console.log(Object.keys(JSON.parse(require('fs').readFileSync('spec/openapi.json')).paths).length)") paths"

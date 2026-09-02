@@ -3376,7 +3376,7 @@
             "items": {
               "$ref": "#/components/schemas/ExportMessage"
             },
-            "description": "Conversation messages"
+            "description": "Conversation messages. Present unless `include=summary` was requested."
           }
         },
         "required": [
@@ -3386,8 +3386,7 @@
           "updatedAt",
           "userId",
           "source",
-          "status",
-          "messages"
+          "status"
         ]
       },
       "ExportMessage": {
@@ -5582,6 +5581,7 @@
   "paths": {
     "/health": {
       "get": {
+        "operationId": "getHealth",
         "tags": [
           "Health"
         ],
@@ -5622,6 +5622,33 @@
     },
     "/agents": {
       "get": {
+        "operationId": "listAgents",
+        "x-mcp": {
+          "tool": "chatbase_list_agents",
+          "scopes": [
+            "agents:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          },
+          "fields": [
+            "id",
+            "name",
+            "status",
+            "createdAt",
+            "model",
+            "autoRetrain",
+            "lastTrainedAt",
+            "lastMessageAt",
+            "size",
+            "visibility",
+            "temp",
+            "creditLimit",
+            "creditsUsed"
+          ],
+          "maxItems": 25
+        },
         "tags": [
           "Agents"
         ],
@@ -5769,11 +5796,19 @@
         }
       },
       "post": {
+        "operationId": "createAgent",
+        "x-mcp": {
+          "tool": "chatbase_create_agent",
+          "scopes": [
+            "agents:write"
+          ],
+          "annotations": {}
+        },
         "tags": [
           "Agents"
         ],
         "summary": "Create agent",
-        "description": "Creates a new agent. If `url` is provided, a link source is created from that URL and training is queued automatically — this may take several seconds.",
+        "description": "Creates a new agent. If `url` is provided, a link source is created from that URL and training is queued automatically.\n\nThe agent is always created even if source setup or training fails — `id` is always returned. Check `pendingSteps` in the response to see which steps need to be retried:\n- `ADD_SOURCE` — the URL could not be added as a source. Add sources manually via the Sources API.\n- `TRAIN_AGENT` — training could not be started. Trigger it manually via `POST /agents/{agentId}/train`.\n\nWhen `pendingSteps` is absent, all steps succeeded.\n\nSubject to plan agent limits — returns `AGENT_LIMIT_REACHED` (403) when the account has reached its maximum number of agents.",
         "security": [
           {
             "bearerAuth": []
@@ -5901,6 +5936,17 @@
     },
     "/agents/{agentId}": {
       "get": {
+        "operationId": "getAgent",
+        "x-mcp": {
+          "tool": "chatbase_get_agent",
+          "scopes": [
+            "agents:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          }
+        },
         "tags": [
           "Agents"
         ],
@@ -6035,6 +6081,16 @@
         }
       },
       "put": {
+        "operationId": "updateAgent",
+        "x-mcp": {
+          "tool": "chatbase_update_agent",
+          "scopes": [
+            "agents:write"
+          ],
+          "annotations": {
+            "idempotent": true
+          }
+        },
         "tags": [
           "Agents"
         ],
@@ -6195,6 +6251,16 @@
         }
       },
       "delete": {
+        "operationId": "deleteAgent",
+        "x-mcp": {
+          "tool": "chatbase_delete_agent",
+          "scopes": [
+            "agents:delete"
+          ],
+          "annotations": {
+            "destructive": true
+          }
+        },
         "tags": [
           "Agents"
         ],
@@ -6331,6 +6397,7 @@
     },
     "/agents/{agentId}/styles": {
       "put": {
+        "operationId": "updateAgentStyles",
         "tags": [
           "Agents"
         ],
@@ -6493,11 +6560,21 @@
     },
     "/agents/{agentId}/auto-retrain": {
       "put": {
+        "operationId": "updateAgentAutoRetrain",
+        "x-mcp": {
+          "tool": "chatbase_update_agent_auto_retrain",
+          "scopes": [
+            "sources:write"
+          ],
+          "annotations": {
+            "idempotent": true
+          }
+        },
         "tags": [
           "Agents"
         ],
         "summary": "Toggle auto-retrain",
-        "description": "Enables or disables automatic retraining. When enabled, the agent automatically retrains every 7 days and checks for the latest updates.",
+        "description": "Enables or disables automatic retraining. When enabled, the agent retrains every 7 days to reflect any source changes.\n\nRequirements:\n- The agent must have been trained at least once — returns `AGENT_NOT_TRAINED` (409) otherwise.\n- Requires the Standard plan or higher — returns `PLAN_FEATURE_NOT_AVAILABLE` (403) on unsupported plans.",
         "security": [
           {
             "bearerAuth": []
@@ -6671,11 +6748,19 @@
     },
     "/agents/{agentId}/clone": {
       "post": {
+        "operationId": "cloneAgent",
+        "x-mcp": {
+          "tool": "chatbase_clone_agent",
+          "scopes": [
+            "agents:write"
+          ],
+          "annotations": {}
+        },
         "tags": [
           "Agents"
         ],
         "summary": "Clone agent",
-        "description": "Creates a full deep-clone of an agent, including all its sources (excluding Notion). Returns the new agent ID.",
+        "description": "Creates a full deep-clone of an agent, including all its sources (excluding Notion). Returns the new agent ID.\n\nSame response shape as Create Agent — `pendingSteps` indicates if training could not start automatically. The clone is a new, independent agent; changes to the original do not affect it.\n\nSubject to plan agent limits — returns `AGENT_LIMIT_REACHED` (403) when the account has reached its maximum number of agents.",
         "security": [
           {
             "bearerAuth": []
@@ -6807,6 +6892,16 @@
     },
     "/agents/{agentId}/train": {
       "post": {
+        "operationId": "trainAgent",
+        "x-mcp": {
+          "tool": "chatbase_train_agent",
+          "scopes": [
+            "sources:write"
+          ],
+          "annotations": {
+            "destructive": true
+          }
+        },
         "tags": [
           "Agents"
         ],
@@ -6959,6 +7054,16 @@
     },
     "/agents/{agentId}/chat": {
       "post": {
+        "operationId": "chatWithAgent",
+        "x-mcp": {
+          "tool": "chatbase_chat",
+          "scopes": [
+            "chatlogs:write"
+          ],
+          "annotations": {
+            "openWorld": true
+          }
+        },
         "tags": [
           "Agents"
         ],
@@ -7150,6 +7255,7 @@
     },
     "/agents/{agentId}/conversations/{conversationId}/retry": {
       "post": {
+        "operationId": "retryMessage",
         "tags": [
           "Agents"
         ],
@@ -7354,11 +7460,12 @@
     },
     "/agents/{agentId}/conversations": {
       "get": {
+        "operationId": "listConversations",
         "tags": [
           "Conversations"
         ],
         "summary": "List conversations",
-        "description": "List conversations for an agent, ordered by createdAt date. Supports cursor-based pagination.",
+        "description": "List conversations for an agent, ordered by createdAt date. Supports cursor-based pagination. Pass `startDate` and/or `endDate` to restrict the results to a createdAt window.",
         "security": [
           {
             "bearerAuth": []
@@ -7401,6 +7508,28 @@
             "description": "Number of items per page (1 to 100, default 20)",
             "name": "limit",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Only return conversations created at or after this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the start of that day in UTC) or an ISO 8601 date-time.",
+              "example": "2024-01-01"
+            },
+            "required": false,
+            "description": "Only return conversations created at or after this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the start of that day in UTC) or an ISO 8601 date-time.",
+            "name": "startDate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Only return conversations created at or before this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the *end* of that day in UTC, so the day itself is included) or an ISO 8601 date-time.",
+              "example": "2024-01-31"
+            },
+            "required": false,
+            "description": "Only return conversations created at or before this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the *end* of that day in UTC, so the day itself is included) or an ISO 8601 date-time.",
+            "name": "endDate",
+            "in": "query"
           }
         ],
         "responses": {
@@ -7415,16 +7544,30 @@
             }
           },
           "400": {
-            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 },
-                "example": {
-                  "error": {
-                    "code": "VALIDATION_INVALID_BODY",
-                    "message": "Invalid request"
+                "examples": {
+                  "VALIDATION_INVALID_BODY": {
+                    "summary": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_INVALID_BODY",
+                        "message": "Invalid request"
+                      }
+                    }
+                  },
+                  "VALIDATION_INVALID_DATE_RANGE": {
+                    "summary": "The requested `createdAt` window is inverted. An inverted window can never match a row, so it is rejected rather than silently returning an empty page.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_INVALID_DATE_RANGE",
+                        "message": "startDate must not be after endDate"
+                      }
+                    }
                   }
                 }
               }
@@ -7515,11 +7658,33 @@
     },
     "/agents/{agentId}/conversations/export": {
       "get": {
+        "operationId": "exportConversations",
+        "x-mcp": {
+          "tool": "chatbase_export_conversations",
+          "scopes": [
+            "chatlogs:export"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          },
+          "fields": [
+            "id",
+            "title",
+            "source",
+            "status",
+            "userId",
+            "createdAt",
+            "updatedAt",
+            "messages"
+          ],
+          "maxItems": 10
+        },
         "tags": [
           "Conversations"
         ],
         "summary": "Export conversations",
-        "description": "Export all conversations with full message history for an agent. Includes conversations from all sources. Tool results are sanitized to remove internal data. Supports cursor-based pagination. Pass `conversationId` to fetch a single conversation from any source (widget, API, WhatsApp, etc.).",
+        "description": "Export all conversations with full message history for an agent. Includes conversations from all sources. Tool results are sanitized to remove internal data. Supports cursor-based pagination. Pass `conversationId` to fetch a single conversation from any source (widget, API, WhatsApp, etc.). Pass `include=summary` to omit message bodies for a cheaper triage pass, `source` to restrict to one or more conversation sources, and `startDate` / `endDate` to restrict to a createdAt window.",
         "security": [
           {
             "bearerAuth": []
@@ -7566,11 +7731,60 @@
           {
             "schema": {
               "type": "string",
+              "description": "Only return conversations created at or after this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the start of that day in UTC) or an ISO 8601 date-time.",
+              "example": "2024-01-01"
+            },
+            "required": false,
+            "description": "Only return conversations created at or after this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the start of that day in UTC) or an ISO 8601 date-time.",
+            "name": "startDate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Only return conversations created at or before this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the *end* of that day in UTC, so the day itself is included) or an ISO 8601 date-time.",
+              "example": "2024-01-31"
+            },
+            "required": false,
+            "description": "Only return conversations created at or before this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the *end* of that day in UTC, so the day itself is included) or an ISO 8601 date-time.",
+            "name": "endDate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "description": "Return only the conversation with this ID. Use this to fetch a single conversation from any source (widget, API, WhatsApp, etc.)."
             },
             "required": false,
             "description": "Return only the conversation with this ID. Use this to fetch a single conversation from any source (widget, API, WhatsApp, etc.).",
             "name": "conversationId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "summary",
+                "messages"
+              ],
+              "default": "messages",
+              "description": "Whether to include message bodies. `summary` omits them and skips reading them from the database — use it to triage a page cheaply, then re-request a specific conversation with `conversationId`. Defaults to `messages`.",
+              "example": "summary"
+            },
+            "required": false,
+            "description": "Whether to include message bodies. `summary` omits them and skips reading them from the database — use it to triage a page cheaply, then re-request a specific conversation with `conversationId`. Defaults to `messages`.",
+            "name": "include",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated conversation sources to include, e.g. `API,WhatsApp`. Omit for all sources.",
+              "example": "Widget or Iframe"
+            },
+            "required": false,
+            "description": "Comma-separated conversation sources to include, e.g. `API,WhatsApp`. Omit for all sources.",
+            "name": "source",
             "in": "query"
           }
         ],
@@ -7586,16 +7800,30 @@
             }
           },
           "400": {
-            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 },
-                "example": {
-                  "error": {
-                    "code": "VALIDATION_INVALID_BODY",
-                    "message": "Invalid request"
+                "examples": {
+                  "VALIDATION_INVALID_BODY": {
+                    "summary": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_INVALID_BODY",
+                        "message": "Invalid request"
+                      }
+                    }
+                  },
+                  "VALIDATION_INVALID_DATE_RANGE": {
+                    "summary": "The requested `createdAt` window is inverted. An inverted window can never match a row, so it is rejected rather than silently returning an empty page.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_INVALID_DATE_RANGE",
+                        "message": "startDate must not be after endDate"
+                      }
+                    }
                   }
                 }
               }
@@ -7686,6 +7914,7 @@
     },
     "/agents/{agentId}/conversations/{conversationId}": {
       "get": {
+        "operationId": "getConversation",
         "tags": [
           "Conversations"
         ],
@@ -7834,6 +8063,7 @@
     },
     "/agents/{agentId}/conversations/{conversationId}/messages": {
       "get": {
+        "operationId": "listConversationMessages",
         "tags": [
           "Conversations"
         ],
@@ -8023,6 +8253,7 @@
     },
     "/agents/{agentId}/users/{userId}/conversations": {
       "get": {
+        "operationId": "listUserConversations",
         "tags": [
           "Conversations"
         ],
@@ -8198,6 +8429,7 @@
     },
     "/agents/{agentId}/conversations/{conversationId}/messages/{messageId}/feedback": {
       "patch": {
+        "operationId": "updateMessageFeedback",
         "tags": [
           "Conversations"
         ],
@@ -8398,6 +8630,7 @@
     },
     "/agents/{agentId}/conversations/{conversationId}/tool-result": {
       "post": {
+        "operationId": "submitToolResult",
         "tags": [
           "Agents"
         ],
@@ -8571,6 +8804,17 @@
     },
     "/agents/{agentId}/sources/summary": {
       "get": {
+        "operationId": "getSourcesSummary",
+        "x-mcp": {
+          "tool": "chatbase_get_sources_summary",
+          "scopes": [
+            "sources:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          }
+        },
         "tags": [
           "Sources"
         ],
@@ -8691,6 +8935,18 @@
     },
     "/agents/{agentId}/sources": {
       "get": {
+        "operationId": "listSources",
+        "x-mcp": {
+          "tool": "chatbase_list_sources",
+          "scopes": [
+            "sources:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          },
+          "maxItems": 50
+        },
         "tags": [
           "Sources"
         ],
@@ -8872,6 +9128,14 @@
         }
       },
       "post": {
+        "operationId": "createSource",
+        "x-mcp": {
+          "tool": "chatbase_create_source",
+          "scopes": [
+            "sources:write"
+          ],
+          "annotations": {}
+        },
         "tags": [
           "Sources"
         ],
@@ -9049,6 +9313,17 @@
     },
     "/agents/{agentId}/sources/{sourceId}": {
       "get": {
+        "operationId": "getSource",
+        "x-mcp": {
+          "tool": "chatbase_get_source",
+          "scopes": [
+            "sources:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          }
+        },
         "tags": [
           "Sources"
         ],
@@ -9195,6 +9470,16 @@
         }
       },
       "delete": {
+        "operationId": "deleteSource",
+        "x-mcp": {
+          "tool": "chatbase_delete_source",
+          "scopes": [
+            "sources:delete"
+          ],
+          "annotations": {
+            "destructive": true
+          }
+        },
         "tags": [
           "Sources"
         ],
@@ -9357,11 +9642,21 @@
         }
       },
       "put": {
+        "operationId": "updateSource",
+        "x-mcp": {
+          "tool": "chatbase_update_source",
+          "scopes": [
+            "sources:write"
+          ],
+          "annotations": {
+            "idempotent": true
+          }
+        },
         "tags": [
           "Sources"
         ],
         "summary": "Update source",
-        "description": "Updates an existing source. Accepts text, qna, and link sources.File sources require a dedicated endpoint. Link URL is immutable — to change it, delete and recreate the source. Ticket and Notion sources are not accepted.\n\n**Q&A request body limit:** The total request body must not exceed 4.5 MB for Q&A sources.",
+        "description": "Updates an existing source. Accepts text, qna, and link sources. File sources require a dedicated endpoint. Link URL is immutable — to change it, delete and recreate the source. Ticket and Notion sources are not accepted.\n\n**Q&A request body limit:** The total request body must not exceed 4.5 MB for Q&A sources.",
         "security": [
           {
             "bearerAuth": []
@@ -9562,6 +9857,16 @@
     },
     "/agents/{agentId}/sources/{sourceId}/restore": {
       "post": {
+        "operationId": "restoreSource",
+        "x-mcp": {
+          "tool": "chatbase_restore_source",
+          "scopes": [
+            "sources:write"
+          ],
+          "annotations": {
+            "idempotent": true
+          }
+        },
         "tags": [
           "Sources"
         ],
@@ -9742,6 +10047,7 @@
     },
     "/agents/{agentId}/whatsapp/templates": {
       "get": {
+        "operationId": "listWhatsAppTemplates",
         "tags": [
           "WhatsApp"
         ],
@@ -9862,6 +10168,7 @@
     },
     "/agents/{agentId}/whatsapp/messages/template": {
       "post": {
+        "operationId": "sendWhatsAppTemplateMessage",
         "tags": [
           "WhatsApp"
         ],
@@ -10161,6 +10468,17 @@
     },
     "/agents/{agentId}/helpdesk/ticket-statuses": {
       "get": {
+        "operationId": "listTicketStatuses",
+        "x-mcp": {
+          "tool": "chatbase_list_ticket_statuses",
+          "scopes": [
+            "helpdesk_tickets:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          }
+        },
         "tags": [
           "Helpdesk"
         ],
@@ -10297,6 +10615,17 @@
     },
     "/agents/{agentId}/helpdesk/teams": {
       "get": {
+        "operationId": "listHelpdeskTeams",
+        "x-mcp": {
+          "tool": "chatbase_list_helpdesk_teams",
+          "scopes": [
+            "helpdesk_tickets:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          }
+        },
         "tags": [
           "Helpdesk"
         ],
@@ -10433,6 +10762,14 @@
     },
     "/agents/{agentId}/helpdesk/tickets": {
       "post": {
+        "operationId": "createTicket",
+        "x-mcp": {
+          "tool": "chatbase_create_ticket",
+          "scopes": [
+            "helpdesk_tickets:write"
+          ],
+          "annotations": {}
+        },
         "tags": [
           "Helpdesk"
         ],
@@ -10592,6 +10929,18 @@
         }
       },
       "get": {
+        "operationId": "listTickets",
+        "x-mcp": {
+          "tool": "chatbase_list_tickets",
+          "scopes": [
+            "helpdesk_tickets:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          },
+          "maxItems": 25
+        },
         "tags": [
           "Helpdesk"
         ],
@@ -10906,6 +11255,18 @@
     },
     "/agents/{agentId}/helpdesk/tickets/search": {
       "post": {
+        "operationId": "searchTickets",
+        "x-mcp": {
+          "tool": "chatbase_search_tickets",
+          "scopes": [
+            "helpdesk_tickets:write"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          },
+          "maxItems": 25
+        },
         "tags": [
           "Helpdesk"
         ],
@@ -11068,6 +11429,17 @@
     },
     "/agents/{agentId}/helpdesk/tickets/{ticketNumber}": {
       "get": {
+        "operationId": "getTicket",
+        "x-mcp": {
+          "tool": "chatbase_get_ticket",
+          "scopes": [
+            "helpdesk_tickets:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          }
+        },
         "tags": [
           "Helpdesk"
         ],
@@ -11229,6 +11601,16 @@
         }
       },
       "patch": {
+        "operationId": "updateTicket",
+        "x-mcp": {
+          "tool": "chatbase_update_ticket",
+          "scopes": [
+            "helpdesk_tickets:write"
+          ],
+          "annotations": {
+            "idempotent": true
+          }
+        },
         "tags": [
           "Helpdesk"
         ],
@@ -11440,6 +11822,27 @@
     },
     "/agents/{agentId}/helpdesk/tickets/{ticketNumber}/messages": {
       "get": {
+        "operationId": "listTicketMessages",
+        "x-mcp": {
+          "tool": "chatbase_list_ticket_messages",
+          "scopes": [
+            "helpdesk_tickets:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          },
+          "fields": [
+            "id",
+            "type",
+            "sender",
+            "contentText",
+            "attachments",
+            "createdAt",
+            "metadata"
+          ],
+          "maxItems": 50
+        },
         "tags": [
           "Helpdesk"
         ],
@@ -11670,6 +12073,14 @@
         }
       },
       "post": {
+        "operationId": "createTicketMessage",
+        "x-mcp": {
+          "tool": "chatbase_create_ticket_message",
+          "scopes": [
+            "helpdesk_tickets:write"
+          ],
+          "annotations": {}
+        },
         "tags": [
           "Helpdesk"
         ],
@@ -11873,6 +12284,417 @@
             }
           }
         }
+      }
+    },
+    "/api/v2/agents/{agentId}/sources": {
+      "post": {
+        "operationId": "createFileSource",
+        "tags": [
+          "Sources"
+        ],
+        "summary": "Create file source",
+        "description": "Upload a file as a knowledge source for an agent. Accepts PDF, DOC, DOCX, and TXT files up to 20 MB.\n\n**Base URL:** `https://files.chatbase.co/api/v2` — this endpoint uses a different host from all other Sources endpoints.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "name": "agentId",
+            "in": "path",
+            "description": "The agent ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Display name for the source.",
+                    "example": "Employee Handbook"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "File to upload. Formats: .pdf, .doc, .docx, .txt. Max 20 MB."
+                  }
+                },
+                "required": [
+                  "name",
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File source created. Status is `untrained` until the agent is retrained.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceListItem"
+                },
+                "example": {
+                  "id": "a63a69a5-e7a9-4757-b73b-2041854d435d",
+                  "type": "file",
+                  "name": "Employee Handbook",
+                  "size": 245760,
+                  "createdAt": "2025-01-15T10:30:00.000Z",
+                  "status": "untrained",
+                  "metadata": null
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required field, unsupported file type, or a file outside the allowed size range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Missing required field, unsupported file type, or a file outside the allowed size range."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "No Authorization header present."
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard plan or higher required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "Standard plan or higher required."
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Agent not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AGENT_NOT_FOUND",
+                    "message": "Agent not found."
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Adding this file would exceed the plan storage limit for this agent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SOURCE_SIZE_LIMIT_EXCEEDED",
+                    "message": "Adding this file would exceed the plan storage limit for this agent."
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Rate limit exceeded."
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unhandled server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Unhandled server error."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://files.chatbase.co",
+            "description": "Chatbase file upload server"
+          }
+        ]
+      }
+    },
+    "/api/v2/agents/{agentId}/sources/{sourceId}": {
+      "put": {
+        "operationId": "updateFileSource",
+        "tags": [
+          "Sources"
+        ],
+        "summary": "Update file source",
+        "description": "Replace a file source's content, rename it, or both. At least one of `name` or `file` must be provided.\n\n**Base URL:** `https://files.chatbase.co/api/v2` — this endpoint uses a different host from all other Sources endpoints.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "name": "agentId",
+            "in": "path",
+            "description": "The agent ID"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "a63a69a5-e7a9-4757-b73b-2041854d435d"
+            },
+            "required": true,
+            "name": "sourceId",
+            "in": "path",
+            "description": "The source ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "New display name. If omitted, the existing name is preserved.",
+                    "example": "Employee Handbook v2"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Replacement file. Same constraints as create. If omitted, existing content is preserved."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated file source. If the file was replaced and previously `trained`, status becomes `updated`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceListItem"
+                },
+                "example": {
+                  "id": "a63a69a5-e7a9-4757-b73b-2041854d435d",
+                  "type": "file",
+                  "name": "Employee Handbook v2",
+                  "size": 261120,
+                  "createdAt": "2025-01-15T10:30:00.000Z",
+                  "status": "updated",
+                  "metadata": null
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No fields provided, unsupported file type, or a file outside the allowed size range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "No fields provided, unsupported file type, or a file outside the allowed size range."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "No Authorization header present."
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard plan or higher required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "Standard plan or higher required."
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Agent or source not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SOURCE_NOT_FOUND",
+                    "message": "Agent or source not found."
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Source is pending deletion. Restore it before editing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SOURCE_PENDING_DELETION",
+                    "message": "Source is pending deletion. Restore it before editing."
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Adding this file would exceed the plan storage limit for this agent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SOURCE_SIZE_LIMIT_EXCEEDED",
+                    "message": "Adding this file would exceed the plan storage limit for this agent."
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Rate limit exceeded."
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unhandled server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Unhandled server error."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://files.chatbase.co",
+            "description": "Chatbase file upload server"
+          }
+        ]
       }
     }
   },
