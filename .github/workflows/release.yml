@@ -19,10 +19,17 @@ jobs:
             # version-pinned "See code" links go stale in its release PR and
             # fail CI's readme-freshness gate. Regenerate and push them onto
             # the PR branch here — PAT checkout/push so the PR's CI re-runs.
+            # Branch name includes the package component (…--components--chatbase),
+            # so take it from the PR output instead of hardcoding.
+            - if: steps.rp.outputs.prs_created == 'true'
+              id: pr-branch
+              env:
+                  PR_JSON: ${{ steps.rp.outputs.pr }}
+              run: echo "name=$(jq -r .headBranchName <<< "$PR_JSON")" >> "$GITHUB_OUTPUT"
             - if: steps.rp.outputs.prs_created == 'true'
               uses: actions/checkout@v4
               with:
-                  ref: release-please--branches--main
+                  ref: ${{ steps.pr-branch.outputs.name }}
                   token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
             - if: steps.rp.outputs.prs_created == 'true'
               uses: actions/setup-node@v4
@@ -30,13 +37,15 @@ jobs:
             - if: steps.rp.outputs.prs_created == 'true'
               run: npm ci && npm run build && npx oclif readme
             - if: steps.rp.outputs.prs_created == 'true'
+              env:
+                  PR_BRANCH: ${{ steps.pr-branch.outputs.name }}
               run: |
                   git config user.name "github-actions[bot]"
                   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
                   git add README.md
                   git diff --cached --quiet || {
                       git commit -m "chore: regenerate README for release"
-                      git push origin HEAD:release-please--branches--main
+                      git push origin "HEAD:$PR_BRANCH"
                   }
     publish:
         needs: release-please
