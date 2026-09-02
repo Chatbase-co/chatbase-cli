@@ -35,26 +35,22 @@ ignoring prose) and lists endpoint-level drift — the same check CI runs
 daily via `.github/workflows/spec-drift.yml`.
 
 ```bash
-npm run spec:refresh                      # default: sibling ../chatbase checkout
-npm run spec:refresh -- /path/to/openapi.json   # explicit source
+npm run spec:refresh                      # default: public docs OpenAPI
+npm run spec:refresh -- /path/to/openapi.json   # explicit local source
 ```
 
-The default regenerates the spec from the private API checkout expected at
-`../chatbase` (needs `bun`), copies it to `spec/openapi.json`, and reruns
-`spec:generate`. If the sibling checkout isn't there, ask the user where
-their API checkout or spec file lives — don't guess. When the checkout
-lives elsewhere, run the generator inside it yourself, then pass its
-output as the explicit source:
+The default fetches `https://www.chatbase.co/docs/api-v2-openapi.json`
+(overridable via `SPEC_DRIFT_URL`, same as `spec:drift`), strips the docs
+copy's duplicate `/api/v2/...`-prefixed path keys, writes
+`spec/openapi.json`, and reruns `spec:generate`.
+
+To refresh from a private API checkout instead (exact code about to
+deploy), generate there first, then pass the file:
 
 ```bash
 (cd /path/to/chatbase && bun --preload ./scripts/mock-server-only.ts scripts/generate-openapi.ts)
 npm run spec:refresh -- /path/to/chatbase/openapi.json
 ```
-
-The docs-repo copy of
-the spec is kept in sync with the API (since September 2026) and is an
-acceptable explicit source; generating from the API checkout stays the
-default because it reflects the exact code being deployed.
 
 ### 2. Read the diff
 
@@ -91,10 +87,11 @@ in `src/` (excluding `src/generated/`) and prints:
 - **Orphaned** — a spec-shaped path literal in `src/` that's no longer in
   the spec. These are compile errors waiting to happen; step 4 material.
 
-Endpoints deliberately left without a command live in
-`spec/coverage-ignore.json` (`[{"method", "path", "reason"}]`). When the
-user decides to skip an endpoint, record it there with the reason — that
-decision should survive to the next sync instead of being re-litigated.
+Endpoints deliberately left without a command are recorded in
+`spec/coverage-ignore.json` (`[{"method", "path", "reason"}]`). Create
+the file on the first deliberate skip — it does not exist until then.
+When the user decides to skip an endpoint, add an entry with the reason
+so that decision survives to the next sync instead of being re-litigated.
 
 ### 4. Fix drift in existing commands
 
@@ -151,7 +148,7 @@ than inventing structure:
 | Shape | Exemplar |
 |---|---|
 | Write with typed body + positional arg | `src/commands/tickets/reply.ts` |
-| Paginated list with table output | `src/commands/conversations/list.ts` |
+| Paginated list with table output | `src/commands/tickets/list.ts` |
 | Simple get/delete | `src/commands/sources/get.ts`, `delete.ts` |
 
 Conventions the reviewers of this repo expect:
@@ -162,6 +159,9 @@ Conventions the reviewers of this repo expect:
 - A spec property with a `default` comes out **required** in the
   generated body type (openapi-typescript emits it non-optional) — set
   it explicitly, e.g. send `{}` for a defaulted empty object.
+- Flag values that accept `@file` or `@-` (stdin) go through
+  `readBodyData` / `readTextInput` in `src/base/body-input.ts` —
+  never hand-roll `@` parsing.
 - Every client call is followed by `throwIfError(response, error)`.
 - Output goes through the base helpers: `--json` (raw response), `--plain`,
   and the default table via `Column` arrays; writes end with
@@ -179,14 +179,19 @@ paths prefixed `/api/v2`, env stubs for `CHATBASE_API_KEY` /
 (assert on rendered output or `--json` passthrough), the request body sent
 (for writes), and one error path.
 
-Then run the full gate — all of it, in this order:
+Then run the full gate — all of it, in this order (matches CI):
 
 ```bash
-npm run build && npm run spec:check && npm run typecheck && npm run lint && npm test
+npm run build && npm run spec:check && npm run typecheck && npm run lint && npm test \
+  && npx oclif readme && git diff --exit-code README.md \
+  && node scripts/check-startup.mjs
 ```
 
 Build comes first because the scaffold tests execute `bin/run.js`, which
 loads compiled `dist/` — stale dist means the suite tests old code.
+Adding or renaming a command changes the generated README, so regenerate
+it and confirm it is committed (`git diff --exit-code`). The startup
+budget check is the same script CI runs after tests.
 
 If an `oclif.manifest.json` exists in the repo root, delete it — it is an
 untracked publish artifact (`prepack` regenerates it) and oclif prefers it
@@ -207,5 +212,6 @@ still go to production. Set `CHATBASE_FILES_URL` as well.
 ### 8. Report
 
 Summarize: endpoints added (with their new commands), changed (what was
-fixed), removed, and deliberately skipped (now in the ignore file). State
-the gate results plainly. Do not commit unless the user asks.
+fixed), removed, and deliberately skipped (recorded in
+`spec/coverage-ignore.json`, creating it if needed). State the gate
+results plainly. Do not commit unless the user asks.
