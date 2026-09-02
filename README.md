@@ -56,6 +56,7 @@ calls you invoke.
 * [`chatbase conversations export`](#chatbase-conversations-export)
 * [`chatbase conversations get [CONVERSATIONID]`](#chatbase-conversations-get-conversationid)
 * [`chatbase conversations list`](#chatbase-conversations-list)
+* [`chatbase conversations tool-result [CONVERSATIONID]`](#chatbase-conversations-tool-result-conversationid)
 * [`chatbase health`](#chatbase-health)
 * [`chatbase help [COMMAND]`](#chatbase-help-command)
 * [`chatbase helpdesk statuses`](#chatbase-helpdesk-statuses)
@@ -76,6 +77,8 @@ calls you invoke.
 * [`chatbase tickets reply [TICKETNUMBER]`](#chatbase-tickets-reply-ticketnumber)
 * [`chatbase tickets search QUERY`](#chatbase-tickets-search-query)
 * [`chatbase tickets update TICKETNUMBER`](#chatbase-tickets-update-ticketnumber)
+* [`chatbase whatsapp send-template TEMPLATE`](#chatbase-whatsapp-send-template-template)
+* [`chatbase whatsapp templates`](#chatbase-whatsapp-templates)
 
 ## `chatbase agents auto-retrain [AGENTID]`
 
@@ -817,6 +820,50 @@ EXAMPLES
 
 _See code: [src/commands/conversations/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/conversations/list.ts)_
 
+## `chatbase conversations tool-result [CONVERSATIONID]`
+
+Submit a client-side tool result to a chat turn
+
+```
+USAGE
+  $ chatbase conversations tool-result [CONVERSATIONID] --tool-call-id <value> [--json] [--plain] [-q] [--verbose] [--no-input]
+    [--no-color] [--agent-name <value> | -a <value>] [--conversation <value>] [--output <value>]
+
+ARGUMENTS
+  [CONVERSATIONID]  Conversation ID (alternative to --conversation)
+
+FLAGS
+  -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet                 Suppress non-essential output
+      --agent-name=<value>    Agent display name (looked up to an ID)
+      --conversation=<value>  Conversation ID
+      --no-color              Disable colored output
+      --no-input              Never prompt; fail instead
+      --output=<value>        Result of executing the tool (inline JSON, @file, or @-); a value that is not valid JSON
+                              is sent as a plain string
+      --tool-call-id=<value>  (required) The toolCallId from the tool-call part in the chat response
+      --verbose               Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Submit a client-side tool result to a chat turn
+
+  Submit the result of a client-side tool call so the paused chat turn can continue. The tool call ID comes from the
+  tool-call part of the chat response that requested the execution.
+
+EXAMPLES
+  $ chatbase conversations tool-result conv_123 --tool-call-id tc_1 --output '{"temperature": 72}' -a agt_123
+
+  $ chatbase conversations tool-result conv_123 --tool-call-id tc_1 --output @result.json -a agt_123
+
+  $ chatbase conversations tool-result conv_123 --tool-call-id tc_1 -a agt_123
+```
+
+_See code: [src/commands/conversations/tool-result.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/conversations/tool-result.ts)_
+
 ## `chatbase health`
 
 Check that the Chatbase API is reachable
@@ -1526,4 +1573,84 @@ EXAMPLES
 ```
 
 _See code: [src/commands/tickets/update.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/tickets/update.ts)_
+
+## `chatbase whatsapp send-template TEMPLATE`
+
+Send an approved WhatsApp template message
+
+```
+USAGE
+  $ chatbase whatsapp send-template TEMPLATE --to <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+    [--agent-name <value> | -a <value>] [--from <value>] [--language <value>] [--variables <value>]
+
+ARGUMENTS
+  TEMPLATE  Name of the approved template
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --from=<value>        Which connected WhatsApp number to send from — optional when the agent has exactly one
+      --language=<value>    Template language code (e.g. en_US) — optional when the template exists in a single language
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --to=<value>          (required) Recipient phone number in international format (digits with country code)
+      --variables=<value>   Template variable values as JSON grouped by component (@file, @-, or inline), e.g.
+                            '{"body":{"1":"Jane"}}'
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Send an approved WhatsApp template message
+
+  Send an approved WhatsApp template to a phone number from one of the agent’s connected numbers. No user ID is needed —
+  a Chatbase user is resolved or created from the recipient number, and replies flow through the agent’s regular
+  WhatsApp pipeline. Use `whatsapp templates` to see available templates and the variables each expects.
+
+EXAMPLES
+  $ chatbase whatsapp send-template order_update --to 14155552671 -a agt_123
+
+  $ chatbase whatsapp send-template order_update --to 14155552671 --language en_US --variables '{"header":{"1":"#1042"},"body":{"1":"Jane","2":"Friday"}}' -a agt_123
+```
+
+_See code: [src/commands/whatsapp/send-template.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/whatsapp/send-template.ts)_
+
+## `chatbase whatsapp templates`
+
+List approved WhatsApp templates for an agent
+
+```
+USAGE
+  $ chatbase whatsapp templates [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>]
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  List approved WhatsApp templates for an agent
+
+  List the approved WhatsApp templates available to the agent, across all of its connected WhatsApp Business Accounts. A
+  template can only be sent from a number on its own Business Account — pick a sender whose WABA matches the template’s
+  WABA column.
+
+EXAMPLES
+  $ chatbase whatsapp templates -a agt_123
+
+  $ chatbase whatsapp templates -a agt_123 --json
+```
+
+_See code: [src/commands/whatsapp/templates.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.1.0/src/commands/whatsapp/templates.ts)_
 <!-- commandsstop -->

@@ -6,8 +6,9 @@ set -euo pipefail
 #   $1 if given, else the sibling private checkout's OpenAPI generator
 #   (../chatbase, run via `bun scripts/generate-openapi.ts`) is used by
 #   default and produces ../chatbase/openapi.json.
-#   The docs-repo copy is a separate, independently-maintained artifact and
-#   is known to drift from the API — never vendor it as a spec source.
+#   The docs-repo copy is kept in sync with the API (since Sep 2026) and
+#   may be passed explicitly as $1; generating from the API checkout stays
+#   the default since it reflects the exact code being deployed.
 SRC="${1:-}"
 if [ -z "$SRC" ]; then
     # Default: regenerate from the sibling private checkout.

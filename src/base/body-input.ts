@@ -85,6 +85,9 @@ export async function readBodyData(
 }
 
 /** Resolve a flag value via the same @file/@- indirection, without JSON parsing. */
-export async function readTextInput(value: string): Promise<string> {
-    return resolveInput(value, '--content')
+export async function readTextInput(
+    value: string,
+    flagName = '--content'
+): Promise<string> {
+    return resolveInput(value, flagName)
 }

@@ -5800,6 +5800,10 @@ export interface components {
                     chat?: string;
                     voice?: string;
                 };
+                search?: string | {
+                    chat?: string;
+                    voice?: string;
+                };
             } | null;
             /**
              * @description AI model used by the agent. Can be a deprecated model for agents that were configured before it was retired.
@@ -6142,6 +6146,10 @@ export interface components {
                     voice?: string;
                 };
                 phone?: string | {
+                    chat?: string;
+                    voice?: string;
+                };
+                search?: string | {
                     chat?: string;
                     voice?: string;
                 };
@@ -6730,7 +6738,7 @@ export interface components {
              * @description Conversation source
              * @enum {string|null}
              */
-            source: "API" | "WhatsApp" | "Messenger" | "Instagram" | "Slack" | "Salesforce" | "Zendesk" | "Zendesk Messaging" | "Chatbase site" | "Playground" | "Action preview" | "Qna preview" | "Widget or Iframe" | "Center stage" | "Iframe" | "Email" | "Agent page" | "Phone" | "Android SDK" | "iOS SDK" | "Unspecified" | null;
+            source: "API" | "WhatsApp" | "Messenger" | "Instagram" | "Slack" | "Salesforce" | "Zendesk" | "Zendesk Messaging" | "Chatbase site" | "Playground" | "Action preview" | "Qna preview" | "Widget or Iframe" | "Center stage" | "Search" | "Iframe" | "Email" | "Agent page" | "Phone" | "Android SDK" | "iOS SDK" | "Unspecified" | null;
             /**
              * @description Conversation activity status
              * @enum {string}

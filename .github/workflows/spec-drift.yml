@@ -1,0 +1,21 @@
+name: Spec drift
+on:
+    schedule:
+        - cron: '17 6 * * *'
+    workflow_dispatch:
+    push:
+        branches: [main]
+        paths: ['spec/**']
+permissions:
+    contents: read
+jobs:
+    drift:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Compare vendored spec against the docs spec
+              # explicit shell => GitHub adds -o pipefail; do not remove
+              shell: bash
+              run: |
+                  set -o pipefail # drift must fail the step even through `tee`
+                  bash scripts/spec-drift.sh 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"

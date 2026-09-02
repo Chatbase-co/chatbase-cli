@@ -405,6 +405,24 @@
                     }
                   }
                 ]
+              },
+              "search": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "chat": {
+                        "type": "string"
+                      },
+                      "voice": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
               }
             },
             "description": "Per-channel instruction overrides"
@@ -1747,6 +1765,24 @@
                 ]
               },
               "phone": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "chat": {
+                        "type": "string"
+                      },
+                      "voice": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              },
+              "search": {
                 "anyOf": [
                   {
                     "type": "string"
@@ -3314,6 +3350,7 @@
               "Qna preview",
               "Widget or Iframe",
               "Center stage",
+              "Search",
               "Iframe",
               "Email",
               "Agent page",
