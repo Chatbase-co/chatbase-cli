@@ -35,7 +35,8 @@ jobs:
                       branch=$(jq -r '.headBranchName // empty' <<< "$PR_JSON")
                   fi
                   if [ -z "$branch" ]; then
-                      branch=$(gh pr list --base main --state open --json headRefName \
+                      branch=$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --state open \
+                          --json headRefName \
                           --jq '[.[] | select(.headRefName | startswith("release-please--"))][0].headRefName // empty')
                   fi
                   if [ -n "$branch" ]; then
