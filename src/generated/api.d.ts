@@ -221,7 +221,7 @@ export interface paths {
         };
         /**
          * List conversations
-         * @description List conversations for an agent, ordered by createdAt date. Supports cursor-based pagination.
+         * @description List conversations for an agent, ordered by createdAt date. Supports cursor-based pagination. Pass `startDate` and/or `endDate` to restrict the results to a createdAt window.
          */
         get: operations["listConversations"];
         put?: never;
@@ -241,7 +241,7 @@ export interface paths {
         };
         /**
          * Export conversations
-         * @description Export all conversations with full message history for an agent. Includes conversations from all sources. Tool results are sanitized to remove internal data. Supports cursor-based pagination. Pass `conversationId` to fetch a single conversation from any source (widget, API, WhatsApp, etc.). Pass `include=summary` to omit message bodies for a cheaper triage pass, and `source` to restrict to one or more conversation sources.
+         * @description Export all conversations with full message history for an agent. Includes conversations from all sources. Tool results are sanitized to remove internal data. Supports cursor-based pagination. Pass `conversationId` to fetch a single conversation from any source (widget, API, WhatsApp, etc.). Pass `include=summary` to omit message bodies for a cheaper triage pass, `source` to restrict to one or more conversation sources, and `startDate` / `endDate` to restrict to a createdAt window.
          */
         get: operations["exportConversations"];
         put?: never;
@@ -4133,6 +4133,10 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of items per page (1 to 100, default 20) */
                 limit?: number;
+                /** @description Only return conversations created at or after this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the start of that day in UTC) or an ISO 8601 date-time. */
+                startDate?: string;
+                /** @description Only return conversations created at or before this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the *end* of that day in UTC, so the day itself is included) or an ISO 8601 date-time. */
+                endDate?: string;
             };
             header?: never;
             path: {
@@ -4152,20 +4156,12 @@ export interface operations {
                     "application/json": components["schemas"]["ListConversationsResponse"];
                 };
             };
-            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            /** @description Invalid request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    /**
-                     * @example {
-                     *       "error": {
-                     *         "code": "VALIDATION_INVALID_BODY",
-                     *         "message": "Invalid request"
-                     *       }
-                     *     }
-                     */
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
@@ -4263,9 +4259,13 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of items per page (1–20, default 20) */
                 limit?: number;
+                /** @description Only return conversations created at or after this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the start of that day in UTC) or an ISO 8601 date-time. */
+                startDate?: string;
+                /** @description Only return conversations created at or before this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the *end* of that day in UTC, so the day itself is included) or an ISO 8601 date-time. */
+                endDate?: string;
                 /** @description Return only the conversation with this ID. Use this to fetch a single conversation from any source (widget, API, WhatsApp, etc.). */
                 conversationId?: string;
-                /** @description Whether to include message bodies. `summary` omits them and skips reading them from the database — use it to triage a page cheaply, then re-request a specific conversation with `conversationId`. Defaults to `messages`, which is the historical behaviour. */
+                /** @description Whether to include message bodies. `summary` omits them and skips reading them from the database — use it to triage a page cheaply, then re-request a specific conversation with `conversationId`. Defaults to `messages`. */
                 include?: "summary" | "messages";
                 /** @description Comma-separated conversation sources to include, e.g. `API,WhatsApp`. Omit for all sources. */
                 source?: string;
@@ -4288,20 +4288,12 @@ export interface operations {
                     "application/json": components["schemas"]["ExportConversationsResponse"];
                 };
             };
-            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            /** @description Invalid request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    /**
-                     * @example {
-                     *       "error": {
-                     *         "code": "VALIDATION_INVALID_BODY",
-                     *         "message": "Invalid request"
-                     *       }
-                     *     }
-                     */
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };

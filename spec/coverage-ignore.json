@@ -1,0 +1,12 @@
+[
+    {
+        "method": "POST",
+        "path": "/api/v2/agents/{agentId}/sources",
+        "reason": "Covered by `sources create --file`, but not via the typed openapi-fetch client: this is a multipart upload against the separate files.chatbase.co host (see the operation's `servers` override), so it goes through uploadFileSource in src/client/files.ts, which builds the URL from a template literal the coverage scan cannot see."
+    },
+    {
+        "method": "PUT",
+        "path": "/api/v2/agents/{agentId}/sources/{sourceId}",
+        "reason": "Covered by `sources update --file`, via the same multipart uploadFileSource path in src/client/files.ts as createFileSource above."
+    }
+]

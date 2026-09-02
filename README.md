@@ -701,19 +701,28 @@ Export conversations from every source, with full message history
 ```
 USAGE
   $ chatbase conversations export [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
-    <value>] [--cursor <value>] [--limit <value>] [--all] [-o <value>]
+    <value>] [--cursor <value>] [--limit <value>] [--all] [-o <value>] [--start-date <value>] [--end-date <value>]
+    [--conversation <value>] [--include summary|messages] [--source <value>]
 
 FLAGS
-  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
-  -o, --output=<value>      Write export JSON to a file instead of stdout
-  -q, --quiet               Suppress non-essential output
-      --agent-name=<value>  Agent display name (looked up to an ID)
-      --all                 Fetch every page
-      --cursor=<value>      Opaque cursor from a previous response
-      --limit=<value>       Items per page (1-20, default 20)
-      --no-color            Disable colored output
-      --no-input            Never prompt; fail instead
-      --verbose             Verbose diagnostics
+  -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID)
+  -o, --output=<value>        Write export JSON to a file instead of stdout
+  -q, --quiet                 Suppress non-essential output
+      --agent-name=<value>    Agent display name (looked up to an ID)
+      --all                   Fetch every page
+      --conversation=<value>  Export only this conversation ID, from any source (widget, API, WhatsApp, …)
+      --cursor=<value>        Opaque cursor from a previous response
+      --end-date=<value>      Only conversations created at or before this YYYY-MM-DD date (inclusive) or ISO 8601
+                              date-time
+      --include=<option>      Whether to embed message bodies; summary omits them for a cheaper triage pass
+                              <options: summary|messages>
+      --limit=<value>         Items per page (1-20, default 20)
+      --no-color              Disable colored output
+      --no-input              Never prompt; fail instead
+      --source=<value>        Restrict to these conversation sources (comma-separated, e.g. "Widget or
+                              Iframe,WhatsApp"). Omit for all sources
+      --start-date=<value>    Only conversations created at or after this YYYY-MM-DD date or ISO 8601 date-time
+      --verbose               Verbose diagnostics
 
 OUTPUT FLAGS
   --json   Output raw API JSON
@@ -734,6 +743,12 @@ EXAMPLES
   $ chatbase conversations export -a agt_123
 
   $ chatbase conversations export -a agt_123 --all -o export.json
+
+  $ chatbase conversations export -a agt_123 --start-date 2024-01-01 --end-date 2024-01-31
+
+  $ chatbase conversations export -a agt_123 --include summary --source Widget,WhatsApp
+
+  $ chatbase conversations export -a agt_123 --conversation conv_123
 ```
 
 _See code: [src/commands/conversations/export.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.2.0/src/commands/conversations/export.ts)_
@@ -781,7 +796,7 @@ List an agent’s API-created conversations
 ```
 USAGE
   $ chatbase conversations list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
-    <value>] [--limit <value>] [--cursor <value>] [--all] [--user <value>]
+    <value>] [--limit <value>] [--cursor <value>] [--all] [--user <value>] [--start-date <value>] [--end-date <value>]
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
@@ -789,9 +804,12 @@ FLAGS
       --agent-name=<value>  Agent display name (looked up to an ID)
       --all                 Fetch every page
       --cursor=<value>      Pagination cursor from a previous page
+      --end-date=<value>    Only conversations created at or before this YYYY-MM-DD date (inclusive) or ISO 8601
+                            date-time
       --limit=<value>       Maximum items per page
       --no-color            Disable colored output
       --no-input            Never prompt; fail instead
+      --start-date=<value>  Only conversations created at or after this YYYY-MM-DD date or ISO 8601 date-time
       --user=<value>        List conversations for a specific user (uses GET /users/{userId}/conversations)
       --verbose             Verbose diagnostics
 
@@ -814,6 +832,8 @@ EXAMPLES
   $ chatbase conversations list -a agt_123
 
   $ chatbase conversations list -a agt_123 --user usr_456
+
+  $ chatbase conversations list -a agt_123 --start-date 2024-01-01 --end-date 2024-01-31
 
   $ chatbase conversations list -a agt_123 --all --json
 ```

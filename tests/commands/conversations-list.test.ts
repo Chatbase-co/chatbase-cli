@@ -190,6 +190,92 @@ describe('chatbase conversations list', () => {
         expect(printed).toContain('ongoing')
     })
 
+    it('maps the date window flags to startDate/endDate query params', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET',
+                query: { startDate: '2024-01-01', endDate: '2024-01-31' }
+            })
+            .reply(200, page1)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await ConversationsList.run(
+            [
+                '-a',
+                'agt_1',
+                '--plain',
+                '--start-date',
+                '2024-01-01',
+                '--end-date',
+                '2024-01-31'
+            ],
+            process.cwd()
+        )
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'c_1'
+        )
+    })
+
+    // The per-user endpoint takes only cursor/limit, so the API would drop a
+    // date window and return the unfiltered list — a wrong answer that looks
+    // like a right one. Refusing locally is the whole point of this guard.
+    it('refuses a date window combined with --user instead of silently ignoring it', async () => {
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            ConversationsList.run(
+                [
+                    '-a',
+                    'agt_1',
+                    '--plain',
+                    '--user',
+                    'usr_1',
+                    '--start-date',
+                    '2024-01-01'
+                ],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'not supported with --user'
+        )
+    })
+
+    it('surfaces the API error when the date window is inverted', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations',
+                method: 'GET',
+                query: { startDate: '2024-02-01', endDate: '2024-01-01' }
+            })
+            .reply(400, {
+                error: {
+                    code: 'VALIDATION_INVALID_DATE_RANGE',
+                    message: 'startDate must not be after endDate'
+                }
+            })
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            ConversationsList.run(
+                [
+                    '-a',
+                    'agt_1',
+                    '--plain',
+                    '--start-date',
+                    '2024-02-01',
+                    '--end-date',
+                    '2024-01-01'
+                ],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 1 } })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'VALIDATION_INVALID_DATE_RANGE'
+        )
+    })
+
     it('fails with a usage error when no agent is resolvable', async () => {
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         vi.stubEnv('CHATBASE_AGENT_ID', '')
