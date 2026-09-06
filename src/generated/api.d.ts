@@ -212,6 +212,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agents/{agentId}/voice/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a voice session
+         * @description Create a real-time voice session for an agent. Pass the response `data` to the Chatbase Voice SDK (`@chatbase-co/voice-sdk`) in your client: the SDK connects, publishes the microphone, and the agent joins automatically. Requires a plan with voice mode enabled; voice minutes consume message credits. Send `{}` when no options are needed.
+         */
+        post: operations["createVoiceSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agents/{agentId}/conversations": {
         parameters: {
             query?: never;
@@ -1654,6 +1674,34 @@ export interface components {
              * @default true
              */
             stream: boolean;
+        };
+        VoiceSessionResponse: {
+            /** @description Short-lived token scoped to this session. Pass the response `data` to the Chatbase Voice SDK in your client; safe to hand to the browser or mobile app. */
+            participantToken: string;
+            /** @description The voice session ID. */
+            sessionId: string;
+            /** @description The session room name, for correlating logs. */
+            roomName: string;
+            /** @description Maximum session duration; the session ends automatically when it elapses. */
+            maxDurationSeconds: number;
+            /** @description The conversation this session belongs to (echoed or generated). */
+            conversationId: string;
+            /** @description The end-user ID for this session (echoed or generated). */
+            userId: string;
+        };
+        VoiceSessionRequest: {
+            /**
+             * Format: uuid
+             * @description Optional conversation UUID. Reuse a value to group multiple voice sessions into one conversation in chat logs. If omitted, a new conversation is created. A conversation belongs to the end-user who started it: when reusing, send that same userId or omit userId to inherit it. Sending a different userId is rejected with CONVERSATION_USER_MISMATCH, unless the conversation is still anonymous — then it is claimed by the userId you send.
+             */
+            conversationId?: string;
+            /** @description Your end-user ID. Send a stable ID so per-user voice limits apply; if omitted a random one is generated per session (or inherited from the conversation when reusing a conversationId). Sessions with the same userId but no conversationId are separate conversations owned by the same end-user. Must contain only URL-safe characters (letters, digits, hyphens, underscores, dots). */
+            userId?: string;
+            /**
+             * @description IANA timezone of the end user (e.g. "Europe/Paris"), used by the agent for time-aware answers. Defaults to UTC.
+             * @default UTC
+             */
+            timezone: string;
         };
         ListConversationsResponse: {
             data: components["schemas"]["ConversationMetadata"][];
@@ -4067,6 +4115,154 @@ export interface operations {
                      *       "error": {
                      *         "code": "CHAT_RETRY_MESSAGE_NOT_FOUND",
                      *         "message": "Message not found in conversation"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createVoiceSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceSessionRequest"];
+            };
+        };
+        responses: {
+            /** @description Voice session created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["VoiceSessionResponse"];
+                    };
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
                      *       }
                      *     }
                      */

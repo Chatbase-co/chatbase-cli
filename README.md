@@ -77,6 +77,7 @@ calls you invoke.
 * [`chatbase tickets reply [TICKETNUMBER]`](#chatbase-tickets-reply-ticketnumber)
 * [`chatbase tickets search QUERY`](#chatbase-tickets-search-query)
 * [`chatbase tickets update TICKETNUMBER`](#chatbase-tickets-update-ticketnumber)
+* [`chatbase voice start`](#chatbase-voice-start)
 * [`chatbase whatsapp send-template TEMPLATE`](#chatbase-whatsapp-send-template-template)
 * [`chatbase whatsapp templates`](#chatbase-whatsapp-templates)
 
@@ -1593,6 +1594,50 @@ EXAMPLES
 ```
 
 _See code: [src/commands/tickets/update.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.3.0/src/commands/tickets/update.ts)_
+
+## `chatbase voice start`
+
+Start a voice session
+
+```
+USAGE
+  $ chatbase voice start [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--conversation <value>] [--user <value>] [--timezone <value>]
+
+FLAGS
+  -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet                 Suppress non-essential output
+      --agent-name=<value>    Agent display name (looked up to an ID)
+      --conversation=<value>  Conversation ID to reuse, grouping several sessions into one conversation (default: start
+                              a new conversation)
+      --no-color              Disable colored output
+      --no-input              Never prompt; fail instead
+      --timezone=<value>      [default: UTC] IANA timezone of the end user, used by the agent for time-aware answers
+      --user=<value>          Your end-user ID; send a stable value so per-user voice limits apply (default: generated
+                              per session)
+      --verbose               Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Start a voice session
+
+  Create a real-time voice session for an agent and print its credentials. Pass the response to the Chatbase Voice SDK
+  (@chatbase-co/voice-sdk) in your client: the SDK connects, publishes the microphone, and the agent joins
+  automatically. Requires a plan with voice mode enabled; voice minutes consume message credits. The participant token
+  is abbreviated in the default output — use --json or --plain for the full value.
+
+EXAMPLES
+  $ chatbase voice start -a agt_123
+
+  $ chatbase voice start --user user_42 --timezone Europe/Paris -a agt_123
+
+  $ chatbase voice start --conversation 0b6a1f2e-7c3d-4a5b-8e9f-1a2b3c4d5e6f --json -a agt_123
+```
+
+_See code: [src/commands/voice/start.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.3.0/src/commands/voice/start.ts)_
 
 ## `chatbase whatsapp send-template TEMPLATE`
 

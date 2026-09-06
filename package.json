@@ -73,6 +73,9 @@
             "helpdesk": {
                 "description": "Look up helpdesk teams and ticket statuses"
             },
+            "voice": {
+                "description": "Start real-time voice sessions for an agent"
+            },
             "whatsapp": {
                 "description": "List WhatsApp templates and send template messages"
             },
