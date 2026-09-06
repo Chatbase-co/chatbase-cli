@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.3.0...v0.4.0) (2026-09-06)
+
+
+### Features
+
+* add `voice start` for the voice sessions endpoint ([1386d84](https://github.com/Chatbase-co/chatbase-cli/commit/1386d84c6be74fd20211705505a9888ffcc00a68))
+* add `voice start` for the voice sessions endpoint ([d90ccf4](https://github.com/Chatbase-co/chatbase-cli/commit/d90ccf4ae9ac224db14ac0d2c119ec36b3cd4a5f))
+
 ## [0.3.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.2.0...v0.3.0) (2026-09-02)
 
 
