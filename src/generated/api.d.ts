@@ -1046,7 +1046,7 @@ export interface components {
              * @example https://example.com
              */
             url?: string;
-            /** @description System prompt / instructions for the agent */
+            /** @description System prompt / instructions for the agent (max 30,000 characters) */
             instructions?: string;
             /**
              * @description AI model to use
@@ -1072,9 +1072,9 @@ export interface components {
         UpdateAgentBody: {
             /** @description Agent name */
             name?: string;
-            /** @description System prompt */
+            /** @description System prompt (max 30,000 characters) */
             instructions?: string;
-            /** @description Per-channel instruction overrides */
+            /** @description Per-channel instruction overrides (max 30,000 characters each) */
             channelInstructions?: {
                 chat_widget?: string | {
                     chat?: string;
@@ -1692,7 +1692,7 @@ export interface components {
         VoiceSessionRequest: {
             /**
              * Format: uuid
-             * @description Optional conversation UUID. Reuse a value to group multiple voice sessions into one conversation in chat logs. If omitted, a new conversation is created. A conversation belongs to the end-user who started it: when reusing, send that same userId or omit userId to inherit it. Sending a different userId is rejected with CONVERSATION_USER_MISMATCH, unless the conversation is still anonymous — then it is claimed by the userId you send.
+             * @description Optional conversation UUID. Reuse a value to group multiple voice sessions into one conversation in chat logs. If omitted, a new conversation is created. A conversation belongs to the end-user who started it: when reusing, send that same userId or omit userId to inherit it; a different userId is rejected with CONVERSATION_USER_MISMATCH.
              */
             conversationId?: string;
             /** @description Your end-user ID. Send a stable ID so per-user voice limits apply; if omitted a random one is generated per session (or inherited from the conversation when reusing a conversationId). Sessions with the same userId but no conversationId are separate conversations owned by the same end-user. Must contain only URL-safe characters (letters, digits, hyphens, underscores, dots). */
