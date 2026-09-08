@@ -6,6 +6,8 @@ on:
     push:
         branches: [main]
         paths: ['spec/**']
+    pull_request:
+        branches: [main]
 permissions:
     contents: read
 jobs:
