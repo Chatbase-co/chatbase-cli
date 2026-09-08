@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.4.0...v0.5.0) (2026-09-08)
+
+
+### Features
+
+* enforce instructions limits ([a8c795f](https://github.com/Chatbase-co/chatbase-cli/commit/a8c795f9ca44df5783f6e06c84c0c5e48340b8ac))
+* enforce instructions limits ([6abe422](https://github.com/Chatbase-co/chatbase-cli/commit/6abe422252f28817188929da471e508cd6a80d07))
+
 ## [0.4.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.3.0...v0.4.0) (2026-09-06)
 
 
