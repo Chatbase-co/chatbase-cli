@@ -1396,8 +1396,7 @@
           },
           "instructions": {
             "type": "string",
-            "maxLength": 30000,
-            "description": "System prompt / instructions for the agent (max 30,000 characters)"
+            "description": "System prompt / instructions for the agent"
           },
           "model": {
             "type": "string",
@@ -1487,8 +1486,7 @@
           },
           "instructions": {
             "type": "string",
-            "maxLength": 30000,
-            "description": "System prompt (max 30,000 characters)"
+            "description": "System prompt"
           },
           "channelInstructions": {
             "type": [
@@ -1499,19 +1497,16 @@
               "chat_widget": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1520,19 +1515,16 @@
               "help_page": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1541,19 +1533,16 @@
               "center_stage": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1562,19 +1551,16 @@
               "side_panel": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1583,19 +1569,16 @@
               "slack": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1604,19 +1587,16 @@
               "whatsapp": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1625,19 +1605,16 @@
               "messenger": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1646,19 +1623,16 @@
               "instagram": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1667,19 +1641,16 @@
               "salesforce": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1688,19 +1659,16 @@
               "zendesk": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1709,19 +1677,16 @@
               "zendesk_messaging": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1730,19 +1695,16 @@
               "api": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1751,19 +1713,16 @@
               "email": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1772,19 +1731,16 @@
               "android_sdk": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1793,19 +1749,16 @@
               "ios_sdk": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1814,19 +1767,16 @@
               "phone": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
@@ -1835,26 +1785,23 @@
               "search": {
                 "anyOf": [
                   {
-                    "type": "string",
-                    "maxLength": 30000
+                    "type": "string"
                   },
                   {
                     "type": "object",
                     "properties": {
                       "chat": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       },
                       "voice": {
-                        "type": "string",
-                        "maxLength": 30000
+                        "type": "string"
                       }
                     }
                   }
                 ]
               }
             },
-            "description": "Per-channel instruction overrides (max 30,000 characters each)"
+            "description": "Per-channel instruction overrides"
           },
           "model": {
             "type": "string",

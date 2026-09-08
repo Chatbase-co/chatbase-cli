@@ -1046,7 +1046,7 @@ export interface components {
              * @example https://example.com
              */
             url?: string;
-            /** @description System prompt / instructions for the agent (max 30,000 characters) */
+            /** @description System prompt / instructions for the agent */
             instructions?: string;
             /**
              * @description AI model to use
@@ -1072,9 +1072,9 @@ export interface components {
         UpdateAgentBody: {
             /** @description Agent name */
             name?: string;
-            /** @description System prompt (max 30,000 characters) */
+            /** @description System prompt */
             instructions?: string;
-            /** @description Per-channel instruction overrides (max 30,000 characters each) */
+            /** @description Per-channel instruction overrides */
             channelInstructions?: {
                 chat_widget?: string | {
                     chat?: string;
