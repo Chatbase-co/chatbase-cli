@@ -289,7 +289,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Pause or resume a conversation
+         * @description Pause or resume an ongoing conversation. A paused conversation stops receiving AI replies but still records incoming messages.
+         */
+        patch: operations["updateConversation"];
         trace?: never;
     };
     "/agents/{agentId}/conversations/{conversationId}/messages": {
@@ -1729,7 +1733,7 @@ export interface components {
              * @description Conversation activity status
              * @enum {string}
              */
-            status: "ongoing" | "ended" | "taken_over";
+            status: "ongoing" | "ended" | "taken_over" | "paused";
         };
         ExportConversationsResponse: {
             data: components["schemas"]["ExportConversation"][];
@@ -1762,7 +1766,7 @@ export interface components {
              * @description Conversation activity status
              * @enum {string}
              */
-            status: "ongoing" | "ended" | "taken_over";
+            status: "ongoing" | "ended" | "taken_over" | "paused";
             /** @description Conversation messages. Present unless `include=summary` was requested. */
             messages?: components["schemas"]["ExportMessage"][];
         };
@@ -1857,6 +1861,21 @@ export interface components {
                 /** @description Total number of items matching the query */
                 total: number;
             };
+        };
+        UpdateConversationResponse: {
+            data: {
+                /** @description Conversation ID */
+                id: string;
+                /**
+                 * @description Conversation activity status
+                 * @enum {string}
+                 */
+                status: "ongoing" | "paused";
+            };
+        };
+        UpdateConversationRequest: {
+            /** @description Set to true to pause, false to resume */
+            paused: boolean;
         };
         UpdateMessageFeedbackResponse: {
             data: components["schemas"]["ConversationMessage"];
@@ -2220,7 +2239,7 @@ export interface components {
              * @example email
              * @enum {string}
              */
-            channel: "helpdesk" | "iframe" | "email" | "whatsapp" | "api" | "messenger" | "instagram" | "center_stage" | "phone";
+            channel: "helpdesk" | "iframe" | "email" | "whatsapp" | "api" | "messenger" | "instagram" | "center_stage" | "phone" | "instagram_comment" | "facebook_comment";
             /** @description ID of the linked conversation, if any */
             conversationId: string | null;
             /** @description ID of the assigned team, or null. Resolve via /teams. */
@@ -2338,7 +2357,7 @@ export interface components {
              * @example email
              * @enum {string}
              */
-            channel: "helpdesk" | "iframe" | "email" | "whatsapp" | "api" | "messenger" | "instagram" | "center_stage" | "phone";
+            channel: "helpdesk" | "iframe" | "email" | "whatsapp" | "api" | "messenger" | "instagram" | "center_stage" | "phone" | "instagram_comment" | "facebook_comment";
             /** @description ID of the linked conversation, if any */
             conversationId: string | null;
             /** @description ID of the assigned team, or null. Resolve via /teams. */
@@ -4648,6 +4667,154 @@ export interface operations {
                      *       "error": {
                      *         "code": "RESOURCE_NOT_FOUND",
                      *         "message": "The requested item could not be found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateConversation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The conversation ID */
+                conversationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateConversationRequest"];
+            };
+        };
+        responses: {
+            /** @description Conversation updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateConversationResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Standard plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
                      *       }
                      *     }
                      */
