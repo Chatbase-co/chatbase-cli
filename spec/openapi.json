@@ -678,6 +678,9 @@
           "ipRateLimits": {
             "$ref": "#/components/schemas/AgentIpRateLimits"
           },
+          "spamSettings": {
+            "$ref": "#/components/schemas/AgentSpamSettings"
+          },
           "voiceSettings": {
             "type": [
               "object",
@@ -908,6 +911,7 @@
           "creditsUsed",
           "notificationsSettings",
           "ipRateLimits",
+          "spamSettings",
           "voiceSettings",
           "styles",
           "createdAt",
@@ -945,6 +949,27 @@
           "timeframe",
           "message"
         ]
+      },
+      "AgentSpamSettings": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether spam detection is enabled"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Custom prompt describing what counts as spam for this agent (max 2000 chars)"
+          }
+        },
+        "required": [
+          "enabled",
+          "prompt"
+        ],
+        "description": "Spam detection settings. When enabled, conversations are checked for spam and automatically paused."
       },
       "AgentStyles": {
         "type": [
@@ -2065,6 +2090,28 @@
               }
             },
             "description": "IP-based rate limit settings (partial update; null = reset to defaults)"
+          },
+          "spamSettings": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether spam detection is enabled"
+              },
+              "prompt": {
+                "type": "string",
+                "maxLength": 2000,
+                "description": "Custom prompt describing what counts as spam for this agent (max 2000 chars)"
+              }
+            },
+            "required": [
+              "enabled",
+              "prompt"
+            ],
+            "description": "Spam detection settings (null = disable spam detection)"
           },
           "voiceSettings": {
             "type": [
