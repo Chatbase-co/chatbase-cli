@@ -3306,7 +3306,8 @@
             "enum": [
               "ongoing",
               "ended",
-              "taken_over"
+              "taken_over",
+              "paused"
             ],
             "description": "Conversation activity status"
           }
@@ -3426,7 +3427,8 @@
             "enum": [
               "ongoing",
               "ended",
-              "taken_over"
+              "taken_over",
+              "paused"
             ],
             "description": "Conversation activity status"
           },
@@ -3761,6 +3763,48 @@
           "data",
           "pagination"
         ]
+      },
+      "UpdateConversationResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Conversation ID"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ongoing",
+                  "paused"
+                ],
+                "description": "Conversation activity status"
+              }
+            },
+            "required": [
+              "id",
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "UpdateConversationRequest": {
+        "type": "object",
+        "properties": {
+          "paused": {
+            "type": "boolean",
+            "description": "Set to true to pause, false to resume"
+          }
+        },
+        "required": [
+          "paused"
+        ],
+        "additionalProperties": false
       },
       "UpdateMessageFeedbackResponse": {
         "type": "object",
@@ -4766,7 +4810,9 @@
               "messenger",
               "instagram",
               "center_stage",
-              "phone"
+              "phone",
+              "instagram_comment",
+              "facebook_comment"
             ],
             "description": "Channel the ticket originated from",
             "example": "email"
@@ -5014,7 +5060,9 @@
               "messenger",
               "instagram",
               "center_stage",
-              "phone"
+              "phone",
+              "instagram_comment",
+              "facebook_comment"
             ],
             "description": "Channel the ticket originated from",
             "example": "email"
@@ -8235,6 +8283,187 @@
                   "error": {
                     "code": "RESOURCE_NOT_FOUND",
                     "message": "The requested item could not be found"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateConversation",
+        "x-mcp": {
+          "tool": "chatbase_update_conversation",
+          "scopes": [
+            "chatlogs:write"
+          ],
+          "annotations": {
+            "idempotent": true
+          }
+        },
+        "tags": [
+          "Conversations"
+        ],
+        "summary": "Pause or resume a conversation",
+        "description": "Pause or resume an ongoing conversation. A paused conversation stops receiving AI replies but still records incoming messages.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The conversation ID",
+              "example": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+            },
+            "required": true,
+            "description": "The conversation ID",
+            "name": "conversationId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConversationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Conversation updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateConversationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "A Standard plan or higher is required to access the API"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No agent matches the provided `agentId`, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AGENT_NOT_FOUND",
+                    "message": "Agent not found"
                   }
                 }
               }
