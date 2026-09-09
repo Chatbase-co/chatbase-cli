@@ -860,6 +860,7 @@ export interface components {
                 };
             } | null;
             ipRateLimits: components["schemas"]["AgentIpRateLimits"];
+            spamSettings: components["schemas"]["AgentSpamSettings"];
             /** @description Voice mode settings */
             voiceSettings: {
                 voice?: {
@@ -926,6 +927,13 @@ export interface components {
              */
             message: string;
         };
+        /** @description Spam detection settings. When enabled, conversations are checked for spam and automatically paused. */
+        AgentSpamSettings: {
+            /** @description Whether spam detection is enabled */
+            enabled: boolean;
+            /** @description Custom prompt describing what counts as spam for this agent (max 2000 chars) */
+            prompt: string;
+        } | null;
         AgentStyles: {
             /** @description Chat widget styles */
             chat: {
@@ -1221,6 +1229,13 @@ export interface components {
                  * @example Too many messages in a row
                  */
                 message?: string;
+            } | null;
+            /** @description Spam detection settings (null = disable spam detection) */
+            spamSettings?: {
+                /** @description Whether spam detection is enabled */
+                enabled: boolean;
+                /** @description Custom prompt describing what counts as spam for this agent (max 2000 chars) */
+                prompt: string;
             } | null;
             /** @description Voice mode configuration (null = disable voice mode) */
             voiceSettings?: {
