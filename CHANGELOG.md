@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.5.0...v0.6.0) (2026-09-15)
+
+
+### Features
+
+* pause conversations, spam settings, and API v2 spec sync ([1e6909f](https://github.com/Chatbase-co/chatbase-cli/commit/1e6909f5723f53b295c591025d46637fb478c8ce))
+* pause conversations, spam settings, and API v2 spec sync ([ba22d6e](https://github.com/Chatbase-co/chatbase-cli/commit/ba22d6ee95e733098009a43758a2bd958aefc5ba))
+
 ## [0.5.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.4.0...v0.5.0) (2026-09-08)
 
 
