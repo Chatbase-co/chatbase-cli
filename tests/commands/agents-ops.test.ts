@@ -35,13 +35,19 @@ afterEach(async () => {
 })
 
 describe('chatbase agents train', () => {
-    it('agents train posts and reports', async () => {
+    it('agents train posts and reports the deprecated no-op', async () => {
         mock.get(BASE)
             .intercept({ path: '/api/v2/agents/agt_1/train', method: 'POST' })
-            .reply(200, { success: true })
+            .reply(200, {
+                success: true,
+                deprecated: true,
+                message: 'Deprecated: this endpoint does nothing.'
+            })
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await AgentsTrain.run(['agt_1'], process.cwd())
-        expect(err.mock.calls.join('')).toContain('Training started')
+        const stderr = err.mock.calls.join('')
+        expect(stderr).toContain('Nothing to do for agt_1')
+        expect(stderr).toContain('sources train as soon as they are created')
     })
 })
 

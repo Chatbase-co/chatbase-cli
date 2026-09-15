@@ -3,8 +3,7 @@ import { AgentCommand } from '../../base/agent-command.js'
 import { throwIfError } from '../../client/client.js'
 
 export default class SourcesDelete extends AgentCommand {
-    static override description =
-        'Delete a source (restorable via restore command)'
+    static override description = 'Delete a source'
     static override examples = [
         '<%= config.bin %> sources delete src_1 -a agt_1'
     ]
@@ -25,14 +24,11 @@ export default class SourcesDelete extends AgentCommand {
         )
         throwIfError(response, error)
         this.success(flags, `Deleted source ${args.sourceId}`)
-        // Never-trained sources are hard-deleted (status "deleted") — only
-        // trained ones get the restorable "toBeDeleted" mark.
+        // Knowledge is purged immediately; "toBeDeleted" only means the
+        // background purge is still finishing.
         const status = (data as { status?: string } | undefined)?.status
         if (status === 'toBeDeleted') {
-            this.note(
-                flags,
-                `↩ restore with: chatbase sources restore ${args.sourceId} -a ${agentId}`
-            )
+            this.note(flags, '… purge still finishing')
         }
     }
 }

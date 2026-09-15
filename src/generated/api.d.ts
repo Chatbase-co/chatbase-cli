@@ -162,8 +162,9 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Train agent
-         * @description Queues a training job for the agent. Training is asynchronous — use GET /agents/{agentId} to poll `status` for completion.
+         * Train agent (deprecated)
+         * @deprecated
+         * @description **Deprecated.** Sources train as soon as they are created, updated or deleted, so changes take effect immediately and there is nothing to trigger. The call does nothing and always succeeds. Poll `GET /agents/{agentId}/sources/{sourceId}` and read `status` to follow a source, or `GET /agents/{agentId}` for the agent-level `status`.
          */
         post: operations["trainAgent"];
         delete?: never;
@@ -411,7 +412,7 @@ export interface paths {
         put?: never;
         /**
          * Create source
-         * @description Creates a new source. Accepts text, qna, and link source types. File sources require a dedicated endpoint. Ticket and Notion sources are not accepted.
+         * @description Creates a new source. Accepts text, qna, and link source types. File sources require a dedicated endpoint. Ticket and Notion sources are not accepted. The source starts training immediately — no separate training call is needed. It is returned as `untrained` and flips to `trained` when it is live, or `failed` if training did not land; poll `GET /agents/{agentId}/sources/{sourceId}` to follow it.
          *
          *     **Q&A request body limit:** The total request body must not exceed 4.5 MB for Q&A sources.
          */
@@ -436,7 +437,7 @@ export interface paths {
         get: operations["getSource"];
         /**
          * Update source
-         * @description Updates an existing source. Accepts text, qna, and link sources. File sources require a dedicated endpoint. Link URL is immutable — to change it, delete and recreate the source. Ticket and Notion sources are not accepted.
+         * @description Updates an existing source. Accepts text, qna, and link sources. File sources require a dedicated endpoint. A content change retrains the source immediately (status `updated` until it is live again). Link URL is immutable — to change it, delete and recreate the source. Ticket and Notion sources are not accepted.
          *
          *     **Q&A request body limit:** The total request body must not exceed 4.5 MB for Q&A sources.
          */
@@ -444,7 +445,7 @@ export interface paths {
         post?: never;
         /**
          * Delete source
-         * @description Marks a source for deletion. Returns the source in its final state.
+         * @description Deletes a source. Its knowledge is removed from the agent immediately; the response carries the final state (`deleted`, or `toBeDeleted` while the purge finishes).
          */
         delete: operations["deleteSource"];
         options?: never;
@@ -462,8 +463,9 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Restore source
-         * @description Restores a source that is pending deletion back to its previous active state.
+         * Restore source (deprecated)
+         * @deprecated
+         * @description **Deprecated.** A delete takes effect immediately — the knowledge is purged right away, so there is no pending state to restore from. The call does nothing and always succeeds. Re-create the source instead.
          */
         post: operations["restoreSource"];
         delete?: never;
@@ -861,6 +863,14 @@ export interface components {
             } | null;
             ipRateLimits: components["schemas"]["AgentIpRateLimits"];
             spamSettings: components["schemas"]["AgentSpamSettings"];
+            /**
+             * @description ISO 3166-1 alpha-2 country codes blocked from accessing this agent. Visitors from these countries will not see the chatbot.
+             * @example [
+             *       "RU",
+             *       "KP"
+             *     ]
+             */
+            blockedCountries: string[] | null;
             /** @description Voice mode settings */
             voiceSettings: {
                 voice?: {
@@ -903,10 +913,11 @@ export interface components {
             /** @description ISO 8601 timestamp of the last completed training */
             lastTrainedAt: string | null;
             /**
-             * @description Current training status of the agent
+             * @description Training state derived from the agent's sources. `untrained`: no live sources. `training`: at least one source is still being processed. `failed`: a source failed to train (the others are live). `trained`: every source is live.
              * @example trained
+             * @enum {string}
              */
-            status: string | null;
+            status: "untrained" | "training" | "failed" | "trained";
             /** @description Total size of training data in bytes */
             size: number;
         };
@@ -1342,6 +1353,14 @@ export interface components {
                 /** @description Fallback message spoken to the user when the agent encounters an unrecoverable error during a call (max 500 chars). */
                 errorMessage?: string;
             } | null;
+            /**
+             * @description ISO 3166-1 alpha-2 country codes to block (null = remove all blocking)
+             * @example [
+             *       "RU",
+             *       "KP"
+             *     ]
+             */
+            blockedCountries?: string[] | null;
         };
         UpdateAgentStylesBody: {
             styles: components["schemas"]["UpdateAgentStylesInput"];
@@ -1570,6 +1589,14 @@ export interface components {
         UpdateAgentAutoRetrainBody: {
             /** @description true = retrain every 7 days, false = never */
             enabled: boolean;
+        };
+        DeprecatedEndpointResponse: {
+            /** @enum {boolean} */
+            success: true;
+            /** @enum {boolean} */
+            deprecated: true;
+            /** @example Deprecated: this endpoint does nothing. Sources train as soon as they are created, updated or deleted, so changes take effect immediately. Poll GET /agents/{agentId}/sources/{sourceId} for a source status. */
+            message: string;
         };
         /**
          * @description Streaming response using the AI SDK UIMessage Stream protocol.
@@ -1957,10 +1984,10 @@ export interface components {
             /** @description ISO 8601 creation timestamp */
             createdAt: string;
             /**
-             * @description Training status of the source
+             * @description Training status of the source. `failed` means the last training run did not land; an earlier trained version, if any, stays live.
              * @enum {string}
              */
-            status: "untrained" | "trained" | "toBeDeleted" | "updated";
+            status: "untrained" | "trained" | "toBeDeleted" | "updated" | "failed";
             metadata: components["schemas"]["LinkMetadata"];
         };
         /** @description Link-specific metadata. Present only for type="link". */
@@ -1997,7 +2024,7 @@ export interface components {
              * @description Training status of the source
              * @enum {string}
              */
-            status?: "untrained" | "trained" | "toBeDeleted" | "updated" | "deleted";
+            status?: "untrained" | "trained" | "toBeDeleted" | "updated" | "failed" | "deleted";
         };
         CreateSourceBody: {
             /** @enum {string} */
@@ -3744,13 +3771,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Training job queued */
+            /** @description Nothing to do — sources already train on write */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuccessResponse"];
+                    "application/json": components["schemas"]["DeprecatedEndpointResponse"];
                 };
             };
             /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
@@ -3804,23 +3831,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description A training run is already in progress for this agent. Wait for it to complete before starting another. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "error": {
-                     *         "code": "AGENT_ALREADY_TRAINING",
-                     *         "message": "Agent is already training, please wait for it to finish"
-                     *       }
-                     *     }
-                     */
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
             /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
             429: {
                 headers: {
@@ -3849,23 +3859,6 @@ export interface operations {
                      *       "error": {
                      *         "code": "INTERNAL_SERVER_ERROR",
                      *         "message": "Something went wrong, please try again"
-                     *       }
-                     *     }
-                     */
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "error": {
-                     *         "code": "SERVICE_UNDER_MAINTENANCE",
-                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
                      *       }
                      *     }
                      */
@@ -5803,6 +5796,23 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description A parent link with this URL and link type already exists for this agent. */
             409: {
                 headers: {
@@ -6357,13 +6367,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Source restored to its previous active state */
+            /** @description Nothing to do — deletes are final */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SourceListItem"];
+                    "application/json": components["schemas"]["DeprecatedEndpointResponse"];
                 };
             };
             /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
@@ -6400,57 +6410,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "error": {
-                     *         "code": "AGENT_NOT_FOUND",
-                     *         "message": "Agent not found"
-                     *       }
-                     *     }
-                     */
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Only sources with status to_be_deleted can be restored. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "error": {
-                     *         "code": "SOURCE_NOT_RESTORABLE",
-                     *         "message": "Source is not pending deletion"
-                     *       }
-                     *     }
-                     */
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Restoring this link would exceed the maximum number of crawl and sitemap links allowed per agent. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "error": {
-                     *         "code": "SOURCE_LINK_LIMIT_EXCEEDED",
-                     *         "message": "Crawl/sitemap link limit reached"
-                     *       }
-                     *     }
-                     */
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
             /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
             429: {
                 headers: {
@@ -6479,23 +6438,6 @@ export interface operations {
                      *       "error": {
                      *         "code": "INTERNAL_SERVER_ERROR",
                      *         "message": "Something went wrong, please try again"
-                     *       }
-                     *     }
-                     */
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "error": {
-                     *         "code": "SERVICE_UNDER_MAINTENANCE",
-                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
                      *       }
                      *     }
                      */

@@ -140,7 +140,7 @@ describe('chatbase sources update', () => {
 })
 
 describe('chatbase sources delete', () => {
-    it('prints the restore hint for a trained source (toBeDeleted)', async () => {
+    it('notes the purge is still finishing (toBeDeleted)', async () => {
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/sources/src_1',
@@ -159,12 +159,10 @@ describe('chatbase sources delete', () => {
         await SourcesDelete.run(['src_1'], process.cwd())
         const stderr = err.mock.calls.join('')
         expect(stderr).toContain('Deleted source src_1')
-        expect(stderr).toContain(
-            '↩ restore with: chatbase sources restore src_1 -a agt_1'
-        )
+        expect(stderr).toContain('purge still finishing')
     })
 
-    it('omits the restore hint when an untrained source is hard-deleted', async () => {
+    it('omits the purge note when the delete is already final', async () => {
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/sources/src_1',
@@ -183,28 +181,26 @@ describe('chatbase sources delete', () => {
         await SourcesDelete.run(['src_1'], process.cwd())
         const stderr = err.mock.calls.join('')
         expect(stderr).toContain('Deleted source src_1')
-        expect(stderr).not.toContain('restore with')
+        expect(stderr).not.toContain('purge still finishing')
     })
 })
 
 describe('chatbase sources restore', () => {
-    it('POSTs to restore endpoint and prints success message', async () => {
+    it('POSTs to the deprecated restore endpoint and reports a no-op', async () => {
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/sources/src_1/restore',
                 method: 'POST'
             })
-            .reply(200, () => {
-                return {
-                    id: 'src_1',
-                    name: 'Source',
-                    type: 'text',
-                    status: 'trained',
-                    size: 0
-                }
+            .reply(200, {
+                success: true,
+                deprecated: true,
+                message: 'Deprecated: this endpoint does nothing.'
             })
         const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await SourcesRestore.run(['src_1'], process.cwd())
-        expect(err.mock.calls.join('')).toContain('Restored source src_1')
+        const stderr = err.mock.calls.join('')
+        expect(stderr).toContain('Nothing to do for src_1')
+        expect(stderr).toContain('Re-create the source instead.')
     })
 })

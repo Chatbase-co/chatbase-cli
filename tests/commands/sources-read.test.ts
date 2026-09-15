@@ -40,6 +40,16 @@ const src3 = {
     metadata: null
 }
 
+const src4 = {
+    id: 'src_4',
+    type: 'text',
+    name: 'Notes',
+    size: 64,
+    createdAt: '2026-01-04T00:00:00Z',
+    status: 'failed',
+    metadata: null
+}
+
 const page1 = {
     data: [src1],
     pagination: { cursor: 'cur_2', hasMore: true, total: 2 }
@@ -90,8 +100,8 @@ describe('chatbase sources list', () => {
         mock.get(BASE)
             .intercept({ path: '/api/v2/agents/agt_1/sources', method: 'GET' })
             .reply(200, {
-                data: [src1, src2, src3],
-                pagination: { cursor: null, hasMore: false, total: 3 }
+                data: [src1, src2, src3, src4],
+                pagination: { cursor: null, hasMore: false, total: 4 }
             })
         const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
         vi.spyOn(process.stderr, 'write').mockReturnValue(true)
@@ -108,6 +118,7 @@ describe('chatbase sources list', () => {
         expect(printed).not.toContain('✓ toBeDeleted')
         expect(printed).not.toContain('✗ toBeDeleted')
         expect(printed).not.toContain('… toBeDeleted')
+        expect(printed).toContain('✗ failed')
     })
 
     it('--json emits the raw API envelope for a single page', async () => {
