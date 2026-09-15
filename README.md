@@ -321,7 +321,7 @@ _See code: [src/commands/agents/styles.ts](https://github.com/Chatbase-co/chatba
 
 ## `chatbase agents train [AGENTID]`
 
-Queue a training job for an agent
+Deprecated: sources train automatically on write, so this does nothing
 
 ```
 USAGE
@@ -344,7 +344,7 @@ OUTPUT FLAGS
   --plain  Tab-separated output for scripts
 
 DESCRIPTION
-  Queue a training job for an agent
+  Deprecated: sources train automatically on write, so this does nothing
 
 EXAMPLES
   $ chatbase agents train agt_123
@@ -1118,7 +1118,7 @@ _See code: [src/commands/sources/create.ts](https://github.com/Chatbase-co/chatb
 
 ## `chatbase sources delete SOURCEID`
 
-Delete a source (restorable via restore command)
+Delete a source
 
 ```
 USAGE
@@ -1141,7 +1141,7 @@ OUTPUT FLAGS
   --plain  Tab-separated output for scripts
 
 DESCRIPTION
-  Delete a source (restorable via restore command)
+  Delete a source
 
 EXAMPLES
   $ chatbase sources delete src_1 -a agt_1
@@ -1221,7 +1221,7 @@ _See code: [src/commands/sources/list.ts](https://github.com/Chatbase-co/chatbas
 
 ## `chatbase sources restore SOURCEID`
 
-Restore a deleted source
+Deprecated: deletes are final, so this does nothing
 
 ```
 USAGE
@@ -1244,7 +1244,7 @@ OUTPUT FLAGS
   --plain  Tab-separated output for scripts
 
 DESCRIPTION
-  Restore a deleted source
+  Deprecated: deletes are final, so this does nothing
 
 EXAMPLES
   $ chatbase sources restore src_1 -a agt_1

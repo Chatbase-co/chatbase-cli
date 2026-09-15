@@ -3,7 +3,9 @@ import { AgentCommand } from '../../base/agent-command.js'
 import { throwIfError } from '../../client/client.js'
 
 export default class SourcesRestore extends AgentCommand {
-    static override description = 'Restore a deleted source'
+    static override description =
+        'Deprecated: deletes are final, so this does nothing'
+    static override state = 'deprecated'
     static override examples = [
         '<%= config.bin %> sources restore src_1 -a agt_1'
     ]
@@ -23,6 +25,10 @@ export default class SourcesRestore extends AgentCommand {
             }
         )
         throwIfError(response, error)
-        this.success(flags, `Restored source ${args.sourceId}`)
+        this.success(
+            flags,
+            `Nothing to do for ${args.sourceId} — deletes take effect immediately`
+        )
+        this.note(flags, 'Re-create the source instead.')
     }
 }

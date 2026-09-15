@@ -4,7 +4,9 @@ import { throwIfError } from '../../client/client.js'
 import { UsageError } from '../../errors/errors.js'
 
 export default class AgentsTrain extends AgentCommand {
-    static override description = 'Queue a training job for an agent'
+    static override description =
+        'Deprecated: sources train automatically on write, so this does nothing'
+    static override state = 'deprecated'
     static override examples = [
         '<%= config.bin %> agents train agt_123',
         '<%= config.bin %> agents train'
@@ -34,6 +36,13 @@ export default class AgentsTrain extends AgentCommand {
             }
         )
         throwIfError(response, error)
-        this.success(flags, `Training started for ${agentId}`)
+        this.success(
+            flags,
+            `Nothing to do for ${agentId} — sources train as soon as they are created, updated or deleted`
+        )
+        this.note(
+            flags,
+            'Poll `chatbase sources get <sourceId>` or `chatbase agents get` to follow training.'
+        )
     }
 }
