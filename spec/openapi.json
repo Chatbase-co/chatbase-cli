@@ -4941,6 +4941,18 @@
             ],
             "description": "ID of the assigned team, or null. Resolve via /teams."
           },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "none",
+              "low",
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "description": "Ticket priority. `none` means the ticket has not been triaged.",
+            "example": "high"
+          },
           "createdAt": {
             "type": "string",
             "description": "ISO 8601 creation timestamp",
@@ -4972,6 +4984,7 @@
           "channel",
           "conversationId",
           "teamId",
+          "priority",
           "createdAt",
           "updatedAt",
           "lastMessageAt"
@@ -5071,6 +5084,18 @@
             "type": "string",
             "format": "uuid",
             "description": "ID of an existing team for this agent. When provided without any assignee field, an agent is picked within this team using the team's own assignment strategy, and routing rules are skipped. When provided together with assigneeId/assigneeEmail, including assigneeId: null, no auto-assignment runs and the team is written as given."
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "none",
+              "low",
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "description": "Ticket priority. Defaults to `none` (untriaged) when omitted.",
+            "example": "high"
           }
         },
         "required": [
@@ -5191,6 +5216,18 @@
             ],
             "description": "ID of the assigned team, or null. Resolve via /teams."
           },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "none",
+              "low",
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "description": "Ticket priority. `none` means the ticket has not been triaged.",
+            "example": "high"
+          },
           "createdAt": {
             "type": "string",
             "description": "ISO 8601 creation timestamp",
@@ -5220,6 +5257,7 @@
           "channel",
           "conversationId",
           "teamId",
+          "priority",
           "createdAt",
           "updatedAt",
           "lastMessageAt"
@@ -5361,10 +5399,9 @@
             "type": "string",
             "enum": [
               "reply",
-              "note",
-              "event"
+              "note"
             ],
-            "description": "`reply` is customer-visible, `note` is an internal note, `event` is a system timeline entry",
+            "description": "`reply` is customer-visible, `note` is an internal note",
             "example": "reply"
           },
           "sender": {
@@ -5375,29 +5412,26 @@
               "string",
               "null"
             ],
-            "description": "Rich (HTML) body. Null on `event` messages."
+            "description": "Rich (HTML) body"
           },
           "contentText": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Plain-text body. Null on `event` messages."
+            "description": "Plain-text body"
           },
           "attachments": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/MessageAttachment"
             },
-            "description": "Always an empty array on `event` messages"
+            "description": "Message attachments"
           },
           "createdAt": {
             "type": "string",
             "description": "ISO 8601 creation timestamp",
             "example": "2026-07-25T10:15:00.000Z"
-          },
-          "metadata": {
-            "$ref": "#/components/schemas/MessageEventMetadata"
           }
         },
         "required": [
@@ -5454,7 +5488,7 @@
           "name",
           "email"
         ],
-        "description": "Null on `event` messages"
+        "description": "Who sent the message"
       },
       "MessageAttachment": {
         "type": "object",
@@ -5495,174 +5529,6 @@
           "type",
           "size"
         ]
-      },
-      "MessageEventMetadata": {
-        "type": "object",
-        "properties": {
-          "eventType": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Event kind. `status_change` and `assign` are documented; other values may appear as new event kinds are added, and carry no further fields.",
-            "example": "status_change"
-          },
-          "statusFrom": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Previous status category (status_change only)",
-            "example": "on_you"
-          },
-          "statusTo": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "New status category (status_change only)",
-            "example": "closed"
-          },
-          "doneBy": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "id": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "name": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "email": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "enum": [
-                  "agent",
-                  "customer",
-                  null
-                ],
-                "description": "Whether the actor is one of your agents or the ticket customer"
-              }
-            },
-            "required": [
-              "id",
-              "name",
-              "email",
-              "type"
-            ],
-            "description": "Who triggered the event"
-          },
-          "assignedTo": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "id": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "name": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "email": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "enum": [
-                  "agent",
-                  "customer",
-                  null
-                ],
-                "description": "Whether the actor is one of your agents or the ticket customer"
-              }
-            },
-            "required": [
-              "id",
-              "name",
-              "email",
-              "type"
-            ],
-            "description": "New assignee (assign only)"
-          },
-          "assignedFrom": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "id": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "name": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "email": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "enum": [
-                  "agent",
-                  "customer",
-                  null
-                ],
-                "description": "Whether the actor is one of your agents or the ticket customer"
-              }
-            },
-            "required": [
-              "id",
-              "name",
-              "email",
-              "type"
-            ],
-            "description": "Previous assignee (assign only)"
-          }
-        },
-        "required": [
-          "eventType"
-        ],
-        "description": "Present only on `event` messages"
       },
       "CreatedTicketMessage": {
         "type": "object",
@@ -5789,6 +5655,18 @@
             ],
             "format": "uuid",
             "description": "ID of an existing team for this agent. Pass null to clear the team. Omit to leave the team unchanged."
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "none",
+              "low",
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "description": "New ticket priority. Pass `none` to clear it. Omit to leave the priority unchanged.",
+            "example": "urgent"
           }
         }
       }
@@ -11547,6 +11425,17 @@
           {
             "schema": {
               "type": "string",
+              "description": "Comma-separated priorities (is-any-of). Priorities: none, low, normal, high, urgent. Pass `none` for untriaged tickets.",
+              "example": "high,urgent"
+            },
+            "required": false,
+            "description": "Comma-separated priorities (is-any-of). Priorities: none, low, normal, high, urgent. Pass `none` for untriaged tickets.",
+            "name": "priority",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "format": "date-time",
               "description": "Only tickets created at or after this ISO 8601 timestamp.",
               "example": "2026-07-01T00:00:00Z"
@@ -12106,7 +11995,7 @@
           "Helpdesk"
         ],
         "summary": "Update a ticket",
-        "description": "Partially updates a ticket's status, assignee, or team. Only provided fields are changed. Fields are validated together but written independently, so a 500 can leave a partial update.",
+        "description": "Partially updates a ticket's status, assignee, team, or priority. Only provided fields are changed. Fields are validated together but written independently, so a 500 can leave a partial update.",
         "security": [
           {
             "bearerAuth": []
@@ -12399,11 +12288,11 @@
             "schema": {
               "type": "string",
               "default": "reply,note",
-              "description": "Comma-separated message types. Defaults to `reply,note`; system `event` messages are opt-in.",
+              "description": "Comma-separated message types (`reply`, `note`). Defaults to `reply,note`.",
               "example": "reply,note"
             },
             "required": false,
-            "description": "Comma-separated message types. Defaults to `reply,note`; system `event` messages are opt-in.",
+            "description": "Comma-separated message types (`reply`, `note`). Defaults to `reply,note`.",
             "name": "types",
             "in": "query"
           },

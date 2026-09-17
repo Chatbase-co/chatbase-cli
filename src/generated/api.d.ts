@@ -617,7 +617,7 @@ export interface paths {
         head?: never;
         /**
          * Update a ticket
-         * @description Partially updates a ticket's status, assignee, or team. Only provided fields are changed. Fields are validated together but written independently, so a 500 can leave a partial update.
+         * @description Partially updates a ticket's status, assignee, team, or priority. Only provided fields are changed. Fields are validated together but written independently, so a 500 can leave a partial update.
          */
         patch: operations["updateTicket"];
         trace?: never;
@@ -2287,6 +2287,12 @@ export interface components {
             /** @description ID of the assigned team, or null. Resolve via /teams. */
             teamId: string | null;
             /**
+             * @description Ticket priority. `none` means the ticket has not been triaged.
+             * @example high
+             * @enum {string}
+             */
+            priority: "none" | "low" | "normal" | "high" | "urgent";
+            /**
              * @description ISO 8601 creation timestamp
              * @example 2026-07-20T12:34:56.000Z
              */
@@ -2357,6 +2363,12 @@ export interface components {
              * @description ID of an existing team for this agent. When provided without any assignee field, an agent is picked within this team using the team's own assignment strategy, and routing rules are skipped. When provided together with assigneeId/assigneeEmail, including assigneeId: null, no auto-assignment runs and the team is written as given.
              */
             teamId?: string;
+            /**
+             * @description Ticket priority. Defaults to `none` (untriaged) when omitted.
+             * @example high
+             * @enum {string}
+             */
+            priority?: "none" | "low" | "normal" | "high" | "urgent";
         };
         CreateTicketCustomer: {
             /**
@@ -2404,6 +2416,12 @@ export interface components {
             conversationId: string | null;
             /** @description ID of the assigned team, or null. Resolve via /teams. */
             teamId: string | null;
+            /**
+             * @description Ticket priority. `none` means the ticket has not been triaged.
+             * @example high
+             * @enum {string}
+             */
+            priority: "none" | "low" | "normal" | "high" | "urgent";
             /**
              * @description ISO 8601 creation timestamp
              * @example 2026-07-20T12:34:56.000Z
@@ -2466,26 +2484,25 @@ export interface components {
             /** @description Message id */
             id: string;
             /**
-             * @description `reply` is customer-visible, `note` is an internal note, `event` is a system timeline entry
+             * @description `reply` is customer-visible, `note` is an internal note
              * @example reply
              * @enum {string}
              */
-            type: "reply" | "note" | "event";
+            type: "reply" | "note";
             sender: components["schemas"]["MessageSender"];
-            /** @description Rich (HTML) body. Null on `event` messages. */
+            /** @description Rich (HTML) body */
             content: string | null;
-            /** @description Plain-text body. Null on `event` messages. */
+            /** @description Plain-text body */
             contentText: string | null;
-            /** @description Always an empty array on `event` messages */
+            /** @description Message attachments */
             attachments: components["schemas"]["MessageAttachment"][];
             /**
              * @description ISO 8601 creation timestamp
              * @example 2026-07-25T10:15:00.000Z
              */
             createdAt: string;
-            metadata?: components["schemas"]["MessageEventMetadata"];
         };
-        /** @description Null on `event` messages */
+        /** @description Who sent the message */
         MessageSender: {
             /**
              * @description Who sent the message
@@ -2512,57 +2529,6 @@ export interface components {
             type: string | null;
             /** @description Size in bytes */
             size: number | null;
-        };
-        /** @description Present only on `event` messages */
-        MessageEventMetadata: {
-            /**
-             * @description Event kind. `status_change` and `assign` are documented; other values may appear as new event kinds are added, and carry no further fields.
-             * @example status_change
-             */
-            eventType: string | null;
-            /**
-             * @description Previous status category (status_change only)
-             * @example on_you
-             */
-            statusFrom?: string | null;
-            /**
-             * @description New status category (status_change only)
-             * @example closed
-             */
-            statusTo?: string | null;
-            /** @description Who triggered the event */
-            doneBy?: {
-                id: string | null;
-                name: string | null;
-                email: string | null;
-                /**
-                 * @description Whether the actor is one of your agents or the ticket customer
-                 * @enum {string|null}
-                 */
-                type: "agent" | "customer" | null;
-            } | null;
-            /** @description New assignee (assign only) */
-            assignedTo?: {
-                id: string | null;
-                name: string | null;
-                email: string | null;
-                /**
-                 * @description Whether the actor is one of your agents or the ticket customer
-                 * @enum {string|null}
-                 */
-                type: "agent" | "customer" | null;
-            } | null;
-            /** @description Previous assignee (assign only) */
-            assignedFrom?: {
-                id: string | null;
-                name: string | null;
-                email: string | null;
-                /**
-                 * @description Whether the actor is one of your agents or the ticket customer
-                 * @enum {string|null}
-                 */
-                type: "agent" | "customer" | null;
-            } | null;
         };
         CreatedTicketMessage: {
             /** @description Message id */
@@ -2636,6 +2602,12 @@ export interface components {
              * @description ID of an existing team for this agent. Pass null to clear the team. Omit to leave the team unchanged.
              */
             teamId?: string | null;
+            /**
+             * @description New ticket priority. Pass `none` to clear it. Omit to leave the priority unchanged.
+             * @example urgent
+             * @enum {string}
+             */
+            priority?: "none" | "low" | "normal" | "high" | "urgent";
         };
     };
     responses: never;
@@ -6959,6 +6931,8 @@ export interface operations {
                 assigneeId?: "none" | string;
                 /** @description Filter by team id. Pass `none` for tickets with no team. */
                 teamId?: "none" | string;
+                /** @description Comma-separated priorities (is-any-of). Priorities: none, low, normal, high, urgent. Pass `none` for untriaged tickets. */
+                priority?: string;
                 /** @description Only tickets created at or after this ISO 8601 timestamp. */
                 createdAfter?: string;
                 /** @description Only tickets created at or before this ISO 8601 timestamp. */
@@ -7659,7 +7633,7 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of items per page (1 to 100, default 20) */
                 limit?: number;
-                /** @description Comma-separated message types. Defaults to `reply,note`; system `event` messages are opt-in. */
+                /** @description Comma-separated message types (`reply`, `note`). Defaults to `reply,note`. */
                 types?: string;
                 /** @description Chronological direction. Defaults to `asc`, so a thread reads oldest-first. A cursor is only valid for the direction it was issued with. */
                 order?: "asc" | "desc";

@@ -43,7 +43,7 @@ export default class TicketsMessages extends ListCommand {
         }),
         types: Flags.string({
             description:
-                'Message types to include (comma-separated): reply, note, event (default: reply,note)'
+                'Message types to include (comma-separated): reply, note (default: reply,note)'
         }),
         order: Flags.string({
             description: 'Sort direction',
