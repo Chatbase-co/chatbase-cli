@@ -33,6 +33,6 @@ jobs:
             - run: npm ci
             - uses: anthropics/claude-code-action@v1
               with:
-                  anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+                  claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
                   claude_args: >-
                       --allowedTools "Read,Glob,Grep,Edit,Write,Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(git:*),Bash(gh pr:*),Bash(bash scripts/*),Bash(cat:*),Bash(ls:*),Bash(diff:*),Bash(jq:*)"
