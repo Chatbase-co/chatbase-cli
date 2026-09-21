@@ -84,7 +84,18 @@ jobs:
               if: always() && steps.drift.outputs.code == '1' && steps.open.outputs.count == '0'
               env: { GH_TOKEN: '${{ github.token }}' }
               run: |
-                  pr=$(gh pr list --label spec-sync --state open --json url,title,isDraft,headRefName --jq '.[0] // empty')
+                  # Claude created its branch in this checkout, the surest handle on its PR.
+                  # GitHub's list endpoints lag a few seconds behind a fresh PR, hence the retries.
+                  branch=$(git branch --show-current)
+                  pr=""
+                  for attempt in 1 2 3 4 5 6; do
+                      if [ -n "$branch" ] && [ "$branch" != "main" ]; then
+                          pr=$(gh pr list --head "$branch" --state open --json url,title,isDraft,headRefName --jq '.[0] // empty')
+                      fi
+                      [ -z "$pr" ] && pr=$(gh pr list --label spec-sync --state open --json url,title,isDraft,headRefName --jq '.[0] // empty')
+                      [ -n "$pr" ] && break
+                      sleep 10
+                  done
                   run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
                   who="${SLACK_REVIEWER_MENTIONS:+$SLACK_REVIEWER_MENTIONS }"
                   if [ -n "$pr" ]; then
