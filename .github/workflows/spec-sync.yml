@@ -1,0 +1,88 @@
+name: Spec sync
+# Daily: if the vendored spec has drifted from the deployed API and no sync PR
+# is open, run the spec-sync skill unattended and open a PR for review. The
+# skill's "Unattended runs" section governs what Claude may decide alone.
+on:
+    schedule:
+        - cron: '47 6 * * *' # half an hour after the drift check
+    workflow_dispatch:
+permissions:
+    contents: write
+    pull-requests: write
+    issues: write # gh label create
+    id-token: write
+concurrency:
+    group: spec-sync
+jobs:
+    sync:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with: { node-version: 22, cache: npm }
+            - run: npm ci
+            - name: Detect drift
+              id: drift
+              shell: bash
+              # exit 1 = drift (proceed), 0 = in sync (stop), 2 = fetch/tooling failure (fail loudly)
+              run: |
+                  set +e
+                  bash scripts/spec-drift.sh 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+                  code=${PIPESTATUS[0]}
+                  echo "code=$code" >> "$GITHUB_OUTPUT"
+                  [ "$code" -eq 2 ] && exit 2
+                  exit 0
+            - name: Look for an open sync PR
+              id: open
+              if: steps.drift.outputs.code == '1'
+              env: { GH_TOKEN: '${{ github.token }}' }
+              run: |
+                  gh label create spec-sync --description 'Automated API spec sync' --color 0E8A16 --force
+                  echo "count=$(gh pr list --label spec-sync --state open --json number --jq length)" >> "$GITHUB_OUTPUT"
+            - name: Git identity for the sync commit
+              if: steps.drift.outputs.code == '1' && steps.open.outputs.count == '0'
+              run: |
+                  git config user.name 'github-actions[bot]'
+                  git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            - name: Run the spec-sync skill
+              id: claude
+              if: steps.drift.outputs.code == '1' && steps.open.outputs.count == '0'
+              uses: anthropics/claude-code-action@v1
+              with:
+                  anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+                  # github_token is deliberately unset: the action then acts as the
+                  # Claude GitHub App, and a PR opened that way triggers CI. A PR
+                  # opened with GITHUB_TOKEN would never get its required checks.
+                  prompt: |
+                      /spec-sync
+                      This is the unattended spec-sync workflow; nobody can answer questions.
+                      Follow the skill's "Unattended runs" section end to end: branch, fix drift,
+                      run the full gate, commit with the matching conventional type, push, and open
+                      a PR labelled spec-sync whose body is the step-9 report. Proposals for new
+                      endpoints go in the PR body, not into code.
+                  claude_args: >-
+                      --max-turns 100
+                      --allowedTools "Read,Glob,Grep,Edit,Write,Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(git:*),Bash(gh pr:*),Bash(bash scripts/*),Bash(cat:*),Bash(ls:*),Bash(diff:*),Bash(jq:*),Bash(mkdir:*)"
+            - name: Find the PR Claude opened
+              id: pr
+              if: always() && steps.drift.outputs.code == '1' && steps.open.outputs.count == '0'
+              env: { GH_TOKEN: '${{ github.token }}' }
+              run: |
+                  pr=$(gh pr list --label spec-sync --state open --json url,title,isDraft --jq '.[0] // empty')
+                  run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+                  if [ -n "$pr" ]; then
+                      url=$(jq -r .url <<<"$pr"); title=$(jq -r .title <<<"$pr"); draft=$(jq -r .isDraft <<<"$pr")
+                      if [ "$draft" = "true" ]; then state="draft, the gate failed and needs a look"; else state="ready for review"; fi
+                      text="*Spec sync:* <$url|$title> is $state. Comment \`@claude\` on the PR to request changes."
+                  else
+                      text="*Spec sync:* the API spec drifted but the run opened no PR. <$run_url|Run log>"
+                  fi
+                  echo "text=$text" >> "$GITHUB_OUTPUT"
+            - name: Notify Slack
+              if: always() && steps.pr.outputs.text != ''
+              uses: slackapi/slack-github-action@v4.0.0
+              with:
+                  webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+                  webhook-type: incoming-webhook
+                  payload: |
+                      text: ${{ toJSON(steps.pr.outputs.text) }}

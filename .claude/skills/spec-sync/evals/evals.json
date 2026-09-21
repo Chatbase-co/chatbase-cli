@@ -1,0 +1,81 @@
+{
+  "skill_name": "spec-sync",
+  "setup": "Run each eval in a copy of the repo at the pre-sync state: check out the commit before the whatsapp/tool-result commands were added (or delete src/commands/whatsapp, src/commands/conversations/tool-result.ts, their tests, and the whatsapp oclif topic, then `npm run build && npx oclif readme`). The spec already contains the three uncovered endpoints. For eval 2, additionally run `node evals/files/modify-spec.mjs spec/openapi.json` without regenerating types.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "coverage-audit",
+      "prompt": "quick question before I plan this sprint — which Chatbase API endpoints in our spec don't have a dedicated CLI command yet? for each one tell me whether you think it should get a command or whether leaving it to the generic `chatbase api` command is fine. don't change any code, just tell me",
+      "expected_output": "A read-only report naming exactly the three uncovered endpoints (whatsapp templates GET, whatsapp messages/template POST, conversations tool-result POST), not flagging the conversations-list paths served via a variable path, with a per-endpoint recommendation and a mention of the `chatbase api` fallback.",
+      "files": [],
+      "expectations": [
+        "Names all three uncovered endpoints: GET .../whatsapp/templates, POST .../whatsapp/messages/template, POST .../conversations/{conversationId}/tool-result",
+        "Does not list GET /agents/{agentId}/conversations or GET /agents/{agentId}/users/{userId}/conversations as uncovered (both are served by `conversations list` via a variable path)",
+        "Lists no other endpoint as uncovered (zero false positives)",
+        "Gives an explicit per-endpoint recommendation: dedicated command vs leave to `chatbase api`",
+        "Mentions the generic `chatbase api` command as the fallback for endpoints left without a dedicated command",
+        "Makes no changes to the repository (git status is clean)"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "new-endpoint-commands",
+      "prompt": "The API team shipped WhatsApp template support and spec/openapi.json already has the new endpoints (types are regenerated, spec:check is green). Please add CLI commands for them:\n- `whatsapp templates` — list the agent's approved templates\n- `whatsapp send-template <template-name> --to <phone>` — send one; flags for the optional sender number, language, and template variables\n\nThe tool-result callback endpoint is machine-to-machine plumbing — no command for that one, users can hit it via `chatbase api` if they ever need to.\n\nInclude tests, and make sure everything CI runs is green. Don't commit.",
+      "expected_output": "Two new commands under src/commands/whatsapp/ following repo conventions (AgentCommand, literal spec paths, spec-typed body, throwIfError, examples), the whatsapp topic registered, vitest coverage with MockAgent, the tool-result skip recorded in spec/coverage-ignore.json, README regenerated, and the full gate green. No commit.",
+      "files": [],
+      "expectations": [
+        "src/commands/whatsapp/templates.ts exists and calls client.GET with the literal spec path '/agents/{agentId}/whatsapp/templates'",
+        "src/commands/whatsapp/send-template.ts exists and calls client.POST with the literal spec path '/agents/{agentId}/whatsapp/messages/template'",
+        "Both commands extend AgentCommand (agent selection via -a/--agent-name from the base class, not a positional)",
+        "send-template types its request body from the spec (components['schemas']['SendWhatsAppTemplateBody']) with no `as any` / ts-ignore casts on the body",
+        "send-template always sends template.variables, defaulting to {} when the user passes none (the spec default makes the field required in the generated type)",
+        "Every client call in the new commands is followed by throwIfError(response, error)",
+        "Both commands define static override examples",
+        "The whatsapp topic is registered with a description under oclif.topics in package.json",
+        "Tests exist under tests/commands/ for both commands using undici MockAgent with disableNetConnect, covering a happy path, the request body sent by send-template, and one error path",
+        "Full CI gate passes in the repo: npm run build, spec:check, typecheck, lint, test",
+        "README.md was regenerated: `npx oclif readme` produces no diff (CI enforces this)",
+        "The tool-result skip is recorded in spec/coverage-ignore.json with method, path and reason",
+        "No git commit was made (HEAD is unchanged)",
+        "Work is on a new branch, not main: `git branch --show-current` is not `main`, and the branch name starts with feat/ (the sync adds new user-facing commands)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "schema-drift-fix",
+      "prompt": "CI is red on the spec:check step. The API team renamed a couple of fields in the helpdesk ticket schemas and I've already copied their new openapi.json over spec/openapi.json — that's the only change in the working tree. Please get everything green again and make sure the CLI actually works against the new shapes, not just that the checks pass. Don't commit.",
+      "expected_output": "Types regenerated; tickets get/list/search read statusGroup (untyped reads the compiler can't catch); tickets reply sends `text`; create/update untouched; test mocks moved to the new contract; full gate green; report explains what changed and why typecheck alone was insufficient. No commit.",
+      "files": [
+        "evals/files/modify-spec.mjs"
+      ],
+      "expectations": [
+        "npm run spec:check passes (types regenerated from the new spec)",
+        "npm run typecheck passes",
+        "tickets get, list and search read statusGroup from ticket responses; no statusCategory remains in their Column keys or row mappings (these reads are untyped, so the compiler cannot catch them)",
+        "tickets create and update still document/send statusCategory (CreateTicketBody/UpdateTicketBody were not renamed) — no over-eager global rename",
+        "tickets reply sends `text` instead of `content` in the CreateTicketMessageBody",
+        "Test mocks follow the new contract: ticket response mocks in tests use statusGroup and the reply test asserts the sent body contains `text` — no test still passes against the old field names",
+        "Full CI gate passes: build, spec:check, typecheck, lint, test",
+        "Report names the renamed fields and explains that the type checker could not catch the dynamic reads (or describes verifying rendered output beyond the checks passing)",
+        "Changes are limited to the spec, generated types, tickets commands, tickets tests (and README if regenerated) — no unrelated files touched",
+        "No git commit was made",
+        "Work is on a new branch, not main: `git branch --show-current` is not `main`, and the branch name starts with fix/ (the sync only adapts existing commands to renamed fields, no new surface)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "propose-before-building",
+      "prompt": "just refreshed the openapi spec (spec/openapi.json is updated and the types are regenerated). pretty sure the api has endpoints we don't cover in the cli yet — can you sync the cli with the spec?",
+      "expected_output": "Identifies the three uncovered endpoints, then stops with a compact per-endpoint command proposal (name, args/flags, output) and asks for confirmation — questioning whether tool-result deserves a command — without writing command or test files.",
+      "files": [],
+      "expectations": [
+        "Identifies all three uncovered endpoints (whatsapp templates GET, whatsapp messages/template POST, conversations tool-result POST)",
+        "Stops at a proposal and asks for confirmation before writing code: no new files under src/commands/ or tests/",
+        "Proposal covers, per endpoint, a command name, args/flags, and output shape",
+        "Questions whether the tool-result callback deserves a command at all (machine-to-machine) and names the alternative (chatbase api / coverage-ignore)",
+        "Does not report the conversations list paths as uncovered",
+        "No git commit was made"
+      ]
+    }
+  ]
+}
