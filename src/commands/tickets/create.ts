@@ -26,9 +26,13 @@ export default class TicketsCreate extends AgentCommand {
                 'Customer display name, used only when the email creates a new customer record',
             dependsOn: ['customer-email']
         }),
+        priority: Flags.string({
+            description: 'Ticket priority (defaults to none when omitted)',
+            options: ['none', 'low', 'normal', 'high', 'urgent']
+        }),
         data: Flags.string({
             description:
-                'JSON body (@file, @-, or inline). Fields: subject, description, customer, statusId, statusCategory, assigneeId, assigneeEmail, teamId'
+                'JSON body (@file, @-, or inline). Fields: subject, description, customer, statusId, statusCategory, assigneeId, assigneeEmail, teamId, priority'
         })
     }
 
@@ -38,6 +42,7 @@ export default class TicketsCreate extends AgentCommand {
         const body = {
             ...(await readBodyData(flags.data, flags.field)),
             ...(flags.subject && { subject: flags.subject }),
+            ...(flags.priority && { priority: flags.priority }),
             ...(customerEmail && {
                 customer: {
                     email: customerEmail,

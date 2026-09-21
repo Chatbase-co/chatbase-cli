@@ -1327,7 +1327,8 @@ Create a helpdesk ticket
 ```
 USAGE
   $ chatbase tickets create [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
-    <value>] [-f <value>...] [--subject <value>] [--customer-name <value> --customer-email <value>] [--data <value>]
+    <value>] [-f <value>...] [--subject <value>] [--customer-name <value> --customer-email <value>] [--priority
+    none|low|normal|high|urgent] [--data <value>]
 
 FLAGS
   -a, --agent=<value>           Agent ID (or set CHATBASE_AGENT_ID)
@@ -1337,9 +1338,11 @@ FLAGS
       --customer-email=<value>  Customer email — builds the required customer object (alternative to customer in --data)
       --customer-name=<value>   Customer display name, used only when the email creates a new customer record
       --data=<value>            JSON body (@file, @-, or inline). Fields: subject, description, customer, statusId,
-                                statusCategory, assigneeId, assigneeEmail, teamId
+                                statusCategory, assigneeId, assigneeEmail, teamId, priority
       --no-color                Disable colored output
       --no-input                Never prompt; fail instead
+      --priority=<option>       Ticket priority (defaults to none when omitted)
+                                <options: none|low|normal|high|urgent>
       --subject=<value>         Ticket subject
       --verbose                 Verbose diagnostics
 
@@ -1398,8 +1401,8 @@ List helpdesk tickets for an agent
 ```
 USAGE
   $ chatbase tickets list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
-    <value>] [--limit <value>] [--cursor <value>] [--all] [--status <value>] [--channel <value>] [--assignee-id <value>]
-    [--team-id <value>] [--created-after <value>] [--created-before <value>] [--sort-by
+    <value>] [--limit <value>] [--cursor <value>] [--all] [--status <value>] [--priority <value>] [--channel <value>]
+    [--assignee-id <value>] [--team-id <value>] [--created-after <value>] [--created-before <value>] [--sort-by
     createdAt|updatedAt|lastMessageAt] [--order asc|desc] [--include-total]
 
 FLAGS
@@ -1418,6 +1421,7 @@ FLAGS
       --no-input                Never prompt; fail instead
       --order=<option>          Sort direction
                                 <options: asc|desc>
+      --priority=<value>        Filter by priority (comma-separated): none, low, normal, high, urgent
       --sort-by=<option>        Sort field
                                 <options: createdAt|updatedAt|lastMessageAt>
       --status=<value>          Filter by status (comma-separated): new, on_you, on_customer, on_hold, closed, cancelled
@@ -1435,6 +1439,8 @@ EXAMPLES
   $ chatbase tickets list -a agt_123
 
   $ chatbase tickets list -a agt_123 --status new,on_you
+
+  $ chatbase tickets list -a agt_123 --priority high,urgent
 
   $ chatbase tickets list -a agt_123 --all --json
 ```
@@ -1561,12 +1567,12 @@ _See code: [src/commands/tickets/search.ts](https://github.com/Chatbase-co/chatb
 
 ## `chatbase tickets update TICKETNUMBER`
 
-Update a ticket's status, assignee, and/or team
+Update a ticket's status, assignee, team, and/or priority
 
 ```
 USAGE
   $ chatbase tickets update TICKETNUMBER [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
-    <value> | -a <value>] [-f <value>...] [--data <value>]
+    <value> | -a <value>] [-f <value>...] [--priority none|low|normal|high|urgent] [--data <value>]
 
 ARGUMENTS
   TICKETNUMBER  Ticket number
@@ -1577,9 +1583,11 @@ FLAGS
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name (looked up to an ID)
       --data=<value>        JSON body (@file, @-, or inline). Fields: statusId, statusCategory, assigneeId,
-                            assigneeEmail, teamId
+                            assigneeEmail, teamId, priority
       --no-color            Disable colored output
       --no-input            Never prompt; fail instead
+      --priority=<option>   New ticket priority. Pass "none" to clear it.
+                            <options: none|low|normal|high|urgent>
       --verbose             Verbose diagnostics
 
 OUTPUT FLAGS
@@ -1587,10 +1595,12 @@ OUTPUT FLAGS
   --plain  Tab-separated output for scripts
 
 DESCRIPTION
-  Update a ticket's status, assignee, and/or team
+  Update a ticket's status, assignee, team, and/or priority
 
 EXAMPLES
   $ chatbase tickets update 42 --data '{"statusCategory":"closed"}' -a agt_123
+
+  $ chatbase tickets update 42 --priority urgent -a agt_123
 ```
 
 _See code: [src/commands/tickets/update.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.6.0/src/commands/tickets/update.ts)_

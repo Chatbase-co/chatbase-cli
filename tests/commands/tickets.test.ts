@@ -44,6 +44,7 @@ const ticketListItem = {
     ticketNumber: 42,
     subject: 'Refund broken',
     statusCategory: 'on_customer',
+    priority: 'high',
     statusId: 'st_1',
     assigneeId: null,
     customer: {
@@ -61,7 +62,7 @@ const ticketListItem = {
 }
 
 describe('chatbase tickets list', () => {
-    it('renders a plain row with ticketNumber, subject, statusCategory, channel, createdAt', async () => {
+    it('renders a plain row with ticketNumber, subject, statusCategory, priority, channel, createdAt', async () => {
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/helpdesk/tickets',
@@ -74,7 +75,25 @@ describe('chatbase tickets list', () => {
         const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
         await TicketsList.run(['--plain'], process.cwd())
         expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
-            '42\tRefund broken\ton_customer\temail\t2026-07-20T12:34:56.000Z'
+            '42\tRefund broken\ton_customer\thigh\temail\t2026-07-20T12:34:56.000Z'
+        )
+    })
+
+    it('--priority passes a comma-separated query param', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/helpdesk/tickets',
+                method: 'GET',
+                query: { priority: 'high,urgent' }
+            })
+            .reply(200, {
+                data: [ticketListItem],
+                pagination: { cursor: null, hasMore: false }
+            })
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        await TicketsList.run(
+            ['--priority', 'high,urgent', '--plain'],
+            process.cwd()
         )
     })
 })
@@ -171,6 +190,39 @@ describe('chatbase tickets create', () => {
             )
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
     })
+
+    it('--priority sets body.priority', async () => {
+        let sentBody = ''
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/helpdesk/tickets',
+                method: 'POST'
+            })
+            .reply(201, (opts) => {
+                sentBody = bodyText(opts.body)
+                return { ...ticketListItem, ticketNumber: 101 }
+            })
+        vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await TicketsCreate.run(
+            ['--subject', 'Refund broken', '--priority', 'urgent'],
+            process.cwd()
+        )
+        expect(JSON.parse(sentBody)).toEqual({
+            subject: 'Refund broken',
+            priority: 'urgent'
+        })
+    })
+
+    it('rejects an invalid --priority value', async () => {
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            TicketsCreate.run(
+                ['--subject', 'X', '--priority', 'critical'],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+    })
 })
 
 describe('chatbase tickets update', () => {
@@ -192,6 +244,28 @@ describe('chatbase tickets update', () => {
         )
         expect(JSON.parse(sentBody)).toEqual({ statusId: 'st_2' })
         expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain('42')
+    })
+
+    it('--priority merges into the --data body', async () => {
+        let sentBody = ''
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/helpdesk/tickets/42',
+                method: 'PATCH'
+            })
+            .reply(200, (opts) => {
+                sentBody = bodyText(opts.body)
+                return { ...ticketListItem, priority: 'none' }
+            })
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await TicketsUpdate.run(
+            ['42', '--data', '{"statusId":"st_2"}', '--priority', 'none'],
+            process.cwd()
+        )
+        expect(JSON.parse(sentBody)).toEqual({
+            statusId: 'st_2',
+            priority: 'none'
+        })
     })
 })
 

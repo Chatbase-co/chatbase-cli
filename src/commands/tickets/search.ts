@@ -7,6 +7,7 @@ const COLUMNS: Column[] = [
     { key: 'ticketNumber', header: 'TICKET' },
     { key: 'subject', header: 'SUBJECT' },
     { key: 'statusCategory', header: 'STATUS' },
+    { key: 'priority', header: 'PRIORITY' },
     { key: 'channel', header: 'CHANNEL' },
     { key: 'createdAt', header: 'CREATED' }
 ]
@@ -57,6 +58,7 @@ export default class TicketsSearch extends AgentCommand {
             ticketNumber: String(t.ticketNumber ?? ''),
             subject: String(t.subject ?? ''),
             statusCategory: String(t.statusCategory ?? ''),
+            priority: String(t.priority ?? ''),
             channel: String(t.channel ?? ''),
             createdAt: String(t.createdAt ?? '')
         }))
