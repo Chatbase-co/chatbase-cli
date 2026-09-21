@@ -24,8 +24,8 @@ repo makes drift mechanically detectable — this skill walks the loop from
 
 ## Workflow
 
-Work through the steps in order. Steps 1–4 are mechanical; step 5 needs
-judgment and user sign-off; steps 6–7 are implementation.
+Work through the steps in order. Steps 1–5 are mechanical; step 6 needs
+judgment and user sign-off; steps 7–8 are implementation.
 
 ### 1. Refresh the spec
 
@@ -63,9 +63,9 @@ The `.d.ts` diff is machine noise; the spec diff is the readable one.
 Classify every change into three buckets, because each gets different
 treatment later:
 
-- **Added** endpoints → step 5 (design new commands)
-- **Removed** endpoints → step 4 (breaking-change discussion)
-- **Changed** schemas/params on existing endpoints → step 4 (fix drift)
+- **Added** endpoints → step 6 (design new commands)
+- **Removed** endpoints → step 5 (breaking-change discussion)
+- **Changed** schemas/params on existing endpoints → step 5 (fix drift)
 
 If the diff is empty, say so and skip to step 3 anyway — coverage gaps can
 predate this refresh.
@@ -79,13 +79,13 @@ node .claude/skills/spec-sync/scripts/coverage.mjs   # from the repo root
 It compares every `(method, path)` in the spec against literal path usage
 in `src/` (excluding `src/generated/`) and prints:
 
-- **Missing** — in the spec, no client call found. Candidates for step 5.
+- **Missing** — in the spec, no client call found. Candidates for step 6.
 - **Verify manually** — the path literal exists in `src/` but not adjacent
   to a `.GET(`/`.POST(`/etc. call (usually a path picked via a variable,
   like `conversations list --user`). Open the file and confirm the method
   is actually exercised before treating it as covered.
 - **Orphaned** — a spec-shaped path literal in `src/` that's no longer in
-  the spec. These are compile errors waiting to happen; step 4 material.
+  the spec. These are compile errors waiting to happen; step 5 material.
 
 Endpoints deliberately left without a command are recorded in
 `spec/coverage-ignore.json` (`[{"method", "path", "reason"}]`). Create
@@ -93,7 +93,34 @@ the file on the first deliberate skip — it does not exist until then.
 When the user decides to skip an endpoint, add an entry with the reason
 so that decision survives to the next sync instead of being re-litigated.
 
-### 4. Fix drift in existing commands
+### 4. Branch before editing commands
+
+Everything so far is read-only apart from the refresh itself, and
+`git checkout -b` carries those uncommitted spec changes along. Do this
+before the first edit under `src/` or `tests/`. If `git branch
+--show-current` already shows something other than `main`, the user has
+branched already — stay there. If the diff is empty and coverage found
+nothing to fix or build, there is nothing to branch for.
+
+Name the branch for what the sync changes, not for the sync:
+
+| What the sync changes | Branch | Commit type |
+|---|---|---|
+| Anything users will see in `--help`: a new command, flag, or table column | `feat/<resource>-<feature>` (e.g. `feat/ticket-priority`) | `feat(<topic>):` |
+| Only existing commands adapting to a changed contract (renamed field, new required param), no new surface | `fix/<resource>-<what-changed>` | `fix(<topic>):` |
+| Spec and generated types only, no command edits | `chore/spec-sync-YYYYMMDD` | `chore:` |
+
+```bash
+git checkout -b feat/ticket-priority
+```
+
+The prefix matters beyond tidiness: release-please reads the merged
+commit's type to decide the version bump and changelog entry. A `feat`
+cuts a minor release that announces the change; a `chore` ships nothing,
+so a new flag behind a `chore:` commit never reaches users. Keep the
+commit type matching the branch prefix.
+
+### 5. Fix drift in existing commands
 
 Start with `npm run typecheck` — the regenerated types surface most
 breaking changes (renamed body fields, new required params, changed
@@ -112,7 +139,7 @@ one.
 Confirm with the user before removing a command; mention the option of a
 release-notes deprecation instead of silent removal.
 
-### 5. Design commands for new endpoints — propose before building
+### 6. Design commands for new endpoints — propose before building
 
 For each **Missing** endpoint, decide: does it deserve a dedicated command?
 Some endpoints are machine-to-machine plumbing (e.g. tool-result callbacks)
@@ -140,7 +167,7 @@ Design conventions (mirror the existing command tree):
   `AgentCommand` for anything else that is agent-scoped (nearly
   everything); bare `BaseCommand` only for global endpoints like `health`.
 
-### 6. Implement
+### 7. Implement
 
 Pick the nearest existing command as the exemplar and mirror it rather
 than inventing structure:
@@ -169,7 +196,7 @@ Conventions the reviewers of this repo expect:
 - `static examples` on every command (help output asserts on them).
 - Comments are sparse and explain constraints, not mechanics.
 
-### 7. Test
+### 8. Test
 
 Write vitest coverage for each new/changed command following
 `tests/commands/tickets.test.ts`: undici `MockAgent` with
@@ -209,9 +236,42 @@ If asked to also smoke-test against a live preview deployment: setting
 `CHATBASE_API_URL` alone is a trap — file uploads (and the API key) would
 still go to production. Set `CHATBASE_FILES_URL` as well.
 
-### 8. Report
+### 9. Report
 
 Summarize: endpoints added (with their new commands), changed (what was
 fixed), removed, and deliberately skipped (recorded in
 `spec/coverage-ignore.json`, creating it if needed). State the gate
-results plainly. Do not commit unless the user asks.
+results plainly and name the branch the work sits on. Do not commit
+unless the user asks.
+
+## Unattended runs
+
+When the `GITHUB_ACTIONS` environment variable is set, this is the
+scheduled spec-sync workflow and nobody can answer a question. The
+workflow has already confirmed that drift exists and that no `spec-sync`
+PR is open. Run steps 1–9 as written, with these substitutions:
+
+- **Step 4** applies unchanged: the checkout is on `main`, so branch.
+- **Step 5, removed endpoints**: never delete a command. Make the
+  smallest change that keeps the gate green and list the removal under a
+  "Needs a decision" heading in the report.
+- **Step 6, new endpoints**: build nothing. Write each proposal (command
+  name, args/flags, base class, output shape — or the coverage-ignore
+  recommendation) under "Needs a decision" in the report. The reviewer
+  answers on the PR; a later run builds what they approve.
+- **Step 9** ends in a commit and a PR instead of a chat message:
+
+  ```bash
+  git add -A
+  git commit -m "feat(tickets): add priority filter, column, and body field"
+  git push -u origin "$(git branch --show-current)"
+  gh pr create --label spec-sync --title "<commit subject>" --body-file /tmp/report.md
+  ```
+
+  The commit subject takes its type from the step-4 table. The message
+  carries no `Co-Authored-By` or "Generated with" trailer (repo rule).
+  The PR body is the step-9 report, with "Needs a decision" first when
+  it is non-empty; write it outside the repo so it is not committed. If
+  the gate is still red after one fix attempt, open the PR with
+  `--draft` and paste the failing output into the body. A visible red PR
+  beats a silent failed run.

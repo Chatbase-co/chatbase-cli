@@ -11,6 +11,8 @@ jobs:
         runs-on: ubuntu-latest
         outputs:
             release_created: ${{ steps.rp.outputs.release_created }}
+            version: ${{ steps.rp.outputs.version }}
+            pr: ${{ steps.rp.outputs.pr }}
         steps:
             - id: rp
               uses: googleapis/release-please-action@v4
@@ -87,3 +89,53 @@ jobs:
             - run: npm run build
             - run: npm test
             - run: npm publish --provenance --access public
+    # Slack: a new release PR waiting to be merged, or a release whose npm
+    # publish failed. Skipped when no webhook is set.
+    notify:
+        needs: [release-please, publish]
+        if: always() && needs.release-please.result == 'success'
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: read
+        env:
+            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+            SLACK_REVIEWER_MENTIONS: ${{ vars.SLACK_REVIEWER_MENTIONS }}
+        steps:
+            - name: Compose the message
+              id: msg
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  RELEASE_CREATED: ${{ needs.release-please.outputs.release_created }}
+                  VERSION: ${{ needs.release-please.outputs.version }}
+                  PR_JSON: ${{ needs.release-please.outputs.pr }}
+                  PUBLISH_RESULT: ${{ needs.publish.result }}
+              run: |
+                  who="${SLACK_REVIEWER_MENTIONS:+$SLACK_REVIEWER_MENTIONS }"
+                  run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+                  text=""
+                  if [ "$RELEASE_CREATED" = "true" ]; then
+                      # a successful publish is silent; only a release without its npm package needs a human
+                      if [ "$PUBLISH_RESULT" != "success" ]; then
+                          text="${who}chatbase v$VERSION: the GitHub release exists but npm publish did not succeed ($PUBLISH_RESULT). <$run_url|Run log>"
+                      fi
+                  elif [ -n "$PR_JSON" ] && [ "$PR_JSON" != "null" ]; then
+                      number=$(jq -r '.number // empty' <<<"$PR_JSON")
+                      if [ -n "$number" ]; then
+                          pr=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json url,title,createdAt)
+                          created=$(jq -r .createdAt <<<"$pr")
+                          age=$(( $(date +%s) - $(date -d "$created" +%s) ))
+                          # release-please updates the PR on every push to main; announce only a new one
+                          if [ "$age" -lt 900 ]; then
+                              text="${who}a release PR is ready: <$(jq -r .url <<<"$pr")|$(jq -r .title <<<"$pr")>. Merge it to publish."
+                          fi
+                      fi
+                  fi
+                  echo "text=$text" >> "$GITHUB_OUTPUT"
+            - name: Notify Slack
+              if: steps.msg.outputs.text != '' && env.SLACK_WEBHOOK_URL != ''
+              uses: slackapi/slack-github-action@v4.0.0
+              with:
+                  webhook: ${{ env.SLACK_WEBHOOK_URL }}
+                  webhook-type: incoming-webhook
+                  payload: |
+                      text: ${{ toJSON(steps.msg.outputs.text) }}
