@@ -5,28 +5,38 @@ name: Spec sync review
 on:
     pull_request:
         types: [opened, ready_for_review]
+    workflow_dispatch:
+        inputs:
+            pr:
+                description: 'Number of an existing PR to review'
+                required: true
+                type: string
 permissions:
     contents: read
     pull-requests: write
     issues: write
     id-token: write
 concurrency:
-    group: spec-sync-review-${{ github.event.pull_request.number }}
+    group: spec-sync-review-${{ github.event.pull_request.number || inputs.pr }}
     cancel-in-progress: true
 jobs:
     review:
-        if: contains(github.event.pull_request.labels.*.name, 'spec-sync')
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'spec-sync')
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-              with: { fetch-depth: 0 } # needs main to diff the spec against
+              with:
+                  fetch-depth: 0 # needs main to diff the spec against
+                  ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/pull/{0}/head', inputs.pr) || '' }}
             - uses: anthropics/claude-code-action@v1
               with:
                   claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+                  # the PR under review is opened by the Claude app, so the run's actor is a bot
+                  allowed_bots: claude
                   track_progress: true
                   prompt: |
                       REPO: ${{ github.repository }}
-                      PR NUMBER: ${{ github.event.pull_request.number }}
+                      PR NUMBER: ${{ github.event.pull_request.number || inputs.pr }}
 
                       This PR was opened by the unattended spec-sync workflow. Review it as the
                       second pair of eyes before a human approves. Read .claude/skills/spec-sync/SKILL.md
