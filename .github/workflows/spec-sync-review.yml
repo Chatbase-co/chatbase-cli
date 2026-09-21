@@ -1,0 +1,54 @@
+name: Spec sync review
+# When the spec-sync workflow opens a PR, a separate Claude run reviews it
+# against the spec diff before a human does. Review only: it comments, it
+# never pushes or approves. Humans approve; @claude on the PR makes changes.
+on:
+    pull_request:
+        types: [opened, ready_for_review]
+permissions:
+    contents: read
+    pull-requests: write
+    issues: write
+    id-token: write
+concurrency:
+    group: spec-sync-review-${{ github.event.pull_request.number }}
+    cancel-in-progress: true
+jobs:
+    review:
+        if: contains(github.event.pull_request.labels.*.name, 'spec-sync')
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with: { fetch-depth: 0 } # needs main to diff the spec against
+            - uses: anthropics/claude-code-action@v1
+              with:
+                  anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+                  track_progress: true
+                  prompt: |
+                      REPO: ${{ github.repository }}
+                      PR NUMBER: ${{ github.event.pull_request.number }}
+
+                      This PR was opened by the unattended spec-sync workflow. Review it as the
+                      second pair of eyes before a human approves. Read .claude/skills/spec-sync/SKILL.md
+                      for the conventions it should follow, then:
+
+                      1. Run `git diff origin/main...HEAD -- spec/openapi.json` and list every added,
+                         removed, or changed endpoint, schema field, and parameter.
+                      2. For each item, confirm the CLI change that reflects it: command flags or
+                         columns, typed request bodies, tests (mocks on the new contract, a test per
+                         new flag), and README. Flag anything in the spec diff with no matching code
+                         change, and any code change with no matching spec change.
+                      3. Check the conventions: literal spec paths in client calls, throwIfError after
+                         every call, @file/@- input through readBodyData/readTextInput, examples on
+                         every command, no Co-Authored-By trailer in the commit, and a commit type
+                         (feat/fix/chore) that matches what users will see.
+                      4. Read the PR body's "Needs a decision" section, if present, and say whether
+                         each proposal looks right or what you would change.
+
+                      Leave inline comments on specific lines for concrete problems. Finish with one
+                      summary comment: a verdict line ("Looks correct" or "Needs changes"), then the
+                      spec items you verified as covered, then any gaps. Do not approve, request
+                      changes, edit files, or push.
+                  claude_args: >-
+                      --max-turns 40
+                      --allowedTools "Read,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),mcp__github_inline_comment__create_inline_comment"

@@ -16,6 +16,13 @@ concurrency:
 jobs:
     sync:
         runs-on: ubuntu-latest
+        env:
+            # optional: unset means the Slack step is skipped (use the GitHub app
+            # for Slack instead: /github subscribe <org>/<repo> pulls label:"spec-sync")
+            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+            # optional: Slack member IDs to ping, e.g. "<@U0AAAAAAA> <@U0BBBBBBB>"
+            # (Slack profile -> ... -> Copy member ID). Display names do not notify.
+            SLACK_REVIEWER_MENTIONS: ${{ vars.SLACK_REVIEWER_MENTIONS }}
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-node@v4
@@ -68,21 +75,23 @@ jobs:
               if: always() && steps.drift.outputs.code == '1' && steps.open.outputs.count == '0'
               env: { GH_TOKEN: '${{ github.token }}' }
               run: |
-                  pr=$(gh pr list --label spec-sync --state open --json url,title,isDraft --jq '.[0] // empty')
+                  pr=$(gh pr list --label spec-sync --state open --json url,title,isDraft,headRefName --jq '.[0] // empty')
                   run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+                  who="${SLACK_REVIEWER_MENTIONS:+$SLACK_REVIEWER_MENTIONS }"
                   if [ -n "$pr" ]; then
-                      url=$(jq -r .url <<<"$pr"); title=$(jq -r .title <<<"$pr"); draft=$(jq -r .isDraft <<<"$pr")
-                      if [ "$draft" = "true" ]; then state="draft, the gate failed and needs a look"; else state="ready for review"; fi
-                      text="*Spec sync:* <$url|$title> is $state. Comment \`@claude\` on the PR to request changes."
+                      url=$(jq -r .url <<<"$pr"); title=$(jq -r .title <<<"$pr")
+                      draft=$(jq -r .isDraft <<<"$pr"); branch=$(jq -r .headRefName <<<"$pr")
+                      if [ "$draft" = "true" ]; then state="opened as a draft because the gate failed"; else state="ready for review"; fi
+                      text="${who}please review the spec sync PR: <$url|$title> on branch \`$branch\`, $state. Claude's own review lands on the PR in a few minutes; for changes, comment on the PR starting with \`@claude\`."
                   else
-                      text="*Spec sync:* the API spec drifted but the run opened no PR. <$run_url|Run log>"
+                      text="${who}the API spec drifted but the spec sync run opened no PR. <$run_url|Run log>"
                   fi
                   echo "text=$text" >> "$GITHUB_OUTPUT"
             - name: Notify Slack
-              if: always() && steps.pr.outputs.text != ''
+              if: always() && steps.pr.outputs.text != '' && env.SLACK_WEBHOOK_URL != ''
               uses: slackapi/slack-github-action@v4.0.0
               with:
-                  webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+                  webhook: ${{ env.SLACK_WEBHOOK_URL }}
                   webhook-type: incoming-webhook
                   payload: |
                       text: ${{ toJSON(steps.pr.outputs.text) }}
