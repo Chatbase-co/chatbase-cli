@@ -1,10 +1,13 @@
 name: Spec sync
-# Daily: if the vendored spec has drifted from the deployed API and no sync PR
-# is open, run the spec-sync skill unattended and open a PR for review. The
+# Runs when the Spec drift workflow fails on its daily schedule (or a push to
+# main), i.e. the vendored spec is behind the deployed API. If no sync PR is
+# open, it runs the spec-sync skill unattended and opens a PR for review. The
 # skill's "Unattended runs" section governs what Claude may decide alone.
+# Drift failures on pull requests are the nag signal, not a trigger.
 on:
-    schedule:
-        - cron: '47 6 * * *' # half an hour after the drift check
+    workflow_run:
+        workflows: [Spec drift]
+        types: [completed]
     workflow_dispatch:
 permissions:
     contents: write
@@ -15,6 +18,10 @@ concurrency:
     group: spec-sync
 jobs:
     sync:
+        if: >-
+            github.event_name == 'workflow_dispatch' ||
+            (github.event.workflow_run.conclusion == 'failure' &&
+             contains(fromJSON('["schedule", "workflow_dispatch", "push"]'), github.event.workflow_run.event))
         runs-on: ubuntu-latest
         env:
             # optional: unset means the Slack step is skipped (use the GitHub app
@@ -28,9 +35,11 @@ jobs:
             - uses: actions/setup-node@v4
               with: { node-version: 22, cache: npm }
             - run: npm ci
-            - name: Detect drift
+            - name: Confirm drift
               id: drift
               shell: bash
+              # The drift run fails on exit 1 (drift) and exit 2 (fetch failure); only 1
+              # should reach Claude. Re-running the two-second script is the cheapest way to tell.
               # exit 1 = drift (proceed), 0 = in sync (stop), 2 = fetch/tooling failure (fail loudly)
               run: |
                   set +e
