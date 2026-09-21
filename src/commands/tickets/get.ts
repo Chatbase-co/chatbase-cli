@@ -7,6 +7,7 @@ const COLUMNS: Column[] = [
     { key: 'ticketNumber', header: 'TICKET' },
     { key: 'subject', header: 'SUBJECT' },
     { key: 'statusCategory', header: 'STATUS' },
+    { key: 'priority', header: 'PRIORITY' },
     { key: 'channel', header: 'CHANNEL' },
     { key: 'createdAt', header: 'CREATED' }
 ]
@@ -46,6 +47,7 @@ export default class TicketsGet extends AgentCommand {
                     ticketNumber: String(ticket.ticketNumber ?? ''),
                     subject: String(ticket.subject ?? ''),
                     statusCategory: String(ticket.statusCategory ?? ''),
+                    priority: String(ticket.priority ?? ''),
                     channel: String(ticket.channel ?? ''),
                     createdAt: String(ticket.createdAt ?? '')
                 }

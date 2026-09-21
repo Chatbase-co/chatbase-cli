@@ -617,7 +617,7 @@ export interface paths {
         head?: never;
         /**
          * Update a ticket
-         * @description Partially updates a ticket's status, assignee, or team. Only provided fields are changed. Fields are validated together but written independently, so a 500 can leave a partial update.
+         * @description Partially updates a ticket's status, assignee, team, or priority. Only provided fields are changed. Fields are validated together but written independently, so a 500 can leave a partial update.
          */
         patch: operations["updateTicket"];
         trace?: never;
@@ -2287,6 +2287,12 @@ export interface components {
             /** @description ID of the assigned team, or null. Resolve via /teams. */
             teamId: string | null;
             /**
+             * @description Ticket priority. `none` means the ticket has not been triaged.
+             * @example high
+             * @enum {string}
+             */
+            priority: "none" | "low" | "normal" | "high" | "urgent";
+            /**
              * @description ISO 8601 creation timestamp
              * @example 2026-07-20T12:34:56.000Z
              */
@@ -2357,6 +2363,12 @@ export interface components {
              * @description ID of an existing team for this agent. When provided without any assignee field, an agent is picked within this team using the team's own assignment strategy, and routing rules are skipped. When provided together with assigneeId/assigneeEmail, including assigneeId: null, no auto-assignment runs and the team is written as given.
              */
             teamId?: string;
+            /**
+             * @description Ticket priority. Defaults to `none` (untriaged) when omitted.
+             * @example high
+             * @enum {string}
+             */
+            priority?: "none" | "low" | "normal" | "high" | "urgent";
         };
         CreateTicketCustomer: {
             /**
@@ -2404,6 +2416,12 @@ export interface components {
             conversationId: string | null;
             /** @description ID of the assigned team, or null. Resolve via /teams. */
             teamId: string | null;
+            /**
+             * @description Ticket priority. `none` means the ticket has not been triaged.
+             * @example high
+             * @enum {string}
+             */
+            priority: "none" | "low" | "normal" | "high" | "urgent";
             /**
              * @description ISO 8601 creation timestamp
              * @example 2026-07-20T12:34:56.000Z
@@ -2636,6 +2654,12 @@ export interface components {
              * @description ID of an existing team for this agent. Pass null to clear the team. Omit to leave the team unchanged.
              */
             teamId?: string | null;
+            /**
+             * @description New ticket priority. Pass `none` to clear it. Omit to leave the priority unchanged.
+             * @example urgent
+             * @enum {string}
+             */
+            priority?: "none" | "low" | "normal" | "high" | "urgent";
         };
     };
     responses: never;
@@ -6959,6 +6983,8 @@ export interface operations {
                 assigneeId?: "none" | string;
                 /** @description Filter by team id. Pass `none` for tickets with no team. */
                 teamId?: "none" | string;
+                /** @description Comma-separated priorities (is-any-of). Priorities: none, low, normal, high, urgent. Pass `none` for untriaged tickets. */
+                priority?: string;
                 /** @description Only tickets created at or after this ISO 8601 timestamp. */
                 createdAfter?: string;
                 /** @description Only tickets created at or before this ISO 8601 timestamp. */

@@ -7,6 +7,7 @@ const COLUMNS: Column[] = [
     { key: 'ticketNumber', header: 'TICKET' },
     { key: 'subject', header: 'SUBJECT' },
     { key: 'statusCategory', header: 'STATUS' },
+    { key: 'priority', header: 'PRIORITY' },
     { key: 'channel', header: 'CHANNEL' },
     { key: 'createdAt', header: 'CREATED' }
 ]
@@ -16,6 +17,7 @@ export default class TicketsList extends ListCommand {
     static override examples = [
         '<%= config.bin %> tickets list -a agt_123',
         '<%= config.bin %> tickets list -a agt_123 --status new,on_you',
+        '<%= config.bin %> tickets list -a agt_123 --priority high,urgent',
         '<%= config.bin %> tickets list -a agt_123 --all --json'
     ]
     static override flags = {
@@ -23,6 +25,10 @@ export default class TicketsList extends ListCommand {
         status: Flags.string({
             description:
                 'Filter by status (comma-separated): new, on_you, on_customer, on_hold, closed, cancelled'
+        }),
+        priority: Flags.string({
+            description:
+                'Filter by priority (comma-separated): none, low, normal, high, urgent'
         }),
         channel: Flags.string({
             description: 'Filter by channel (comma-separated, e.g. email,api)'
@@ -59,6 +65,7 @@ export default class TicketsList extends ListCommand {
 
         const extraQuery: Record<string, unknown> = {}
         if (flags.status) extraQuery.status = flags.status
+        if (flags.priority) extraQuery.priority = flags.priority
         if (flags.channel) extraQuery.channel = flags.channel
         if (flags['assignee-id']) extraQuery.assigneeId = flags['assignee-id']
         if (flags['team-id']) extraQuery.teamId = flags['team-id']
@@ -85,6 +92,7 @@ export default class TicketsList extends ListCommand {
             ticketNumber: String(t.ticketNumber ?? ''),
             subject: String(t.subject ?? ''),
             statusCategory: String(t.statusCategory ?? ''),
+            priority: String(t.priority ?? ''),
             channel: String(t.channel ?? ''),
             createdAt: String(t.createdAt ?? '')
         }))
