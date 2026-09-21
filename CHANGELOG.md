@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.6.0...v0.7.0) (2026-09-21)
+
+
+### Features
+
+* **tickets:** add priority filter, column, and body field ([0ac3429](https://github.com/Chatbase-co/chatbase-cli/commit/0ac3429a53fe4a1fd665a363fd16eabf1f203d7f))
+* **tickets:** add priority filter, column, and body field ([2004919](https://github.com/Chatbase-co/chatbase-cli/commit/200491903c90c830629b2e103cc85b84d3669eee))
+
 ## [0.6.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.5.0...v0.6.0) (2026-09-15)
 
 
