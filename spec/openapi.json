@@ -4941,6 +4941,18 @@
             ],
             "description": "ID of the assigned team, or null. Resolve via /teams."
           },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "none",
+              "low",
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "description": "Ticket priority. `none` means the ticket has not been triaged.",
+            "example": "high"
+          },
           "createdAt": {
             "type": "string",
             "description": "ISO 8601 creation timestamp",
@@ -4972,6 +4984,7 @@
           "channel",
           "conversationId",
           "teamId",
+          "priority",
           "createdAt",
           "updatedAt",
           "lastMessageAt"
@@ -5071,6 +5084,18 @@
             "type": "string",
             "format": "uuid",
             "description": "ID of an existing team for this agent. When provided without any assignee field, an agent is picked within this team using the team's own assignment strategy, and routing rules are skipped. When provided together with assigneeId/assigneeEmail, including assigneeId: null, no auto-assignment runs and the team is written as given."
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "none",
+              "low",
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "description": "Ticket priority. Defaults to `none` (untriaged) when omitted.",
+            "example": "high"
           }
         },
         "required": [
@@ -5191,6 +5216,18 @@
             ],
             "description": "ID of the assigned team, or null. Resolve via /teams."
           },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "none",
+              "low",
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "description": "Ticket priority. `none` means the ticket has not been triaged.",
+            "example": "high"
+          },
           "createdAt": {
             "type": "string",
             "description": "ISO 8601 creation timestamp",
@@ -5220,6 +5257,7 @@
           "channel",
           "conversationId",
           "teamId",
+          "priority",
           "createdAt",
           "updatedAt",
           "lastMessageAt"
@@ -5789,6 +5827,18 @@
             ],
             "format": "uuid",
             "description": "ID of an existing team for this agent. Pass null to clear the team. Omit to leave the team unchanged."
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "none",
+              "low",
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "description": "New ticket priority. Pass `none` to clear it. Omit to leave the priority unchanged.",
+            "example": "urgent"
           }
         }
       }
@@ -7110,15 +7160,6 @@
     "/agents/{agentId}/train": {
       "post": {
         "operationId": "trainAgent",
-        "x-mcp": {
-          "tool": "chatbase_train_agent",
-          "scopes": [
-            "sources:write"
-          ],
-          "annotations": {
-            "destructive": false
-          }
-        },
         "tags": [
           "Agents"
         ],
@@ -8035,7 +8076,7 @@
             "updatedAt",
             "messages"
           ],
-          "maxItems": 10
+          "maxItems": 20
         },
         "tags": [
           "Conversations"
@@ -10412,15 +10453,6 @@
     "/agents/{agentId}/sources/{sourceId}/restore": {
       "post": {
         "operationId": "restoreSource",
-        "x-mcp": {
-          "tool": "chatbase_restore_source",
-          "scopes": [
-            "sources:write"
-          ],
-          "annotations": {
-            "idempotent": true
-          }
-        },
         "tags": [
           "Sources"
         ],
@@ -11547,6 +11579,17 @@
           {
             "schema": {
               "type": "string",
+              "description": "Comma-separated priorities (is-any-of). Priorities: none, low, normal, high, urgent. Pass `none` for untriaged tickets.",
+              "example": "high,urgent"
+            },
+            "required": false,
+            "description": "Comma-separated priorities (is-any-of). Priorities: none, low, normal, high, urgent. Pass `none` for untriaged tickets.",
+            "name": "priority",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "format": "date-time",
               "description": "Only tickets created at or after this ISO 8601 timestamp.",
               "example": "2026-07-01T00:00:00Z"
@@ -11750,7 +11793,7 @@
         "x-mcp": {
           "tool": "chatbase_search_tickets",
           "scopes": [
-            "helpdesk_tickets:write"
+            "helpdesk_tickets:read"
           ],
           "annotations": {
             "readOnly": true,
@@ -12106,7 +12149,7 @@
           "Helpdesk"
         ],
         "summary": "Update a ticket",
-        "description": "Partially updates a ticket's status, assignee, or team. Only provided fields are changed. Fields are validated together but written independently, so a 500 can leave a partial update.",
+        "description": "Partially updates a ticket's status, assignee, team, or priority. Only provided fields are changed. Fields are validated together but written independently, so a 500 can leave a partial update.",
         "security": [
           {
             "bearerAuth": []

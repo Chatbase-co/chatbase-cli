@@ -7,6 +7,7 @@ const COLUMNS: Column[] = [
     { key: 'ticketNumber', header: 'TICKET' },
     { key: 'subject', header: 'SUBJECT' },
     { key: 'statusCategory', header: 'STATUS' },
+    { key: 'priority', header: 'PRIORITY' },
     { key: 'channel', header: 'CHANNEL' },
     { key: 'createdAt', header: 'CREATED' }
 ]
@@ -16,6 +17,7 @@ export default class TicketsList extends ListCommand {
     static override examples = [
         '<%= config.bin %> tickets list -a agt_123',
         '<%= config.bin %> tickets list -a agt_123 --status new,on_you',
+        '<%= config.bin %> tickets list -a agt_123 --priority high,urgent',
         '<%= config.bin %> tickets list -a agt_123 --all --json'
     ]
     static override flags = {
@@ -32,6 +34,10 @@ export default class TicketsList extends ListCommand {
         }),
         'team-id': Flags.string({
             description: 'Filter by team UUID, or "none" for no team'
+        }),
+        priority: Flags.string({
+            description:
+                'Filter by priority (comma-separated): none, low, normal, high, urgent'
         }),
         'created-after': Flags.string({
             description: 'Only tickets created after this ISO 8601 date'
@@ -62,6 +68,7 @@ export default class TicketsList extends ListCommand {
         if (flags.channel) extraQuery.channel = flags.channel
         if (flags['assignee-id']) extraQuery.assigneeId = flags['assignee-id']
         if (flags['team-id']) extraQuery.teamId = flags['team-id']
+        if (flags.priority) extraQuery.priority = flags.priority
         if (flags['created-after'])
             extraQuery.createdAfter = flags['created-after']
         if (flags['created-before'])
@@ -85,6 +92,7 @@ export default class TicketsList extends ListCommand {
             ticketNumber: String(t.ticketNumber ?? ''),
             subject: String(t.subject ?? ''),
             statusCategory: String(t.statusCategory ?? ''),
+            priority: String(t.priority ?? ''),
             channel: String(t.channel ?? ''),
             createdAt: String(t.createdAt ?? '')
         }))

@@ -9,9 +9,10 @@ type UpdateTicketBody = components['schemas']['UpdateTicketBody']
 
 export default class TicketsUpdate extends AgentCommand {
     static override description =
-        "Update a ticket's status, assignee, and/or team"
+        "Update a ticket's status, assignee, team, and/or priority"
     static override examples = [
-        '<%= config.bin %> tickets update 42 --data \'{"statusCategory":"closed"}\' -a agt_123'
+        '<%= config.bin %> tickets update 42 --data \'{"statusCategory":"closed"}\' -a agt_123',
+        '<%= config.bin %> tickets update 42 --priority urgent -a agt_123'
     ]
     static override args = {
         ticketNumber: Args.integer({
@@ -22,15 +23,22 @@ export default class TicketsUpdate extends AgentCommand {
     static override flags = {
         ...AgentCommand.baseFlags,
         ...bodyFieldFlags,
+        priority: Flags.string({
+            description: 'New ticket priority',
+            options: ['none', 'low', 'normal', 'high', 'urgent']
+        }),
         data: Flags.string({
             description:
-                'JSON body (@file, @-, or inline). Fields: statusId, statusCategory, assigneeId, assigneeEmail, teamId'
+                'JSON body (@file, @-, or inline). Fields: statusId, statusCategory, assigneeId, assigneeEmail, teamId, priority'
         })
     }
 
     async run(): Promise<void> {
         const { args, flags } = await this.parse(TicketsUpdate)
-        const body = await readBodyData(flags.data, flags.field)
+        const body = {
+            ...(await readBodyData(flags.data, flags.field)),
+            ...(flags.priority && { priority: flags.priority })
+        }
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
         const { error, response } = await client.PATCH(
