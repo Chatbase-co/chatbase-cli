@@ -56,6 +56,8 @@ calls you invoke.
 * [`chatbase conversations export`](#chatbase-conversations-export)
 * [`chatbase conversations get [CONVERSATIONID]`](#chatbase-conversations-get-conversationid)
 * [`chatbase conversations list`](#chatbase-conversations-list)
+* [`chatbase conversations pause [CONVERSATIONID]`](#chatbase-conversations-pause-conversationid)
+* [`chatbase conversations resume [CONVERSATIONID]`](#chatbase-conversations-resume-conversationid)
 * [`chatbase conversations tool-result [CONVERSATIONID]`](#chatbase-conversations-tool-result-conversationid)
 * [`chatbase health`](#chatbase-health)
 * [`chatbase help [COMMAND]`](#chatbase-help-command)
@@ -840,6 +842,78 @@ EXAMPLES
 ```
 
 _See code: [src/commands/conversations/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.7.0/src/commands/conversations/list.ts)_
+
+## `chatbase conversations pause [CONVERSATIONID]`
+
+Pause a conversation
+
+```
+USAGE
+  $ chatbase conversations pause [CONVERSATIONID] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+    [--agent-name <value> | -a <value>] [--conversation <value>]
+
+ARGUMENTS
+  [CONVERSATIONID]  Conversation ID (alternative to --conversation)
+
+FLAGS
+  -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet                 Suppress non-essential output
+      --agent-name=<value>    Agent display name (looked up to an ID)
+      --conversation=<value>  Conversation ID
+      --no-color              Disable colored output
+      --no-input              Never prompt; fail instead
+      --verbose               Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Pause a conversation
+
+EXAMPLES
+  $ chatbase conversations pause conv_123 -a agt_123
+
+  $ chatbase conversations pause --conversation conv_123 -a agt_123
+```
+
+_See code: [src/commands/conversations/pause.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.7.0/src/commands/conversations/pause.ts)_
+
+## `chatbase conversations resume [CONVERSATIONID]`
+
+Resume a paused conversation
+
+```
+USAGE
+  $ chatbase conversations resume [CONVERSATIONID] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+    [--agent-name <value> | -a <value>] [--conversation <value>]
+
+ARGUMENTS
+  [CONVERSATIONID]  Conversation ID (alternative to --conversation)
+
+FLAGS
+  -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet                 Suppress non-essential output
+      --agent-name=<value>    Agent display name (looked up to an ID)
+      --conversation=<value>  Conversation ID
+      --no-color              Disable colored output
+      --no-input              Never prompt; fail instead
+      --verbose               Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Resume a paused conversation
+
+EXAMPLES
+  $ chatbase conversations resume conv_123 -a agt_123
+
+  $ chatbase conversations resume --conversation conv_123 -a agt_123
+```
+
+_See code: [src/commands/conversations/resume.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.7.0/src/commands/conversations/resume.ts)_
 
 ## `chatbase conversations tool-result [CONVERSATIONID]`
 
