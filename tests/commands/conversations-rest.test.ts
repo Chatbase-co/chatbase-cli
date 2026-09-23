@@ -5,6 +5,8 @@ import { MockAgent, setGlobalDispatcher } from 'undici'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ConversationsExport from '../../src/commands/conversations/export.js'
 import ConversationsGet from '../../src/commands/conversations/get.js'
+import ConversationsPause from '../../src/commands/conversations/pause.js'
+import ConversationsResume from '../../src/commands/conversations/resume.js'
 import MessagesFeedback from '../../src/commands/messages/feedback.js'
 import MessagesList from '../../src/commands/messages/list.js'
 
@@ -88,6 +90,84 @@ describe('chatbase conversations get', () => {
         expect(
             JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
         ).toEqual(getResponse)
+    })
+})
+
+describe('chatbase conversations pause', () => {
+    const patchResponse = {
+        data: { id: 'conv_1', status: 'paused' as const }
+    }
+
+    it('sends { paused: true } and renders the id + status row', async () => {
+        let sentBody = ''
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/conv_1',
+                method: 'PATCH'
+            })
+            .reply(200, (opts) => {
+                sentBody = bodyText(opts.body)
+                return patchResponse
+            })
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        await ConversationsPause.run(['conv_1', '--plain'], process.cwd())
+        expect(JSON.parse(sentBody)).toEqual({ paused: true })
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'conv_1\tpaused'
+        )
+    })
+
+    it('--json emits the raw response envelope', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/conv_1',
+                method: 'PATCH'
+            })
+            .reply(200, patchResponse)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        await ConversationsPause.run(['conv_1', '--json'], process.cwd())
+        expect(
+            JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
+        ).toEqual(patchResponse)
+    })
+})
+
+describe('chatbase conversations resume', () => {
+    const patchResponse = {
+        data: { id: 'conv_1', status: 'ongoing' as const }
+    }
+
+    it('sends { paused: false } and renders the id + status row', async () => {
+        let sentBody = ''
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/conv_1',
+                method: 'PATCH'
+            })
+            .reply(200, (opts) => {
+                sentBody = bodyText(opts.body)
+                return patchResponse
+            })
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        await ConversationsResume.run(['conv_1', '--plain'], process.cwd())
+        expect(JSON.parse(sentBody)).toEqual({ paused: false })
+        expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'conv_1\tongoing'
+        )
+    })
+
+    it('--json emits the raw response envelope', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/conversations/conv_1',
+                method: 'PATCH'
+            })
+            .reply(200, patchResponse)
+        const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
+        await ConversationsResume.run(['conv_1', '--json'], process.cwd())
+        expect(
+            JSON.parse(out.mock.calls.map((c) => String(c[0])).join(''))
+        ).toEqual(patchResponse)
     })
 })
 
