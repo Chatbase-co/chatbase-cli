@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.7.0...v0.8.0) (2026-09-23)
+
+
+### Features
+
+* add conversations pause resume ([b1bc3e5](https://github.com/Chatbase-co/chatbase-cli/commit/b1bc3e584a6cad3d7c7e776cb7ffe7d5844bae79))
+* add conversations pause resume ([44de8b8](https://github.com/Chatbase-co/chatbase-cli/commit/44de8b8dec157619be84fdc5efc679d8726a1226))
+
 ## [0.7.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.6.0...v0.7.0) (2026-09-21)
 
 
