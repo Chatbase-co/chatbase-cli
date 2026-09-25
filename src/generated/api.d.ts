@@ -807,7 +807,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
+            model: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
             /** @description Whether the agent automatically retrains every 7 days */
             autoRetrain: boolean;
             /**
@@ -894,7 +894,7 @@ export interface components {
                 maxCallDurationSeconds?: number | null;
                 maxDailyCallsPerUser?: number | null;
                 /** @enum {string} */
-                model?: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
+                model?: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
                 temperature?: number;
                 allowInterruptions?: boolean;
                 allowTextInput?: boolean;
@@ -1076,7 +1076,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
+            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
             /**
              * @description Model temperature (0–1)
              * @example 0
@@ -1173,7 +1173,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
+            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
             /** @description Temperature (0–1) */
             temp?: number;
             /**
@@ -1333,7 +1333,7 @@ export interface components {
                  * @example gpt-5.6-luna
                  * @enum {string}
                  */
-                model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
+                model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "auto";
                 /**
                  * @description Randomness of voice responses (0–1). 0 = deterministic and focused, 1 = more varied and creative.
                  * @example 0
