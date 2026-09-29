@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.8.0...v0.9.0) (2026-09-29)
+
+
+### Features
+
+* **tickets:** sync spec for agentEmail on ticket update ([e8313dc](https://github.com/Chatbase-co/chatbase-cli/commit/e8313dc888da568722a655719b07490f67c176f1))
+* **tickets:** sync spec for agentEmail on ticket update ([da9c0b7](https://github.com/Chatbase-co/chatbase-cli/commit/da9c0b7aa662b2bdbb32254dd54ed34a9911e48a))
+
 ## [0.8.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.7.0...v0.8.0) (2026-09-23)
 
 
