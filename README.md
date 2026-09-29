@@ -1657,7 +1657,8 @@ FLAGS
   -q, --quiet               Suppress non-essential output
       --agent-name=<value>  Agent display name (looked up to an ID)
       --data=<value>        JSON body (@file, @-, or inline). Fields: statusId, statusCategory, assigneeId,
-                            assigneeEmail, teamId, priority
+                            assigneeEmail, teamId, priority, agentEmail (attribute the change to this agent; omitted or
+                            unknown = system)
       --no-color            Disable colored output
       --no-input            Never prompt; fail instead
       --priority=<option>   New ticket priority. Pass "none" to clear it.
@@ -1675,6 +1676,8 @@ EXAMPLES
   $ chatbase tickets update 42 --data '{"statusCategory":"closed"}' -a agt_123
 
   $ chatbase tickets update 42 --priority urgent -a agt_123
+
+  $ chatbase tickets update 42 --data '{"statusCategory":"closed","agentEmail":"sam@example.com"}' -a agt_123
 ```
 
 _See code: [src/commands/tickets/update.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.8.0/src/commands/tickets/update.ts)_
