@@ -5897,6 +5897,12 @@
             ],
             "description": "New ticket priority. Pass `none` to clear it. Omit to leave the priority unchanged.",
             "example": "urgent"
+          },
+          "agentEmail": {
+            "type": "string",
+            "format": "email",
+            "description": "Optional. Attribute this change to the agent with this email — a member of this account (case-insensitive). If omitted, or the email is not a recognized member, the change is recorded as an automatic system change. Not itself a change: you must still provide at least one field above.",
+            "example": "sam@example.com"
           }
         }
       }

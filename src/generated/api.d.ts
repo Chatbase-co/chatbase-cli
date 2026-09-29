@@ -2660,6 +2660,12 @@ export interface components {
              * @enum {string}
              */
             priority?: "none" | "low" | "normal" | "high" | "urgent";
+            /**
+             * Format: email
+             * @description Optional. Attribute this change to the agent with this email — a member of this account (case-insensitive). If omitted, or the email is not a recognized member, the change is recorded as an automatic system change. Not itself a change: you must still provide at least one field above.
+             * @example sam@example.com
+             */
+            agentEmail?: string;
         };
     };
     responses: never;
