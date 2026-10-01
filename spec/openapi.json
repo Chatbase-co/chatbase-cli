@@ -3484,6 +3484,20 @@
               "paused"
             ],
             "description": "Conversation activity status"
+          },
+          "parentConversationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ID of the parent conversation this was continued from, if any"
+          },
+          "parentSummary": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "AI-generated summary of the parent conversation, if any"
           }
         },
         "required": [
@@ -3492,7 +3506,9 @@
           "createdAt",
           "updatedAt",
           "userId",
-          "status"
+          "status",
+          "parentConversationId",
+          "parentSummary"
         ]
       },
       "ExportConversationsResponse": {
@@ -3596,6 +3612,14 @@
             ],
             "description": "Conversation source"
           },
+          "embedOrigin": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Origin of the website the chat widget was embedded on when the conversation started, e.g. `https://www.example.com`. Null when unknown or for non-widget conversations.",
+            "example": "https://www.example.com"
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -3605,6 +3629,20 @@
               "paused"
             ],
             "description": "Conversation activity status"
+          },
+          "parentConversationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ID of the parent conversation this was continued from, if any"
+          },
+          "parentSummary": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "AI-generated summary of the parent conversation, if any"
           },
           "messages": {
             "type": "array",
@@ -3621,6 +3659,7 @@
           "updatedAt",
           "userId",
           "source",
+          "embedOrigin",
           "status"
         ]
       },
@@ -8142,10 +8181,13 @@
             "id",
             "title",
             "source",
+            "embedOrigin",
             "status",
             "userId",
             "createdAt",
             "updatedAt",
+            "parentConversationId",
+            "parentSummary",
             "messages"
           ],
           "maxItems": 20

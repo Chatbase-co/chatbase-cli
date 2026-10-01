@@ -1776,6 +1776,10 @@ export interface components {
              * @enum {string}
              */
             status: "ongoing" | "ended" | "taken_over" | "paused";
+            /** @description ID of the parent conversation this was continued from, if any */
+            parentConversationId: string | null;
+            /** @description AI-generated summary of the parent conversation, if any */
+            parentSummary: string | null;
         };
         ExportConversationsResponse: {
             data: components["schemas"]["ExportConversation"][];
@@ -1805,10 +1809,19 @@ export interface components {
              */
             source: "API" | "WhatsApp" | "Messenger" | "Instagram" | "Slack" | "Salesforce" | "Zendesk" | "Zendesk Messaging" | "Chatbase site" | "Playground" | "Action preview" | "Qna preview" | "Widget or Iframe" | "Center stage" | "Search" | "Iframe" | "Email" | "Agent page" | "Phone" | "Android SDK" | "iOS SDK" | "Unspecified" | null;
             /**
+             * @description Origin of the website the chat widget was embedded on when the conversation started, e.g. `https://www.example.com`. Null when unknown or for non-widget conversations.
+             * @example https://www.example.com
+             */
+            embedOrigin: string | null;
+            /**
              * @description Conversation activity status
              * @enum {string}
              */
             status: "ongoing" | "ended" | "taken_over" | "paused";
+            /** @description ID of the parent conversation this was continued from, if any */
+            parentConversationId?: string | null;
+            /** @description AI-generated summary of the parent conversation, if any */
+            parentSummary?: string | null;
             /** @description Conversation messages. Present unless `include=summary` was requested. */
             messages?: components["schemas"]["ExportMessage"][];
         };
