@@ -807,7 +807,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /** @description Whether the agent automatically retrains every 7 days */
             autoRetrain: boolean;
             /**
@@ -894,7 +894,7 @@ export interface components {
                 maxCallDurationSeconds?: number | null;
                 maxDailyCallsPerUser?: number | null;
                 /** @enum {string} */
-                model?: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+                model?: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
                 temperature?: number;
                 allowInterruptions?: boolean;
                 allowTextInput?: boolean;
@@ -1076,7 +1076,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /**
              * @description Model temperature (0–1)
              * @example 0
@@ -1173,7 +1173,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /** @description Temperature (0–1) */
             temp?: number;
             /**
@@ -1333,7 +1333,7 @@ export interface components {
                  * @example gpt-6-luna
                  * @enum {string}
                  */
-                model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+                model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
                 /**
                  * @description Randomness of voice responses (0–1). 0 = deterministic and focused, 1 = more varied and creative.
                  * @example 0
@@ -2397,10 +2397,10 @@ export interface components {
             name?: string;
         };
         SearchTicketsResponse: {
-            data: components["schemas"]["TicketListItem"][];
+            data: components["schemas"]["SearchTicketsItem"][];
             pagination: components["schemas"]["SearchTicketsPaginationMeta"];
         };
-        TicketListItem: {
+        SearchTicketsItem: {
             /**
              * @description The ticket number
              * @example 123
@@ -2474,13 +2474,57 @@ export interface components {
             data: components["schemas"]["TicketListItem"][];
             pagination: components["schemas"]["TicketListPaginationMeta"];
         };
-        TicketListPaginationMeta: {
-            /** @description Cursor for the next page, or null if no more pages */
-            cursor: string | null;
-            /** @description Whether more results are available */
-            hasMore: boolean;
-            /** @description Total number of tickets matching the filters. Present only when `includeTotal=true`. */
-            total?: number;
+        TicketListItem: {
+            /**
+             * @description The ticket number
+             * @example 123
+             */
+            ticketNumber: number;
+            /** @description Ticket subject */
+            subject: string | null;
+            /**
+             * @description Status category driving color/ordering semantics
+             * @example on_customer
+             * @enum {string}
+             */
+            statusCategory: "new" | "on_you" | "on_customer" | "on_hold" | "closed" | "cancelled";
+            /** @description ID of the ticket status. Resolve label/color via /ticket-statuses. */
+            statusId: string;
+            /** @description ID of the assigned agent user, or null when unassigned */
+            assigneeId: string | null;
+            customer: components["schemas"]["TicketCustomer"];
+            /**
+             * @description Channel the ticket originated from
+             * @example email
+             * @enum {string}
+             */
+            channel: "helpdesk" | "iframe" | "email" | "whatsapp" | "api" | "messenger" | "instagram" | "center_stage" | "phone" | "instagram_comment" | "facebook_comment";
+            /** @description ID of the linked conversation, if any */
+            conversationId: string | null;
+            /** @description ID of the assigned team, or null. Resolve via /teams. */
+            teamId: string | null;
+            /**
+             * @description Ticket priority. `none` means the ticket has not been triaged.
+             * @example high
+             * @enum {string}
+             */
+            priority: "none" | "low" | "normal" | "high" | "urgent";
+            /**
+             * @description ISO 8601 creation timestamp
+             * @example 2026-07-20T12:34:56.000Z
+             */
+            createdAt: string;
+            /**
+             * @description ISO 8601 timestamp of the last update
+             * @example 2026-07-21T09:00:00.000Z
+             */
+            updatedAt: string;
+            /**
+             * @description ISO 8601 timestamp of the most recent message, or null if the ticket has no messages
+             * @example 2026-07-21T08:55:00.000Z
+             */
+            lastMessageAt: string | null;
+            messages?: components["schemas"]["ListTicketMessagesResponse"];
         };
         ListTicketMessagesResponse: {
             data: components["schemas"]["Message"][];
@@ -2594,6 +2638,14 @@ export interface components {
                  */
                 type: "agent" | "customer" | null;
             } | null;
+        };
+        TicketListPaginationMeta: {
+            /** @description Cursor for the next page, or null if no more pages */
+            cursor: string | null;
+            /** @description Whether more results are available */
+            hasMore: boolean;
+            /** @description Total number of tickets matching the filters. Present only when `includeTotal=true`. */
+            total?: number;
         };
         CreatedTicketMessage: {
             /** @description Message id */
@@ -7014,6 +7066,10 @@ export interface operations {
                 order?: "asc" | "desc";
                 /** @description When `true`, the response includes `pagination.total` (costs an extra count query). */
                 includeTotal?: "true" | "false";
+                /** @description When `true`, each ticket includes `messages`: its first 25 messages, oldest first, shaped like List ticket messages. */
+                includeMessages?: "true" | "false";
+                /** @description Message types for `messages`, as in List ticket messages. Ignored unless `includeMessages=true`. */
+                messageTypes?: string;
             };
             header?: never;
             path: {
