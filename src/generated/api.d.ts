@@ -273,6 +273,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agents/{agentId}/conversations/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search conversations
+         * @description Search an agent's conversations by text, filters, or both. With `query`, results are ranked and carry a highlighted snippet; without it, most recently active first. Filters combine with AND; comma-separated values within a filter with OR. Covers conversations created since the 1st of the month 12 months ago (UTC), activity-date filters included. Results lag new messages by a few seconds. A page can hold fewer than `limit` items, even none, while `hasMore` is true; keep paging. Read messages via export with `conversationId`.
+         */
+        get: operations["searchConversations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agents/{agentId}/conversations/{conversationId}": {
         parameters: {
             query?: never;
@@ -807,7 +827,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /** @description Whether the agent automatically retrains every 7 days */
             autoRetrain: boolean;
             /**
@@ -894,7 +914,7 @@ export interface components {
                 maxCallDurationSeconds?: number | null;
                 maxDailyCallsPerUser?: number | null;
                 /** @enum {string} */
-                model?: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+                model?: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
                 temperature?: number;
                 allowInterruptions?: boolean;
                 allowTextInput?: boolean;
@@ -1076,7 +1096,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /**
              * @description Model temperature (0–1)
              * @example 0
@@ -1173,7 +1193,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /** @description Temperature (0–1) */
             temp?: number;
             /**
@@ -1333,7 +1353,7 @@ export interface components {
                  * @example gpt-6-luna
                  * @enum {string}
                  */
-                model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+                model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
                 /**
                  * @description Randomness of voice responses (0–1). 0 = deterministic and focused, 1 = more varied and creative.
                  * @example 0
@@ -1863,6 +1883,62 @@ export interface components {
         MessageMetadata: {
             /** @description Confidence score for this message (0 to 1 float value) */
             score: number | null;
+        };
+        SearchConversationsResponse: {
+            data: components["schemas"]["ConversationSearchResult"][];
+            pagination: components["schemas"]["ConversationSearchPaginationMeta"];
+        };
+        ConversationSearchResult: {
+            /** @description Conversation ID */
+            id: string;
+            /** @description Conversation title */
+            title: string | null;
+            /** @description Unix epoch timestamp (seconds) */
+            createdAt: number;
+            /** @description Unix epoch timestamp (seconds) of last activity */
+            updatedAt: number;
+            /** @description User ID if the conversation is authenticated */
+            userId: string | null;
+            /**
+             * @description Conversation source
+             * @enum {string|null}
+             */
+            source: "API" | "WhatsApp" | "Messenger" | "Instagram" | "Slack" | "Salesforce" | "Zendesk" | "Zendesk Messaging" | "Chatbase site" | "Playground" | "Action preview" | "Qna preview" | "Widget or Iframe" | "Center stage" | "Search" | "Iframe" | "Email" | "Agent page" | "Phone" | "Android SDK" | "iOS SDK" | "Unspecified" | null;
+            /**
+             * @description Origin of the website the chat widget was embedded on when the conversation started, e.g. `https://www.example.com`. Null when unknown or for non-widget conversations.
+             * @example https://www.example.com
+             */
+            embedOrigin: string | null;
+            /**
+             * @description Conversation activity status
+             * @enum {string}
+             */
+            status: "ongoing" | "ended" | "taken_over" | "paused";
+            /** @description ID of the parent conversation this was continued from, if any */
+            parentConversationId?: string | null;
+            /** @description AI-generated summary of the parent conversation, if any */
+            parentSummary?: string | null;
+            /** @description Best matching excerpt. Null when no `query` was given or the match was only in the title. */
+            snippet: components["schemas"]["ConversationSearchSnippet"] | null;
+        };
+        ConversationSearchSnippet: {
+            /**
+             * @description Who wrote the matching message
+             * @enum {string}
+             */
+            speaker: "user" | "assistant";
+            /** @description The matching excerpt split into segments. Concatenate `value`s for the plain excerpt; segments with `isHit: true` matched the query. */
+            highlights: {
+                value: string;
+                /** @description Whether this segment matched the query */
+                isHit: boolean;
+            }[];
+        };
+        ConversationSearchPaginationMeta: {
+            /** @description Cursor for the next page, or null if no more pages */
+            cursor: string | null;
+            /** @description Whether more results are available */
+            hasMore: boolean;
         };
         GetConversationResponse: {
             data: components["schemas"]["ConversationMetadata"] & {
@@ -4697,6 +4773,165 @@ export interface operations {
                      *       }
                      *     }
                      */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    searchConversations: {
+        parameters: {
+            query?: {
+                /** @description Created at or after this point (`YYYY-MM-DD` or ISO 8601). Must be inside the searchable window. */
+                startDate?: string;
+                /** @description Created at or before this point (`YYYY-MM-DD`, inclusive, or ISO 8601). */
+                endDate?: string;
+                /** @description Free-text search over messages and titles. */
+                query?: string;
+                /** @description Comma-separated sources, e.g. `API,WhatsApp`. */
+                source?: string;
+                /** @description Comma-separated: `positive`, `neutral`, `negative`, or `unspecified` for none. */
+                sentiment?: string;
+                /** @description Comma-separated topic names, or `unspecified` for none. */
+                topic?: string;
+                /** @description Comma-separated user IDs. */
+                userId?: string;
+                /** @description Comma-separated: `ongoing`, `ended`, `taken_over`, `paused`. */
+                activityState?: string;
+                /** @description Comma-separated message ratings: `positive`, `negative`. */
+                feedback?: string;
+                /** @description `true`: only conversations escalated to a human (ticket or live-chat handoff). */
+                escalated?: "true";
+                /** @description Comma-separated action types that ran, e.g. `collect-leads`. */
+                actionType?: string;
+                /** @description Comma-separated tool names that were called. */
+                tool?: string;
+                /** @description Comma-separated tool result statuses, e.g. `error`. Scoped to `tool` when set. */
+                toolOutcome?: string;
+                /** @description Comma-separated procedure names that ran. */
+                procedure?: string;
+                /** @description Comma-separated procedure run statuses. Scoped to `procedure` when set. */
+                procedureOutcome?: string;
+                /** @description Whether a voice session took place. */
+                hasVoice?: "true" | "false";
+                /** @description Last active at or after this point (`YYYY-MM-DD` or ISO 8601). */
+                updatedAfter?: string;
+                /** @description Last active at or before this point (`YYYY-MM-DD`, inclusive, or ISO 8601). */
+                updatedBefore?: string;
+                /** @description `pagination.cursor` from the previous page. Keep the other parameters unchanged. */
+                cursor?: string;
+                /** @description Items per page (1 to 25, default 25) */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Matching conversations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchConversationsResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
