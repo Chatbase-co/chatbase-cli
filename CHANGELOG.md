@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.9.0...v0.10.0) (2026-10-05)
+
+
+### Features
+
+* add conversations search ([f6e6a5b](https://github.com/Chatbase-co/chatbase-cli/commit/f6e6a5b362dda59ca26b8861e7521015af86eac6))
+* add conversations search ([c475107](https://github.com/Chatbase-co/chatbase-cli/commit/c47510785576a639ceb4f68d411cf9cf68e8d610))
+
 ## [0.9.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.8.0...v0.9.0) (2026-09-29)
 
 
