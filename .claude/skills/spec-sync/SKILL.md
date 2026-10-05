@@ -93,6 +93,31 @@ the file on the first deliberate skip — it does not exist until then.
 When the user decides to skip an endpoint, add an entry with the reason
 so that decision survives to the next sync instead of being re-litigated.
 
+Coverage only says an endpoint *has* a command. To check that each command
+still *matches* its endpoint, build and run the contract check:
+
+```bash
+npm run build && node .claude/skills/spec-sync/scripts/contract.mjs
+```
+
+It imports the compiled commands, base flags included, and compares
+them with the operation each one calls:
+
+- **error** (exit 1): integer flag bounds that differ from the spec
+  (e.g. `ListCommand`'s `--limit` max of 100 on an endpoint capped at 25),
+  or flag `options` that differ from the spec enum.
+- **warn**: a required query param no flag maps to, an unbounded flag
+  where the spec has bounds, or a row mapper reading a field that is not
+  on the response item. Most rows are built from
+  `Record<string, unknown>`, so tsc can't catch a renamed response field.
+- **info**: optional params or body fields no flag exposes. Usually these
+  are deliberate (`--data`, `-f/--field`, or `chatbase api` covers them),
+  so only report the ones a user would plausibly want.
+
+Matching flags to params is heuristic, so open the command before acting
+on a finding. It does not check required body fields or path params,
+because `npm run typecheck` already does.
+
 ### 4. Branch before editing commands
 
 Everything so far is read-only apart from the refresh itself, and
@@ -124,7 +149,9 @@ commit type matching the branch prefix.
 
 Start with `npm run typecheck` — the regenerated types surface most
 breaking changes (renamed body fields, new required params, changed
-response shapes) as compile errors in the commands that use them.
+response shapes) as compile errors in the commands that use them. Then
+rerun `contract.mjs` (step 3): changed enums, bounds and response field
+names surface there, not in tsc.
 
 The type checker cannot see everything. Response fields that commands read
 dynamically — table `Column` keys, fields plucked in tests' mock payloads —
@@ -146,11 +173,38 @@ Some endpoints are machine-to-machine plumbing (e.g. tool-result callbacks)
 that CLI users would never type by hand — for those, propose adding them to
 `spec/coverage-ignore.json` and note the `chatbase api` escape hatch.
 
-For endpoints that do deserve commands, write a compact proposal per
-endpoint — command name, args/flags, base class, output shape — and get the
-user's confirmation before writing code, unless the user already
-pre-approved the designs in their request. Command UX is much cheaper to
-change as a proposal than as shipped code.
+For endpoints that do deserve commands, start from the operation's facts:
+
+```bash
+node .claude/skills/spec-sync/scripts/operation.mjs GET '/agents/{agentId}/conversations/search'
+```
+
+It prints every param with its bounds, enum and default, then the body
+fields, nullable and epoch response fields, every error code, and the
+operation description. Lines marked ⚠ are traps that already shipped
+wrong or nearly did:
+
+- **`limit` max ≠ 100**: `ListCommand`'s `--limit` allows 100. Override
+  the flag with the endpoint's own `min`/`max`, or a too-large value
+  passes local validation and fails with a 400.
+- **Boolean as a string enum** (`enum: ["true"]`, `["true","false"]`): use
+  a boolean flag (`allowNo: true` for two-valued ones) and send the
+  string. Never send the raw boolean.
+- **Comma-separated** filters: use a plain string flag and say
+  "comma-separated" in its help, as `tickets list --priority` does.
+
+Read the description too. It is where paging and scope caveats live: pages
+that can come back short or empty while `hasMore` is true, date windows,
+the cursor having to keep the same filters, which sources are covered.
+Each caveat belongs in the help text, a `REMEDIATIONS` entry in
+`src/errors/errors.ts` for its error code, or a test.
+
+Then write a compact proposal per endpoint: command name, args and flags
+(one per param, or a stated reason for leaving it out), base class, and
+output shape (columns, plus how nullable fields render). Get the user's
+confirmation before writing code, unless the user already pre-approved
+the designs in their request. Command UX is much cheaper to change as a
+proposal than as shipped code.
 
 Design conventions (mirror the existing command tree):
 
@@ -176,6 +230,7 @@ than inventing structure:
 |---|---|
 | Write with typed body + positional arg | `src/commands/tickets/reply.ts` |
 | Paginated list with table output | `src/commands/tickets/list.ts` |
+| Paginated search with many filters, endpoint-specific `--limit`, typed rows | `src/commands/conversations/search.ts` |
 | Simple get/delete | `src/commands/sources/get.ts`, `delete.ts` |
 
 Conventions the reviewers of this repo expect:
@@ -190,6 +245,12 @@ Conventions the reviewers of this repo expect:
   `readBodyData` / `readTextInput` in `src/base/body-input.ts` —
   never hand-roll `@` parsing.
 - Every client call is followed by `throwIfError(response, error)`.
+- Type list items from the spec
+  (`fetchPages<components['schemas']['...']>`) rather than
+  `Record<string, unknown>`, so tsc catches a renamed response field.
+  Older commands use `Record`, and `contract.mjs` covers them.
+- Endpoint-specific error codes whose fix isn't obvious from the server
+  message get a `REMEDIATIONS` entry in `src/errors/errors.ts`.
 - Output goes through the base helpers: `--json` (raw response), `--plain`,
   and the default table via `Column` arrays; writes end with
   `this.success(flags, ...)`; user mistakes throw `UsageError`.
@@ -204,12 +265,17 @@ Write vitest coverage for each new/changed command following
 paths prefixed `/api/v2`, env stubs for `CHATBASE_API_KEY` /
 `CHATBASE_AGENT_ID` / `XDG_CONFIG_HOME`. Cover at least: happy path
 (assert on rendered output or `--json` passthrough), the request body sent
-(for writes), and one error path.
+(for writes), and one error path. Add tests for the spec facts from step 6
+that apply: query params sent under their spec names (a mock intercept
+with `query: {...}` fails if one is misnamed), a `--limit` above the
+endpoint cap rejected locally (exit 2), `--all` paging through an empty
+page while `hasMore` is true, and nullable fields rendering empty.
 
 Then run the full gate — all of it, in this order (matches CI):
 
 ```bash
 npm run build && npm run spec:check && npm run typecheck && npm run lint && npm test \
+  && node .claude/skills/spec-sync/scripts/contract.mjs \
   && npx oclif readme && git diff --exit-code README.md \
   && node scripts/check-startup.mjs
 ```
@@ -257,7 +323,9 @@ PR is open. Run steps 1–9 as written, with these substitutions:
   "Needs a decision" heading in the report.
 - **Step 6, new endpoints**: build nothing. Write each proposal (command
   name, args/flags, base class, output shape — or the coverage-ignore
-  recommendation) under "Needs a decision" in the report. The reviewer
+  recommendation) under "Needs a decision" in the report. Base it on
+  `operation.mjs` output: list every param's flag, and address every ⚠
+  line, description caveat and error code. The reviewer
   answers on the PR; a later run builds what they approve.
 - **Step 9** ends in a commit and a PR instead of a chat message:
 
