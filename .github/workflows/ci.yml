@@ -30,6 +30,8 @@ jobs:
             - run: npm run typecheck
             - run: npm run spec:check
             - run: npm run build
+            # Flag bounds/enums vs the spec; tsc can't see oclif flag metadata
+            - run: node .claude/skills/spec-sync/scripts/contract.mjs
             - run: npx oclif readme && git diff --exit-code README.md
             - run: npm test
             - run: node scripts/check-startup.mjs

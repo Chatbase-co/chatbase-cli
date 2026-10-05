@@ -58,6 +58,7 @@ calls you invoke.
 * [`chatbase conversations list`](#chatbase-conversations-list)
 * [`chatbase conversations pause [CONVERSATIONID]`](#chatbase-conversations-pause-conversationid)
 * [`chatbase conversations resume [CONVERSATIONID]`](#chatbase-conversations-resume-conversationid)
+* [`chatbase conversations search [QUERY]`](#chatbase-conversations-search-query)
 * [`chatbase conversations tool-result [CONVERSATIONID]`](#chatbase-conversations-tool-result-conversationid)
 * [`chatbase health`](#chatbase-health)
 * [`chatbase help [COMMAND]`](#chatbase-help-command)
@@ -914,6 +915,82 @@ EXAMPLES
 ```
 
 _See code: [src/commands/conversations/resume.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/conversations/resume.ts)_
+
+## `chatbase conversations search [QUERY]`
+
+Search an agent’s conversations by text, filters, or both
+
+```
+USAGE
+  $ chatbase conversations search [QUERY] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all] [--source <value>] [--sentiment <value>] [--topic
+    <value>] [--user-id <value>] [--activity-state <value>] [--feedback <value>] [--escalated] [--action-type <value>]
+    [--tool <value>] [--tool-outcome <value>] [--procedure <value>] [--procedure-outcome <value>] [--has-voice]
+    [--start-date <value>] [--end-date <value>] [--updated-after <value>] [--updated-before <value>]
+
+ARGUMENTS
+  [QUERY]  Free-text search over messages and titles (omit to filter only)
+
+FLAGS
+  -a, --agent=<value>              Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet                      Suppress non-essential output
+      --action-type=<value>        Filter by action type that ran (comma-separated, e.g. collect-leads)
+      --activity-state=<value>     Filter by state (comma-separated): ongoing, ended, taken_over, paused
+      --agent-name=<value>         Agent display name (looked up to an ID)
+      --all                        Fetch every page
+      --cursor=<value>             Pagination cursor from a previous page; repeat the same QUERY and filters or the API
+                                   rejects it
+      --end-date=<value>           Created at or before this YYYY-MM-DD date (inclusive) or ISO 8601 date-time. Must
+                                   fall inside the search window (conversations created since the 1st of the month 12
+                                   months ago, UTC); use `conversations export` for older data.
+      --escalated                  Only conversations escalated to a human (ticket or live-chat handoff)
+      --feedback=<value>           Filter by message rating (comma-separated): positive, negative
+      --[no-]has-voice             Only conversations with a voice session (--no-has-voice: only without)
+      --limit=<value>              Maximum items per page (1–25, default 25)
+      --no-color                   Disable colored output
+      --no-input                   Never prompt; fail instead
+      --procedure=<value>          Filter by procedure name that ran (comma-separated)
+      --procedure-outcome=<value>  Filter by procedure run status (comma-separated); scoped to --procedure when set
+      --sentiment=<value>          Filter by sentiment (comma-separated): positive, neutral, negative, unspecified
+      --source=<value>             Filter by source (comma-separated, e.g. API,WhatsApp,"Widget or Iframe")
+      --start-date=<value>         Created at or after this YYYY-MM-DD date or ISO 8601 date-time. Must fall inside the
+                                   search window (conversations created since the 1st of the month 12 months ago, UTC);
+                                   use `conversations export` for older data.
+      --tool=<value>               Filter by tool name that was called (comma-separated)
+      --tool-outcome=<value>       Filter by tool result status (comma-separated, e.g. error); scoped to --tool when set
+      --topic=<value>              Filter by topic name (comma-separated), or "unspecified" for none
+      --updated-after=<value>      Last active at or after this YYYY-MM-DD date or ISO 8601 date-time
+      --updated-before=<value>     Last active at or before this YYYY-MM-DD date (inclusive) or ISO 8601 date-time. Must
+                                   fall inside the search window (conversations created since the 1st of the month 12
+                                   months ago, UTC); use `conversations export` for older data.
+      --user-id=<value>            Filter by user ID (comma-separated)
+      --verbose                    Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Search an agent’s conversations by text, filters, or both
+
+  Search conversations across sources (narrow with --source). With QUERY, results are ranked by relevance and carry a
+  matching snippet; without it, the most recently active come first. Filters combine with AND; comma-separated values
+  within one filter combine with OR.
+
+  Coverage: conversations created since the 1st of the month 12 months ago (UTC). Use `chatbase conversations export`
+  for older conversations, and `conversations export --conversation <id>` to read a result’s full message history.
+
+EXAMPLES
+  $ chatbase conversations search "refund" -a agt_123
+
+  $ chatbase conversations search -a agt_123 --source WhatsApp,Instagram --sentiment negative
+
+  $ chatbase conversations search "cancel" -a agt_123 --escalated --updated-after 2026-09-01
+
+  $ chatbase conversations search -a agt_123 --tool lookup_order --tool-outcome error --all --json
+```
+
+_See code: [src/commands/conversations/search.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/conversations/search.ts)_
 
 ## `chatbase conversations tool-result [CONVERSATIONID]`
 

@@ -41,7 +41,13 @@ const REMEDIATIONS: Record<string, string> = {
         'This API key does not have permission for this operation. Check its scopes with `chatbase auth status`, re-pair with broader access via `chatbase auth login`, or ask a workspace admin.',
     SUBSCRIPTION_API_RESTRICTED_PLAN:
         'API access requires the Standard plan or higher — upgrade at chatbase.co.',
-    VALIDATION_INVALID_BODY: 'Fix the fields above and retry.'
+    VALIDATION_INVALID_BODY: 'Fix the fields above and retry.',
+    CONVERSATION_SEARCH_UNAVAILABLE:
+        'Free-text search is off for HIPAA or redacted agents. Drop the QUERY argument and search with filters only.',
+    VALIDATION_CURSOR_QUERY_MISMATCH:
+        'A --cursor only works with the exact query and filters that produced it. Repeat them unchanged, or drop --cursor to start over.',
+    VALIDATION_SEARCH_WINDOW_EXCEEDED:
+        'Search covers conversations created since the 1st of the month 12 months ago (UTC). Use `chatbase conversations export` for older ones.'
 }
 
 /**
