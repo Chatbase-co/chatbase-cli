@@ -119,7 +119,7 @@ EXAMPLES
   $ chatbase agents auto-retrain --enabled
 ```
 
-_See code: [src/commands/agents/auto-retrain.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/agents/auto-retrain.ts)_
+_See code: [src/commands/agents/auto-retrain.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/agents/auto-retrain.ts)_
 
 ## `chatbase agents clone AGENTID`
 
@@ -149,7 +149,7 @@ EXAMPLES
   $ chatbase agents clone agt_123
 ```
 
-_See code: [src/commands/agents/clone.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/agents/clone.ts)_
+_See code: [src/commands/agents/clone.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/agents/clone.ts)_
 
 ## `chatbase agents create`
 
@@ -184,7 +184,7 @@ EXAMPLES
   $ chatbase agents create --data @agent.json
 ```
 
-_See code: [src/commands/agents/create.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/agents/create.ts)_
+_See code: [src/commands/agents/create.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/agents/create.ts)_
 
 ## `chatbase agents delete AGENTID`
 
@@ -215,7 +215,7 @@ EXAMPLES
   $ chatbase agents delete agt_123 --confirm agt_123
 ```
 
-_See code: [src/commands/agents/delete.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/agents/delete.ts)_
+_See code: [src/commands/agents/delete.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/agents/delete.ts)_
 
 ## `chatbase agents get [AGENTID]`
 
@@ -250,7 +250,7 @@ EXAMPLES
   $ chatbase agents get
 ```
 
-_See code: [src/commands/agents/get.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/agents/get.ts)_
+_See code: [src/commands/agents/get.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/agents/get.ts)_
 
 ## `chatbase agents list`
 
@@ -283,7 +283,7 @@ EXAMPLES
   $ chatbase agents list --json
 ```
 
-_See code: [src/commands/agents/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/agents/list.ts)_
+_See code: [src/commands/agents/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/agents/list.ts)_
 
 ## `chatbase agents styles [AGENTID]`
 
@@ -320,7 +320,7 @@ EXAMPLES
   $ chatbase agents styles --data @styles.json
 ```
 
-_See code: [src/commands/agents/styles.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/agents/styles.ts)_
+_See code: [src/commands/agents/styles.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/agents/styles.ts)_
 
 ## `chatbase agents train [AGENTID]`
 
@@ -355,7 +355,7 @@ EXAMPLES
   $ chatbase agents train
 ```
 
-_See code: [src/commands/agents/train.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/agents/train.ts)_
+_See code: [src/commands/agents/train.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/agents/train.ts)_
 
 ## `chatbase agents update [AGENTID]`
 
@@ -397,7 +397,7 @@ EXAMPLES
   $ chatbase agents update agt_123 --data @agent.json
 ```
 
-_See code: [src/commands/agents/update.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/agents/update.ts)_
+_See code: [src/commands/agents/update.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/agents/update.ts)_
 
 ## `chatbase api METHOD PATH`
 
@@ -438,7 +438,7 @@ EXAMPLES
   $ chatbase api PATCH /agents/agt_123 --body @patch.json
 ```
 
-_See code: [src/commands/api.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/api.ts)_
+_See code: [src/commands/api.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/api.ts)_
 
 ## `chatbase auth login`
 
@@ -471,7 +471,7 @@ EXAMPLES
   cat key.txt | chatbase auth login --with-token
 ```
 
-_See code: [src/commands/auth/login.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/auth/login.ts)_
+_See code: [src/commands/auth/login.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/auth/login.ts)_
 
 ## `chatbase auth logout`
 
@@ -498,7 +498,7 @@ EXAMPLES
   $ chatbase auth logout
 ```
 
-_See code: [src/commands/auth/logout.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/auth/logout.ts)_
+_See code: [src/commands/auth/logout.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/auth/logout.ts)_
 
 ## `chatbase auth status`
 
@@ -525,7 +525,7 @@ EXAMPLES
   $ chatbase auth status
 ```
 
-_See code: [src/commands/auth/status.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/auth/status.ts)_
+_See code: [src/commands/auth/status.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/auth/status.ts)_
 
 ## `chatbase chat`
 
@@ -567,7 +567,7 @@ EXAMPLES
   $ chatbase chat -a agt_123 -m "hi" --json
 ```
 
-_See code: [src/commands/chat/index.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/chat/index.ts)_
+_See code: [src/commands/chat/index.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/chat/index.ts)_
 
 ## `chatbase chat retry`
 
@@ -602,7 +602,7 @@ EXAMPLES
   $ chatbase chat retry --conversation c_123 -a agt_123 --message-id msg_456 --no-stream
 ```
 
-_See code: [src/commands/chat/retry.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/chat/retry.ts)_
+_See code: [src/commands/chat/retry.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/chat/retry.ts)_
 
 ## `chatbase config get KEY`
 
@@ -634,7 +634,7 @@ EXAMPLES
   $ chatbase config get timeout
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/config/get.ts)_
 
 ## `chatbase config list`
 
@@ -661,7 +661,7 @@ EXAMPLES
   $ chatbase config list
 ```
 
-_See code: [src/commands/config/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/config/list.ts)_
+_See code: [src/commands/config/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/config/list.ts)_
 
 ## `chatbase config set KEY [VALUE]`
 
@@ -696,7 +696,7 @@ EXAMPLES
   $ chatbase config set timeout 60000
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/config/set.ts)_
 
 ## `chatbase conversations export`
 
@@ -755,7 +755,7 @@ EXAMPLES
   $ chatbase conversations export -a agt_123 --conversation conv_123
 ```
 
-_See code: [src/commands/conversations/export.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/conversations/export.ts)_
+_See code: [src/commands/conversations/export.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/conversations/export.ts)_
 
 ## `chatbase conversations get [CONVERSATIONID]`
 
@@ -791,7 +791,7 @@ EXAMPLES
   $ chatbase conversations get --conversation conv_123 -a agt_123
 ```
 
-_See code: [src/commands/conversations/get.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/conversations/get.ts)_
+_See code: [src/commands/conversations/get.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/conversations/get.ts)_
 
 ## `chatbase conversations list`
 
@@ -842,7 +842,7 @@ EXAMPLES
   $ chatbase conversations list -a agt_123 --all --json
 ```
 
-_See code: [src/commands/conversations/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/conversations/list.ts)_
+_See code: [src/commands/conversations/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/conversations/list.ts)_
 
 ## `chatbase conversations pause [CONVERSATIONID]`
 
@@ -878,7 +878,7 @@ EXAMPLES
   $ chatbase conversations pause --conversation conv_123 -a agt_123
 ```
 
-_See code: [src/commands/conversations/pause.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/conversations/pause.ts)_
+_See code: [src/commands/conversations/pause.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/conversations/pause.ts)_
 
 ## `chatbase conversations resume [CONVERSATIONID]`
 
@@ -914,7 +914,7 @@ EXAMPLES
   $ chatbase conversations resume --conversation conv_123 -a agt_123
 ```
 
-_See code: [src/commands/conversations/resume.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/conversations/resume.ts)_
+_See code: [src/commands/conversations/resume.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/conversations/resume.ts)_
 
 ## `chatbase conversations search [QUERY]`
 
@@ -990,7 +990,7 @@ EXAMPLES
   $ chatbase conversations search -a agt_123 --tool lookup_order --tool-outcome error --all --json
 ```
 
-_See code: [src/commands/conversations/search.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/conversations/search.ts)_
+_See code: [src/commands/conversations/search.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/conversations/search.ts)_
 
 ## `chatbase conversations tool-result [CONVERSATIONID]`
 
@@ -1034,7 +1034,7 @@ EXAMPLES
   $ chatbase conversations tool-result conv_123 --tool-call-id tc_1 -a agt_123
 ```
 
-_See code: [src/commands/conversations/tool-result.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/conversations/tool-result.ts)_
+_See code: [src/commands/conversations/tool-result.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/conversations/tool-result.ts)_
 
 ## `chatbase health`
 
@@ -1063,7 +1063,7 @@ EXAMPLES
   $ chatbase health --json
 ```
 
-_See code: [src/commands/health.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/health.ts)_
+_See code: [src/commands/health.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/health.ts)_
 
 ## `chatbase help [COMMAND]`
 
@@ -1113,7 +1113,7 @@ EXAMPLES
   $ chatbase helpdesk statuses -a agt_123
 ```
 
-_See code: [src/commands/helpdesk/statuses.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/helpdesk/statuses.ts)_
+_See code: [src/commands/helpdesk/statuses.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/helpdesk/statuses.ts)_
 
 ## `chatbase helpdesk teams`
 
@@ -1143,7 +1143,7 @@ EXAMPLES
   $ chatbase helpdesk teams -a agt_123
 ```
 
-_See code: [src/commands/helpdesk/teams.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/helpdesk/teams.ts)_
+_See code: [src/commands/helpdesk/teams.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/helpdesk/teams.ts)_
 
 ## `chatbase messages feedback [MESSAGEID]`
 
@@ -1182,7 +1182,7 @@ EXAMPLES
   $ chatbase messages feedback --conversation conv_123 --message msg_1 --rating clear -a agt_123
 ```
 
-_See code: [src/commands/messages/feedback.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/messages/feedback.ts)_
+_See code: [src/commands/messages/feedback.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/messages/feedback.ts)_
 
 ## `chatbase messages list`
 
@@ -1218,7 +1218,7 @@ EXAMPLES
   $ chatbase messages list --conversation conv_123 -a agt_123 --all --json
 ```
 
-_See code: [src/commands/messages/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/messages/list.ts)_
+_See code: [src/commands/messages/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/messages/list.ts)_
 
 ## `chatbase sources create`
 
@@ -1265,7 +1265,7 @@ EXAMPLES
   $ chatbase sources create --file ./guide.pdf -a agt_123
 ```
 
-_See code: [src/commands/sources/create.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/sources/create.ts)_
+_See code: [src/commands/sources/create.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/sources/create.ts)_
 
 ## `chatbase sources delete SOURCEID`
 
@@ -1298,7 +1298,7 @@ EXAMPLES
   $ chatbase sources delete src_1 -a agt_1
 ```
 
-_See code: [src/commands/sources/delete.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/sources/delete.ts)_
+_See code: [src/commands/sources/delete.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/sources/delete.ts)_
 
 ## `chatbase sources get SOURCEID`
 
@@ -1331,7 +1331,7 @@ EXAMPLES
   $ chatbase sources get src_123 -a agt_123
 ```
 
-_See code: [src/commands/sources/get.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/sources/get.ts)_
+_See code: [src/commands/sources/get.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/sources/get.ts)_
 
 ## `chatbase sources list`
 
@@ -1368,7 +1368,7 @@ EXAMPLES
   $ chatbase sources list -a agt_123 --all --json
 ```
 
-_See code: [src/commands/sources/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/sources/list.ts)_
+_See code: [src/commands/sources/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/sources/list.ts)_
 
 ## `chatbase sources restore SOURCEID`
 
@@ -1401,7 +1401,7 @@ EXAMPLES
   $ chatbase sources restore src_1 -a agt_1
 ```
 
-_See code: [src/commands/sources/restore.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/sources/restore.ts)_
+_See code: [src/commands/sources/restore.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/sources/restore.ts)_
 
 ## `chatbase sources summary`
 
@@ -1431,7 +1431,7 @@ EXAMPLES
   $ chatbase sources summary -a agt_123
 ```
 
-_See code: [src/commands/sources/summary.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/sources/summary.ts)_
+_See code: [src/commands/sources/summary.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/sources/summary.ts)_
 
 ## `chatbase sources update SOURCEID`
 
@@ -1469,7 +1469,7 @@ EXAMPLES
   $ chatbase sources update src_1 --file ./updated.pdf -a agt_1
 ```
 
-_See code: [src/commands/sources/update.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/sources/update.ts)_
+_See code: [src/commands/sources/update.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/sources/update.ts)_
 
 ## `chatbase tickets create`
 
@@ -1510,7 +1510,7 @@ EXAMPLES
   $ chatbase tickets create --subject "Export failing" --data '{"description":"Customer cannot export.","customer":{"email":"jane@example.com"}}' -a agt_123
 ```
 
-_See code: [src/commands/tickets/create.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/tickets/create.ts)_
+_See code: [src/commands/tickets/create.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/tickets/create.ts)_
 
 ## `chatbase tickets get TICKETNUMBER`
 
@@ -1543,7 +1543,7 @@ EXAMPLES
   $ chatbase tickets get 42 -a agt_123
 ```
 
-_See code: [src/commands/tickets/get.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/tickets/get.ts)_
+_See code: [src/commands/tickets/get.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/tickets/get.ts)_
 
 ## `chatbase tickets list`
 
@@ -1596,7 +1596,7 @@ EXAMPLES
   $ chatbase tickets list -a agt_123 --all --json
 ```
 
-_See code: [src/commands/tickets/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/tickets/list.ts)_
+_See code: [src/commands/tickets/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/tickets/list.ts)_
 
 ## `chatbase tickets messages [TICKETNUMBER]`
 
@@ -1639,7 +1639,7 @@ EXAMPLES
   $ chatbase tickets messages 42 -a agt_123 --all --json
 ```
 
-_See code: [src/commands/tickets/messages.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/tickets/messages.ts)_
+_See code: [src/commands/tickets/messages.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/tickets/messages.ts)_
 
 ## `chatbase tickets reply [TICKETNUMBER]`
 
@@ -1678,7 +1678,7 @@ EXAMPLES
   $ chatbase tickets reply 42 -m "On it" --author-email sam@example.com -a agt_123
 ```
 
-_See code: [src/commands/tickets/reply.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/tickets/reply.ts)_
+_See code: [src/commands/tickets/reply.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/tickets/reply.ts)_
 
 ## `chatbase tickets search QUERY`
 
@@ -1714,7 +1714,7 @@ EXAMPLES
   $ chatbase tickets search "refund" -a agt_123 --limit 10 --json
 ```
 
-_See code: [src/commands/tickets/search.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/tickets/search.ts)_
+_See code: [src/commands/tickets/search.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/tickets/search.ts)_
 
 ## `chatbase tickets update TICKETNUMBER`
 
@@ -1757,7 +1757,7 @@ EXAMPLES
   $ chatbase tickets update 42 --data '{"statusCategory":"closed","agentEmail":"sam@example.com"}' -a agt_123
 ```
 
-_See code: [src/commands/tickets/update.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/tickets/update.ts)_
+_See code: [src/commands/tickets/update.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/tickets/update.ts)_
 
 ## `chatbase voice start`
 
@@ -1801,7 +1801,7 @@ EXAMPLES
   $ chatbase voice start --conversation 0b6a1f2e-7c3d-4a5b-8e9f-1a2b3c4d5e6f --json -a agt_123
 ```
 
-_See code: [src/commands/voice/start.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/voice/start.ts)_
+_See code: [src/commands/voice/start.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/voice/start.ts)_
 
 ## `chatbase whatsapp send-template TEMPLATE`
 
@@ -1845,7 +1845,7 @@ EXAMPLES
   $ chatbase whatsapp send-template order_update --to 14155552671 --language en_US --variables '{"header":{"1":"#1042"},"body":{"1":"Jane","2":"Friday"}}' -a agt_123
 ```
 
-_See code: [src/commands/whatsapp/send-template.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/whatsapp/send-template.ts)_
+_See code: [src/commands/whatsapp/send-template.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/whatsapp/send-template.ts)_
 
 ## `chatbase whatsapp templates`
 
@@ -1881,5 +1881,5 @@ EXAMPLES
   $ chatbase whatsapp templates -a agt_123 --json
 ```
 
-_See code: [src/commands/whatsapp/templates.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.9.0/src/commands/whatsapp/templates.ts)_
+_See code: [src/commands/whatsapp/templates.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.0/src/commands/whatsapp/templates.ts)_
 <!-- commandsstop -->
