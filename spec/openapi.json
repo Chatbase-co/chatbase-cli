@@ -3632,8 +3632,8 @@
               "string",
               "null"
             ],
-            "description": "Origin of the website the chat widget was embedded on when the conversation started, e.g. `https://www.example.com`. Null when unknown or for non-widget conversations.",
-            "example": "https://www.example.com"
+            "description": "URL of the page the chat widget was embedded on when the conversation started, without its query string, e.g. `https://www.example.com/pricing`. Only the origin is included when the browser did not send the page path. Null when unknown or for non-widget conversations.",
+            "example": "https://www.example.com/pricing"
           },
           "status": {
             "type": "string",
@@ -3890,8 +3890,8 @@
               "string",
               "null"
             ],
-            "description": "Origin of the website the chat widget was embedded on when the conversation started, e.g. `https://www.example.com`. Null when unknown or for non-widget conversations.",
-            "example": "https://www.example.com"
+            "description": "URL of the page the chat widget was embedded on when the conversation started, without its query string, e.g. `https://www.example.com/pricing`. Only the origin is included when the browser did not send the page path. Null when unknown or for non-widget conversations.",
+            "example": "https://www.example.com/pricing"
           },
           "status": {
             "type": "string",

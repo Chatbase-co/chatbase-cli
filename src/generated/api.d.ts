@@ -1829,8 +1829,8 @@ export interface components {
              */
             source: "API" | "WhatsApp" | "Messenger" | "Instagram" | "Slack" | "Salesforce" | "Zendesk" | "Zendesk Messaging" | "Chatbase site" | "Playground" | "Action preview" | "Qna preview" | "Widget or Iframe" | "Center stage" | "Search" | "Iframe" | "Email" | "Agent page" | "Phone" | "Android SDK" | "iOS SDK" | "Unspecified" | null;
             /**
-             * @description Origin of the website the chat widget was embedded on when the conversation started, e.g. `https://www.example.com`. Null when unknown or for non-widget conversations.
-             * @example https://www.example.com
+             * @description URL of the page the chat widget was embedded on when the conversation started, without its query string, e.g. `https://www.example.com/pricing`. Only the origin is included when the browser did not send the page path. Null when unknown or for non-widget conversations.
+             * @example https://www.example.com/pricing
              */
             embedOrigin: string | null;
             /**
@@ -1905,8 +1905,8 @@ export interface components {
              */
             source: "API" | "WhatsApp" | "Messenger" | "Instagram" | "Slack" | "Salesforce" | "Zendesk" | "Zendesk Messaging" | "Chatbase site" | "Playground" | "Action preview" | "Qna preview" | "Widget or Iframe" | "Center stage" | "Search" | "Iframe" | "Email" | "Agent page" | "Phone" | "Android SDK" | "iOS SDK" | "Unspecified" | null;
             /**
-             * @description Origin of the website the chat widget was embedded on when the conversation started, e.g. `https://www.example.com`. Null when unknown or for non-widget conversations.
-             * @example https://www.example.com
+             * @description URL of the page the chat widget was embedded on when the conversation started, without its query string, e.g. `https://www.example.com/pricing`. Only the origin is included when the browser did not send the page path. Null when unknown or for non-widget conversations.
+             * @example https://www.example.com/pricing
              */
             embedOrigin: string | null;
             /**
