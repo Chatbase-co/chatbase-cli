@@ -450,6 +450,7 @@
               "gpt-5-nano",
               "claude-opus-5-5",
               "claude-sonnet-5-5",
+              "claude-haiku-5-5",
               "claude-opus-4-8",
               "claude-opus-4-7",
               "claude-opus-4-6",
@@ -461,9 +462,10 @@
               "gemini-3-flash",
               "gemini-3.1-flash-lite",
               "gemini-3.1-pro",
-              "gemini-3.5-flash",
               "gemini-3.5-flash-lite",
               "gemini-3.6-flash",
+              "gemini-3.8-flash",
+              "grok-4.7",
               "grok-3",
               "grok-3-mini",
               "grok-4",
@@ -471,9 +473,7 @@
               "DeepSeek-R1",
               "DeepSeek-V4-Flash",
               "DeepSeek-V4.1-Flash",
-              "Llama-4-Scout-17B-16E-Instruct",
-              "Llama-4-Maverick-17B-128E-Instruct-FP8",
-              "kimi-k2.5",
+              "kimi-k2.6",
               "mistral-medium-3.5",
               "mistral-small-2603",
               "glm-5.2",
@@ -826,6 +826,7 @@
                   "gpt-5-nano",
                   "claude-opus-5-5",
                   "claude-sonnet-5-5",
+                  "claude-haiku-5-5",
                   "claude-opus-4-8",
                   "claude-opus-4-7",
                   "claude-opus-4-6",
@@ -837,9 +838,10 @@
                   "gemini-3-flash",
                   "gemini-3.1-flash-lite",
                   "gemini-3.1-pro",
-                  "gemini-3.5-flash",
                   "gemini-3.5-flash-lite",
                   "gemini-3.6-flash",
+                  "gemini-3.8-flash",
+                  "grok-4.7",
                   "grok-3",
                   "grok-3-mini",
                   "grok-4",
@@ -847,9 +849,7 @@
                   "DeepSeek-R1",
                   "DeepSeek-V4-Flash",
                   "DeepSeek-V4.1-Flash",
-                  "Llama-4-Scout-17B-16E-Instruct",
-                  "Llama-4-Maverick-17B-128E-Instruct-FP8",
-                  "kimi-k2.5",
+                  "kimi-k2.6",
                   "mistral-medium-3.5",
                   "mistral-small-2603",
                   "glm-5.2",
@@ -1465,34 +1465,22 @@
               "gpt-5.6-terra",
               "gpt-6.1-sol",
               "gpt-6-luna",
-              "gpt-5-mini",
-              "gpt-5-nano",
               "claude-opus-5-5",
               "claude-sonnet-5-5",
-              "claude-opus-4-8",
-              "claude-opus-4-7",
-              "claude-opus-4-6",
-              "claude-sonnet-4-6",
-              "claude-opus-4-5",
-              "claude-haiku-4-5",
-              "claude-sonnet-4-5",
+              "claude-haiku-5-5",
               "gemini-2.5-pro",
               "gemini-3-flash",
               "gemini-3.1-flash-lite",
               "gemini-3.1-pro",
-              "gemini-3.5-flash",
               "gemini-3.5-flash-lite",
               "gemini-3.6-flash",
-              "grok-3",
-              "grok-3-mini",
-              "grok-4",
+              "gemini-3.8-flash",
+              "grok-4.7",
               "DeepSeek-V3.1",
               "DeepSeek-R1",
               "DeepSeek-V4-Flash",
               "DeepSeek-V4.1-Flash",
-              "Llama-4-Scout-17B-16E-Instruct",
-              "Llama-4-Maverick-17B-128E-Instruct-FP8",
-              "kimi-k2.5",
+              "kimi-k2.6",
               "mistral-medium-3.5",
               "mistral-small-2603",
               "glm-5.2",
@@ -1927,34 +1915,22 @@
               "gpt-5.6-terra",
               "gpt-6.1-sol",
               "gpt-6-luna",
-              "gpt-5-mini",
-              "gpt-5-nano",
               "claude-opus-5-5",
               "claude-sonnet-5-5",
-              "claude-opus-4-8",
-              "claude-opus-4-7",
-              "claude-opus-4-6",
-              "claude-sonnet-4-6",
-              "claude-opus-4-5",
-              "claude-haiku-4-5",
-              "claude-sonnet-4-5",
+              "claude-haiku-5-5",
               "gemini-2.5-pro",
               "gemini-3-flash",
               "gemini-3.1-flash-lite",
               "gemini-3.1-pro",
-              "gemini-3.5-flash",
               "gemini-3.5-flash-lite",
               "gemini-3.6-flash",
-              "grok-3",
-              "grok-3-mini",
-              "grok-4",
+              "gemini-3.8-flash",
+              "grok-4.7",
               "DeepSeek-V3.1",
               "DeepSeek-R1",
               "DeepSeek-V4-Flash",
               "DeepSeek-V4.1-Flash",
-              "Llama-4-Scout-17B-16E-Instruct",
-              "Llama-4-Maverick-17B-128E-Instruct-FP8",
-              "kimi-k2.5",
+              "kimi-k2.6",
               "mistral-medium-3.5",
               "mistral-small-2603",
               "glm-5.2",
@@ -2436,34 +2412,22 @@
                   "gpt-5.6-terra",
                   "gpt-6.1-sol",
                   "gpt-6-luna",
-                  "gpt-5-mini",
-                  "gpt-5-nano",
                   "claude-opus-5-5",
                   "claude-sonnet-5-5",
-                  "claude-opus-4-8",
-                  "claude-opus-4-7",
-                  "claude-opus-4-6",
-                  "claude-sonnet-4-6",
-                  "claude-opus-4-5",
-                  "claude-haiku-4-5",
-                  "claude-sonnet-4-5",
+                  "claude-haiku-5-5",
                   "gemini-2.5-pro",
                   "gemini-3-flash",
                   "gemini-3.1-flash-lite",
                   "gemini-3.1-pro",
-                  "gemini-3.5-flash",
                   "gemini-3.5-flash-lite",
                   "gemini-3.6-flash",
-                  "grok-3",
-                  "grok-3-mini",
-                  "grok-4",
+                  "gemini-3.8-flash",
+                  "grok-4.7",
                   "DeepSeek-V3.1",
                   "DeepSeek-R1",
                   "DeepSeek-V4-Flash",
                   "DeepSeek-V4.1-Flash",
-                  "Llama-4-Scout-17B-16E-Instruct",
-                  "Llama-4-Maverick-17B-128E-Instruct-FP8",
-                  "kimi-k2.5",
+                  "kimi-k2.6",
                   "mistral-medium-3.5",
                   "mistral-small-2603",
                   "glm-5.2",
@@ -4198,7 +4162,8 @@
                 "type": "string",
                 "enum": [
                   "ongoing",
-                  "paused"
+                  "paused",
+                  "ended"
                 ],
                 "description": "Conversation activity status"
               }
@@ -4216,13 +4181,18 @@
       "UpdateConversationRequest": {
         "type": "object",
         "properties": {
-          "paused": {
-            "type": "boolean",
-            "description": "Set to true to pause, false to resume"
+          "status": {
+            "type": "string",
+            "enum": [
+              "ongoing",
+              "paused",
+              "ended"
+            ],
+            "description": "Target activity state for the conversation"
           }
         },
         "required": [
-          "paused"
+          "status"
         ],
         "additionalProperties": false
       },
@@ -9381,8 +9351,8 @@
         "tags": [
           "Conversations"
         ],
-        "summary": "Pause or resume a conversation",
-        "description": "Pause or resume an ongoing conversation. A paused conversation stops receiving AI replies but still records incoming messages.",
+        "summary": "Update conversation status",
+        "description": "Update the activity state of a conversation.\n\n- `ongoing` — resumes a paused or ended conversation.\n- `paused` — pauses an ongoing conversation (stops AI replies but still records messages).\n- `ended` — ends the conversation.\n\nConversation-based billing accounts cannot resume ended conversations.",
         "security": [
           {
             "bearerAuth": []
@@ -9493,6 +9463,22 @@
                   "error": {
                     "code": "AGENT_NOT_FOUND",
                     "message": "Agent not found"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Another actor (e.g. an operator taking over) changed the conversation between read and write. Nothing was updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "CONVERSATION_STATE_CHANGED",
+                    "message": "The conversation changed state during the update, please retry"
                   }
                 }
               }

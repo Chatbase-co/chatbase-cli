@@ -311,8 +311,14 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Pause or resume a conversation
-         * @description Pause or resume an ongoing conversation. A paused conversation stops receiving AI replies but still records incoming messages.
+         * Update conversation status
+         * @description Update the activity state of a conversation.
+         *
+         *     - `ongoing` — resumes a paused or ended conversation.
+         *     - `paused` — pauses an ongoing conversation (stops AI replies but still records messages).
+         *     - `ended` — ends the conversation.
+         *
+         *     Conversation-based billing accounts cannot resume ended conversations.
          */
         patch: operations["updateConversation"];
         trace?: never;
@@ -827,7 +833,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /** @description Whether the agent automatically retrains every 7 days */
             autoRetrain: boolean;
             /**
@@ -914,7 +920,7 @@ export interface components {
                 maxCallDurationSeconds?: number | null;
                 maxDailyCallsPerUser?: number | null;
                 /** @enum {string} */
-                model?: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+                model?: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
                 temperature?: number;
                 allowInterruptions?: boolean;
                 allowTextInput?: boolean;
@@ -1096,7 +1102,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /**
              * @description Model temperature (0–1)
              * @example 0
@@ -1193,7 +1199,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /** @description Temperature (0–1) */
             temp?: number;
             /**
@@ -1353,7 +1359,7 @@ export interface components {
                  * @example gpt-6-luna
                  * @enum {string}
                  */
-                model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "Llama-4-Scout-17B-16E-Instruct" | "Llama-4-Maverick-17B-128E-Instruct-FP8" | "kimi-k2.5" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+                model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
                 /**
                  * @description Randomness of voice responses (0–1). 0 = deterministic and focused, 1 = more varied and creative.
                  * @example 0
@@ -2001,12 +2007,15 @@ export interface components {
                  * @description Conversation activity status
                  * @enum {string}
                  */
-                status: "ongoing" | "paused";
+                status: "ongoing" | "paused" | "ended";
             };
         };
         UpdateConversationRequest: {
-            /** @description Set to true to pause, false to resume */
-            paused: boolean;
+            /**
+             * @description Target activity state for the conversation
+             * @enum {string}
+             */
+            status: "ongoing" | "paused" | "ended";
         };
         UpdateMessageFeedbackResponse: {
             data: components["schemas"]["ConversationMessage"];
@@ -5153,6 +5162,23 @@ export interface operations {
                      *       "error": {
                      *         "code": "AGENT_NOT_FOUND",
                      *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Another actor (e.g. an operator taking over) changed the conversation between read and write. Nothing was updated. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "CONVERSATION_STATE_CHANGED",
+                     *         "message": "The conversation changed state during the update, please retry"
                      *       }
                      *     }
                      */
