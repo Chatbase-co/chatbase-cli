@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/Chatbase-co/chatbase-cli/compare/v0.10.0...v0.10.1) (2026-10-12)
+
+
+### Bug Fixes
+
+* **conversations:** send status instead of paused when pausing/resuming ([#39](https://github.com/Chatbase-co/chatbase-cli/issues/39)) ([61efd72](https://github.com/Chatbase-co/chatbase-cli/commit/61efd72cc5c2e05adc1dd3e9cf62573e222765e8))
+
 ## [0.10.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.9.0...v0.10.0) (2026-10-05)
 
 
