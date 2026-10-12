@@ -47,7 +47,7 @@ export default class ConversationsResume extends AgentCommand {
             '/agents/{agentId}/conversations/{conversationId}',
             {
                 params: { path: { agentId, conversationId } },
-                body: { paused: false }
+                body: { status: 'ongoing' }
             }
         )
         throwIfError(response, error)

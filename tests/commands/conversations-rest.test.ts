@@ -98,7 +98,7 @@ describe('chatbase conversations pause', () => {
         data: { id: 'conv_1', status: 'paused' as const }
     }
 
-    it('sends { paused: true } and renders the id + status row', async () => {
+    it("sends { status: 'paused' } and renders the id + status row", async () => {
         let sentBody = ''
         mock.get(BASE)
             .intercept({
@@ -111,7 +111,7 @@ describe('chatbase conversations pause', () => {
             })
         const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
         await ConversationsPause.run(['conv_1', '--plain'], process.cwd())
-        expect(JSON.parse(sentBody)).toEqual({ paused: true })
+        expect(JSON.parse(sentBody)).toEqual({ status: 'paused' })
         expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
             'conv_1\tpaused'
         )
@@ -137,7 +137,7 @@ describe('chatbase conversations resume', () => {
         data: { id: 'conv_1', status: 'ongoing' as const }
     }
 
-    it('sends { paused: false } and renders the id + status row', async () => {
+    it("sends { status: 'ongoing' } and renders the id + status row", async () => {
         let sentBody = ''
         mock.get(BASE)
             .intercept({
@@ -150,7 +150,7 @@ describe('chatbase conversations resume', () => {
             })
         const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
         await ConversationsResume.run(['conv_1', '--plain'], process.cwd())
-        expect(JSON.parse(sentBody)).toEqual({ paused: false })
+        expect(JSON.parse(sentBody)).toEqual({ status: 'ongoing' })
         expect(out.mock.calls.map((c) => String(c[0])).join('')).toContain(
             'conv_1\tongoing'
         )

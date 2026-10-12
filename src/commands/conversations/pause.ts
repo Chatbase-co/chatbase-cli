@@ -47,7 +47,7 @@ export default class ConversationsPause extends AgentCommand {
             '/agents/{agentId}/conversations/{conversationId}',
             {
                 params: { path: { agentId, conversationId } },
-                body: { paused: true }
+                body: { status: 'paused' }
             }
         )
         throwIfError(response, error)

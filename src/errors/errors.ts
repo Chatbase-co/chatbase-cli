@@ -46,6 +46,8 @@ const REMEDIATIONS: Record<string, string> = {
         'Free-text search is off for HIPAA or redacted agents. Drop the QUERY argument and search with filters only.',
     VALIDATION_CURSOR_QUERY_MISMATCH:
         'A --cursor only works with the exact query and filters that produced it. Repeat them unchanged, or drop --cursor to start over.',
+    CONVERSATION_STATE_CHANGED:
+        'Another actor (e.g. an operator taking over) changed the conversation mid-update. Nothing was changed; retry the command.',
     VALIDATION_SEARCH_WINDOW_EXCEEDED:
         'Search covers conversations created since the 1st of the month 12 months ago (UTC). Use `chatbase conversations export` for older ones.'
 }
