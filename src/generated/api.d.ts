@@ -314,7 +314,7 @@ export interface paths {
          * Update conversation status
          * @description Update the activity state of a conversation.
          *
-         *     - `ongoing` — resumes a paused or ended conversation.
+         *     - `ongoing` — resumes a paused or ended conversation. Only API-source conversations can be resumed from ended.
          *     - `paused` — pauses an ongoing conversation (stops AI replies but still records messages).
          *     - `ended` — ends the conversation.
          *
@@ -1102,7 +1102,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /**
              * @description Model temperature (0–1)
              * @example 0
@@ -1199,7 +1199,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /** @description Temperature (0–1) */
             temp?: number;
             /**
@@ -1359,7 +1359,7 @@ export interface components {
                  * @example gpt-6-luna
                  * @enum {string}
                  */
-                model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+                model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
                 /**
                  * @description Randomness of voice responses (0–1). 0 = deterministic and focused, 1 = more varied and creative.
                  * @example 0

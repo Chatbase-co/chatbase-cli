@@ -10,7 +10,8 @@ const COLUMNS: Column[] = [
 ]
 
 export default class ConversationsResume extends AgentCommand {
-    static override description = 'Resume a paused conversation'
+    static override description =
+        'Resume a paused or ended conversation (only API-source conversations can be resumed from ended)'
     static override examples = [
         '<%= config.bin %> conversations resume conv_123 -a agt_123',
         '<%= config.bin %> conversations resume --conversation conv_123 -a agt_123'
