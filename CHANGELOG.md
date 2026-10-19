@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.2](https://github.com/Chatbase-co/chatbase-cli/compare/v0.10.1...v0.10.2) (2026-10-19)
+
+
+### Bug Fixes
+
+* **agents:** drop removed gpt-4o-mini model and note resume-from-ended limit ([4811b0d](https://github.com/Chatbase-co/chatbase-cli/commit/4811b0d8a963f9173aafb69a5d145697953ea8f0))
+* **agents:** drop removed gpt-4o-mini model and note resume-from-ended limit ([dc241ab](https://github.com/Chatbase-co/chatbase-cli/commit/dc241ab43c1daa121c34ff2dd9cb3de816c41966))
+
 ## [0.10.1](https://github.com/Chatbase-co/chatbase-cli/compare/v0.10.0...v0.10.1) (2026-10-12)
 
 
