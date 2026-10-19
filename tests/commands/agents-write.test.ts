@@ -73,7 +73,7 @@ describe('chatbase agents create', () => {
         await AgentsCreate.run(
             [
                 '--data',
-                '{"name":"From Data","model":"gpt-4o-mini"}',
+                '{"name":"From Data","model":"gpt-5.5"}',
                 '--name',
                 'From Flag',
                 '--quiet'
@@ -82,7 +82,7 @@ describe('chatbase agents create', () => {
         )
         expect(JSON.parse(sentBody)).toMatchObject({
             name: 'From Flag',
-            model: 'gpt-4o-mini'
+            model: 'gpt-5.5'
         })
     })
 })

@@ -882,7 +882,7 @@ _See code: [src/commands/conversations/pause.ts](https://github.com/Chatbase-co/
 
 ## `chatbase conversations resume [CONVERSATIONID]`
 
-Resume a paused conversation
+Resume a paused or ended conversation (only API-source conversations can be resumed from ended)
 
 ```
 USAGE
@@ -906,7 +906,7 @@ OUTPUT FLAGS
   --plain  Tab-separated output for scripts
 
 DESCRIPTION
-  Resume a paused conversation
+  Resume a paused or ended conversation (only API-source conversations can be resumed from ended)
 
 EXAMPLES
   $ chatbase conversations resume conv_123 -a agt_123

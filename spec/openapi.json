@@ -1457,7 +1457,6 @@
           "model": {
             "type": "string",
             "enum": [
-              "gpt-4o-mini",
               "gpt-oss-120b",
               "gpt-oss-20b",
               "gpt-5.2",
@@ -1907,7 +1906,6 @@
           "model": {
             "type": "string",
             "enum": [
-              "gpt-4o-mini",
               "gpt-oss-120b",
               "gpt-oss-20b",
               "gpt-5.2",
@@ -2404,7 +2402,6 @@
               "model": {
                 "type": "string",
                 "enum": [
-                  "gpt-4o-mini",
                   "gpt-oss-120b",
                   "gpt-oss-20b",
                   "gpt-5.2",
@@ -9352,7 +9349,7 @@
           "Conversations"
         ],
         "summary": "Update conversation status",
-        "description": "Update the activity state of a conversation.\n\n- `ongoing` — resumes a paused or ended conversation.\n- `paused` — pauses an ongoing conversation (stops AI replies but still records messages).\n- `ended` — ends the conversation.\n\nConversation-based billing accounts cannot resume ended conversations.",
+        "description": "Update the activity state of a conversation.\n\n- `ongoing` — resumes a paused or ended conversation. Only API-source conversations can be resumed from ended.\n- `paused` — pauses an ongoing conversation (stops AI replies but still records messages).\n- `ended` — ends the conversation.\n\nConversation-based billing accounts cannot resume ended conversations.",
         "security": [
           {
             "bearerAuth": []
