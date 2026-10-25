@@ -26,7 +26,7 @@ chatbase auth login --with-token < key.txt
 export CHATBASE_API_KEY=...               # CI
 ```
 
-Keys live in chatbase.co → Workspace Settings → API Keys (Standard plan or higher).
+Keys live in chatbase.co → Workspace Settings → API Keys (Basic plan or higher).
 
 ## Privacy
 

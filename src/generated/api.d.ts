@@ -118,7 +118,7 @@ export interface paths {
          *
          *     Requirements:
          *     - The agent must have been trained at least once — returns `AGENT_NOT_TRAINED` (409) otherwise.
-         *     - Requires the Standard plan or higher — returns `PLAN_FEATURE_NOT_AVAILABLE` (403) on unsupported plans.
+         *     - Requires the Basic plan or higher — returns `PLAN_FEATURE_NOT_AVAILABLE` (403) on unsupported plans.
          */
         put: operations["updateAgentAutoRetrain"];
         post?: never;
@@ -242,7 +242,7 @@ export interface paths {
         };
         /**
          * List conversations
-         * @description List conversations for an agent, ordered by createdAt date. Supports cursor-based pagination. Pass `startDate` and/or `endDate` to restrict the results to a createdAt window.
+         * @description List conversations created through the API for an agent, ordered by createdAt date. Conversations from other sources (widget, WhatsApp, etc.) are not included; use Search conversations or Export conversations for those. Supports cursor-based pagination. Pass `startDate` and/or `endDate` to restrict the results to a createdAt window.
          */
         get: operations["listConversations"];
         put?: never;
@@ -352,7 +352,7 @@ export interface paths {
         };
         /**
          * List conversations for a user
-         * @description List conversations for a specific user under an agent, ordered by last activity. Supports cursor-based pagination.
+         * @description List conversations created through the API for a specific user under an agent, ordered by last activity. Conversations from other sources (widget, WhatsApp, etc.) are not included; use Search conversations with `userId` to find them, and Export conversations to read their messages. Supports cursor-based pagination.
          */
         get: operations["listUserConversations"];
         put?: never;
@@ -1067,7 +1067,7 @@ export interface components {
                 typography?: {
                     /** @default Inter */
                     fontFamily: string;
-                    /** @default 16px */
+                    /** @default 14px */
                     fontSize: string;
                 };
                 /** @default true */
@@ -2958,7 +2958,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2968,7 +2968,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -3084,7 +3084,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -3094,7 +3094,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -3192,7 +3192,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -3202,7 +3202,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -3338,7 +3338,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -3348,7 +3348,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -3463,7 +3463,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -3473,7 +3473,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -3609,7 +3609,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -3619,7 +3619,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -3755,7 +3755,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -3765,7 +3765,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -3897,7 +3897,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -3907,7 +3907,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -4022,7 +4022,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4032,7 +4032,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -4171,7 +4171,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4181,7 +4181,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -4339,7 +4339,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4349,7 +4349,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -4487,7 +4487,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4497,7 +4497,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -4630,7 +4630,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4640,7 +4640,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -4762,7 +4762,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4772,7 +4772,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -5031,7 +5031,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -5041,7 +5041,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -5179,7 +5179,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -5189,7 +5189,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -5345,7 +5345,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -5355,7 +5355,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -5494,7 +5494,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -5504,7 +5504,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -5627,7 +5627,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -5637,7 +5637,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -5792,7 +5792,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -5802,7 +5802,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -5917,7 +5917,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -5927,7 +5927,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -6051,7 +6051,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -6061,7 +6061,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -6180,7 +6180,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -6190,7 +6190,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -6231,7 +6231,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Adding or updating this source would exceed the storage limit for your plan. Remove existing sources or upgrade your plan. */
+            /** @description Adding or updating this source would exceed the storage limit for your plan. Remove existing sources, upgrade your plan or add extra storage. */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -6341,7 +6341,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -6351,7 +6351,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -6489,7 +6489,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -6499,7 +6499,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -6540,7 +6540,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Adding or updating this source would exceed the storage limit for your plan. Remove existing sources or upgrade your plan. */
+            /** @description Adding or updating this source would exceed the storage limit for your plan. Remove existing sources, upgrade your plan or add extra storage. */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -6650,7 +6650,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -6660,7 +6660,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -6794,7 +6794,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -6804,7 +6804,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -7133,7 +7133,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -7143,7 +7143,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -7258,7 +7258,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -7268,7 +7268,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -7429,7 +7429,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -7439,7 +7439,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -7575,7 +7575,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -7585,7 +7585,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -7721,7 +7721,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -7731,7 +7731,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -7848,7 +7848,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -7858,7 +7858,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -7988,7 +7988,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -7998,7 +7998,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -8125,7 +8125,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -8135,7 +8135,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -8265,7 +8265,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Standard plan or higher to use the API. */
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -8275,7 +8275,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Standard plan or higher is required to access the API"
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */
@@ -8467,7 +8467,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Standard plan or higher required. */
+            /** @description Basic plan or higher required. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -8477,7 +8477,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "Standard plan or higher required."
+                     *         "message": "Basic plan or higher required."
                      *       }
                      *     }
                      */
@@ -8637,7 +8637,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Standard plan or higher required. */
+            /** @description Basic plan or higher required. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -8647,7 +8647,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "Standard plan or higher required."
+                     *         "message": "Basic plan or higher required."
                      *       }
                      *     }
                      */

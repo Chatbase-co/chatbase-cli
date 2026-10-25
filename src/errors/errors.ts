@@ -40,7 +40,7 @@ const REMEDIATIONS: Record<string, string> = {
     AUTH_INSUFFICIENT_PERMISSIONS:
         'This API key does not have permission for this operation. Check its scopes with `chatbase auth status`, re-pair with broader access via `chatbase auth login`, or ask a workspace admin.',
     SUBSCRIPTION_API_RESTRICTED_PLAN:
-        'API access requires the Standard plan or higher — upgrade at chatbase.co.',
+        'API access requires the Basic plan or higher — upgrade at chatbase.co.',
     VALIDATION_INVALID_BODY: 'Fix the fields above and retry.',
     CONVERSATION_SEARCH_UNAVAILABLE:
         'Free-text search is off for HIPAA or redacted agents. Drop the QUERY argument and search with filters only.',
