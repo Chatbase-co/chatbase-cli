@@ -143,7 +143,7 @@ export default class AuthStatus extends BaseCommand {
             this.note(
                 flags,
                 this.palette(flags).yellow(
-                    "! This workspace's plan does not include API access — a Standard plan or higher is required."
+                    "! This workspace's plan does not include API access — a Basic plan or higher is required."
                 )
             )
         } else {
