@@ -2676,21 +2676,11 @@ export interface components {
         /** @description Present only on `event` messages */
         MessageEventMetadata: {
             /**
-             * @description Event kind. `status_change` and `assign` are documented; other values may appear as new event kinds are added, and carry no further fields.
+             * @description Event kind: `status_change`, `assign`, `field_change`, `priority_change`, `team_change`, `tag_added`, `tag_removed`, `email_sent`, `webhook_sent` or `slack_sent`. Other values may appear as new event kinds are added, and carry only the common fields.
              * @example status_change
              */
             eventType: string | null;
-            /**
-             * @description Previous status category (status_change only)
-             * @example on_you
-             */
-            statusFrom?: string | null;
-            /**
-             * @description New status category (status_change only)
-             * @example closed
-             */
-            statusTo?: string | null;
-            /** @description Who triggered the event */
+            /** @description Who made the change. Null for automatic changes, including trigger changes. */
             doneBy?: {
                 id: string | null;
                 name: string | null;
@@ -2701,6 +2691,22 @@ export interface components {
                  */
                 type: "agent" | "customer" | null;
             } | null;
+            /** @description Id of the trigger that made the change. Null when no trigger did, or the trigger was since deleted. */
+            triggerId?: string | null;
+            /** @description Name of the trigger that made the change, as it was named at the time. Null when no trigger did. */
+            triggerName?: string | null;
+            /** @description Id of the trigger run. Events from the same run share it. Null when no trigger made the change. */
+            runId?: string | null;
+            /**
+             * @description Previous status category (status_change only)
+             * @example on_you
+             */
+            statusFrom?: string | null;
+            /**
+             * @description New status category (status_change only)
+             * @example closed
+             */
+            statusTo?: string | null;
             /** @description New assignee (assign only) */
             assignedTo?: {
                 id: string | null;
@@ -2723,6 +2729,45 @@ export interface components {
                  */
                 type: "agent" | "customer" | null;
             } | null;
+            /** @description Custom ticket field id (field_change only) */
+            fieldId?: string | null;
+            /** @description Custom ticket field label when the change happened (field_change only) */
+            fieldLabel?: string | null;
+            /** @description Previous field value (field_change only) */
+            valueFrom?: string | null;
+            /** @description New field value (field_change only) */
+            valueTo?: string | null;
+            /** @description Previous priority (priority_change only) */
+            priorityFrom?: string | null;
+            /** @description New priority (priority_change only) */
+            priorityTo?: string | null;
+            /** @description Previous team id (team_change only) */
+            teamFrom?: string | null;
+            /** @description New team id (team_change only) */
+            teamTo?: string | null;
+            /** @description Previous team name when the change happened (team_change only) */
+            teamFromName?: string | null;
+            /** @description New team name when the change happened (team_change only) */
+            teamToName?: string | null;
+            /** @description Tag id (tag_added / tag_removed only) */
+            tagId?: string | null;
+            /** @description Tag name when the change happened (tag_added / tag_removed only) */
+            tagName?: string | null;
+            /** @description Recipient: an email address, or the recipient role such as `requester` (email_sent only) */
+            emailTo?: string | null;
+            /** @description Email subject (email_sent only) */
+            emailSubject?: string | null;
+            /** @description Webhook id (webhook_sent only) */
+            webhookId?: string | null;
+            /**
+             * @description Webhook delivery outcome (webhook_sent only). `pending` until the endpoint responds.
+             * @enum {string|null}
+             */
+            deliveryStatus?: "pending" | "delivered" | "failed" | null;
+            /** @description HTTP status the endpoint returned (webhook_sent only). Null while pending, or when the delivery timed out or could not connect. */
+            statusCode?: number | null;
+            /** @description Slack channel names the message was posted to (slack_sent only) */
+            slackChannels?: string[];
         };
         TicketListPaginationMeta: {
             /** @description Cursor for the next page, or null if no more pages */

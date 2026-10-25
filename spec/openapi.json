@@ -5921,24 +5921,8 @@
               "string",
               "null"
             ],
-            "description": "Event kind. `status_change` and `assign` are documented; other values may appear as new event kinds are added, and carry no further fields.",
+            "description": "Event kind: `status_change`, `assign`, `field_change`, `priority_change`, `team_change`, `tag_added`, `tag_removed`, `email_sent`, `webhook_sent` or `slack_sent`. Other values may appear as new event kinds are added, and carry only the common fields.",
             "example": "status_change"
-          },
-          "statusFrom": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Previous status category (status_change only)",
-            "example": "on_you"
-          },
-          "statusTo": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "New status category (status_change only)",
-            "example": "closed"
           },
           "doneBy": {
             "type": [
@@ -5983,7 +5967,44 @@
               "email",
               "type"
             ],
-            "description": "Who triggered the event"
+            "description": "Who made the change. Null for automatic changes, including trigger changes."
+          },
+          "triggerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the trigger that made the change. Null when no trigger did, or the trigger was since deleted."
+          },
+          "triggerName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the trigger that made the change, as it was named at the time. Null when no trigger did."
+          },
+          "runId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Id of the trigger run. Events from the same run share it. Null when no trigger made the change."
+          },
+          "statusFrom": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Previous status category (status_change only)",
+            "example": "on_you"
+          },
+          "statusTo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "New status category (status_change only)",
+            "example": "closed"
           },
           "assignedTo": {
             "type": [
@@ -6074,6 +6095,138 @@
               "type"
             ],
             "description": "Previous assignee (assign only)"
+          },
+          "fieldId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Custom ticket field id (field_change only)"
+          },
+          "fieldLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Custom ticket field label when the change happened (field_change only)"
+          },
+          "valueFrom": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Previous field value (field_change only)"
+          },
+          "valueTo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "New field value (field_change only)"
+          },
+          "priorityFrom": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Previous priority (priority_change only)"
+          },
+          "priorityTo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "New priority (priority_change only)"
+          },
+          "teamFrom": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Previous team id (team_change only)"
+          },
+          "teamTo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "New team id (team_change only)"
+          },
+          "teamFromName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Previous team name when the change happened (team_change only)"
+          },
+          "teamToName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "New team name when the change happened (team_change only)"
+          },
+          "tagId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tag id (tag_added / tag_removed only)"
+          },
+          "tagName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tag name when the change happened (tag_added / tag_removed only)"
+          },
+          "emailTo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Recipient: an email address, or the recipient role such as `requester` (email_sent only)"
+          },
+          "emailSubject": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Email subject (email_sent only)"
+          },
+          "webhookId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Webhook id (webhook_sent only)"
+          },
+          "deliveryStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "pending",
+              "delivered",
+              "failed",
+              null
+            ],
+            "description": "Webhook delivery outcome (webhook_sent only). `pending` until the endpoint responds."
+          },
+          "statusCode": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "HTTP status the endpoint returned (webhook_sent only). Null while pending, or when the delivery timed out or could not connect."
+          },
+          "slackChannels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Slack channel names the message was posted to (slack_sent only)"
           }
         },
         "required": [
