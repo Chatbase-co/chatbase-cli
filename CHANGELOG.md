@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.3](https://github.com/Chatbase-co/chatbase-cli/compare/v0.10.2...v0.10.3) (2026-10-25)
+
+
+### Bug Fixes
+
+* **auth:** rename required API plan from Standard to Basic ([d215d1c](https://github.com/Chatbase-co/chatbase-cli/commit/d215d1c8d316fece58e37d1cb723d30d6b1d1da3))
+* **auth:** rename required API plan from Standard to Basic ([7d8f471](https://github.com/Chatbase-co/chatbase-cli/commit/7d8f47110c27b91b95823e5217557ab780a2b706))
+
 ## [0.10.2](https://github.com/Chatbase-co/chatbase-cli/compare/v0.10.1...v0.10.2) (2026-10-19)
 
 
