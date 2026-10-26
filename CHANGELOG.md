@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.4](https://github.com/Chatbase-co/chatbase-cli/compare/v0.10.3...v0.10.4) (2026-10-26)
+
+
+### Bug Fixes
+
+* **tickets:** add remediation for TICKET_MERGED error ([45446d5](https://github.com/Chatbase-co/chatbase-cli/commit/45446d50ee8788d392fbf1d296cf03c877f00c75))
+* **tickets:** add remediation for TICKET_MERGED error ([0c19ce9](https://github.com/Chatbase-co/chatbase-cli/commit/0c19ce9f2a0ed8110d46e5c3af2017ba1abe95bd))
+
 ## [0.10.3](https://github.com/Chatbase-co/chatbase-cli/compare/v0.10.2...v0.10.3) (2026-10-25)
 
 
