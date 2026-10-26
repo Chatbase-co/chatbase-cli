@@ -49,7 +49,9 @@ const REMEDIATIONS: Record<string, string> = {
     CONVERSATION_STATE_CHANGED:
         'Another actor (e.g. an operator taking over) changed the conversation mid-update. Nothing was changed; retry the command.',
     VALIDATION_SEARCH_WINDOW_EXCEEDED:
-        'Search covers conversations created since the 1st of the month 12 months ago (UTC). Use `chatbase conversations export` for older ones.'
+        'Search covers conversations created since the 1st of the month 12 months ago (UTC). Use `chatbase conversations export` for older ones.',
+    TICKET_MERGED:
+        'This ticket was merged into another ticket and no longer accepts replies; only moves between closed statuses are allowed. Continue on the ticket it was merged into.'
 }
 
 /**

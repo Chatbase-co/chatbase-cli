@@ -8014,6 +8014,23 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            /** @description This ticket was merged into another ticket. It no longer accepts replies, and its status can only move between closed statuses. Continue on the ticket it was merged into. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "TICKET_MERGED",
+                     *         "message": "The ticket was merged into another ticket"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description The requested statusId/assignee/teamId either doesn't belong to this agent or account, or (for the assignee) was not found. */
             422: {
                 headers: {
@@ -8299,7 +8316,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description This ticket is linked to a live conversation that has not been taken over from the AI agent, so a human reply cannot be posted. Take over the conversation from the dashboard first. */
+            /** @description This ticket is linked to a live conversation that has not been taken over from the AI agent, so a human reply cannot be posted. Take over the conversation from the dashboard first. Also returned with code `TICKET_MERGED` when the ticket was merged into another ticket. */
             409: {
                 headers: {
                     [name: string]: unknown;
