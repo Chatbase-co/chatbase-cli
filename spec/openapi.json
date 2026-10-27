@@ -2319,6 +2319,7 @@
                       "deepgram/flux-general-multi",
                       "soniox/stt-rt-v5",
                       "soniox/stt-rt-v4",
+                      "google/gemini-3.5-transcribe-live",
                       "hamsa/hamsa-ar"
                     ],
                     "example": "soniox/stt-rt-v5",

@@ -1312,7 +1312,7 @@ export interface components {
                      * @example soniox/stt-rt-v5
                      * @enum {string}
                      */
-                    model: "elevenlabs/scribe_v2_realtime" | "cartesia/ink-2" | "cartesia/ink-whisper" | "deepgram/nova-3" | "deepgram/nova-2" | "deepgram/flux-general-multi" | "soniox/stt-rt-v5" | "soniox/stt-rt-v4" | "hamsa/hamsa-ar";
+                    model: "elevenlabs/scribe_v2_realtime" | "cartesia/ink-2" | "cartesia/ink-whisper" | "deepgram/nova-3" | "deepgram/nova-2" | "deepgram/flux-general-multi" | "soniox/stt-rt-v5" | "soniox/stt-rt-v4" | "google/gemini-3.5-transcribe-live" | "hamsa/hamsa-ar";
                     /**
                      * @description BCP-47 language code for speech recognition (e.g. "en", "fr", "ar"). Use "multi" for automatic detection. Valid codes depend on the selected model.
                      * @example multi
