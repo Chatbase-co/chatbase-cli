@@ -430,34 +430,19 @@
           "model": {
             "type": "string",
             "enum": [
-              "gpt-4o",
               "gpt-4o-mini",
-              "o4-mini",
               "gpt-oss-120b",
               "gpt-oss-20b",
-              "gpt-5",
               "gpt-5.1",
               "gpt-5.2",
-              "gpt-5.4",
-              "gpt-5.4-mini",
-              "gpt-5.4-nano",
               "gpt-5.5",
               "gpt-5.6-terra",
-              "gpt-5.6-luna",
               "gpt-6.1-sol",
+              "gpt-6.1-terra",
               "gpt-6-luna",
-              "gpt-5-mini",
-              "gpt-5-nano",
               "claude-opus-5-5",
               "claude-sonnet-5-5",
               "claude-haiku-5-5",
-              "claude-opus-4-8",
-              "claude-opus-4-7",
-              "claude-opus-4-6",
-              "claude-sonnet-4-6",
-              "claude-opus-4-5",
-              "claude-haiku-4-5",
-              "claude-sonnet-4-5",
               "gemini-2.5-pro",
               "gemini-3-flash",
               "gemini-3.1-flash-lite",
@@ -466,9 +451,6 @@
               "gemini-3.6-flash",
               "gemini-3.8-flash",
               "grok-4.7",
-              "grok-3",
-              "grok-3-mini",
-              "grok-4",
               "DeepSeek-V3.1",
               "DeepSeek-R1",
               "DeepSeek-V4-Flash",
@@ -806,34 +788,19 @@
               "model": {
                 "type": "string",
                 "enum": [
-                  "gpt-4o",
                   "gpt-4o-mini",
-                  "o4-mini",
                   "gpt-oss-120b",
                   "gpt-oss-20b",
-                  "gpt-5",
                   "gpt-5.1",
                   "gpt-5.2",
-                  "gpt-5.4",
-                  "gpt-5.4-mini",
-                  "gpt-5.4-nano",
                   "gpt-5.5",
                   "gpt-5.6-terra",
-                  "gpt-5.6-luna",
                   "gpt-6.1-sol",
+                  "gpt-6.1-terra",
                   "gpt-6-luna",
-                  "gpt-5-mini",
-                  "gpt-5-nano",
                   "claude-opus-5-5",
                   "claude-sonnet-5-5",
                   "claude-haiku-5-5",
-                  "claude-opus-4-8",
-                  "claude-opus-4-7",
-                  "claude-opus-4-6",
-                  "claude-sonnet-4-6",
-                  "claude-opus-4-5",
-                  "claude-haiku-4-5",
-                  "claude-sonnet-4-5",
                   "gemini-2.5-pro",
                   "gemini-3-flash",
                   "gemini-3.1-flash-lite",
@@ -842,9 +809,6 @@
                   "gemini-3.6-flash",
                   "gemini-3.8-flash",
                   "grok-4.7",
-                  "grok-3",
-                  "grok-3-mini",
-                  "grok-4",
                   "DeepSeek-V3.1",
                   "DeepSeek-R1",
                   "DeepSeek-V4-Flash",
@@ -1463,6 +1427,7 @@
               "gpt-5.5",
               "gpt-5.6-terra",
               "gpt-6.1-sol",
+              "gpt-6.1-terra",
               "gpt-6-luna",
               "claude-opus-5-5",
               "claude-sonnet-5-5",
@@ -1912,6 +1877,7 @@
               "gpt-5.5",
               "gpt-5.6-terra",
               "gpt-6.1-sol",
+              "gpt-6.1-terra",
               "gpt-6-luna",
               "claude-opus-5-5",
               "claude-sonnet-5-5",
@@ -2409,6 +2375,7 @@
                   "gpt-5.5",
                   "gpt-5.6-terra",
                   "gpt-6.1-sol",
+                  "gpt-6.1-terra",
                   "gpt-6-luna",
                   "claude-opus-5-5",
                   "claude-sonnet-5-5",
@@ -4193,6 +4160,31 @@
           "status"
         ],
         "additionalProperties": false
+      },
+      "DeleteUserConversationsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "deletedCount": {
+                "type": "integer",
+                "description": "Number of conversations deleted"
+              },
+              "skippedCount": {
+                "type": "integer",
+                "description": "Number of conversations not deleted because their HIPAA processing has not finished. Retry later to delete them."
+              }
+            },
+            "required": [
+              "deletedCount",
+              "skippedCount"
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ]
       },
       "UpdateMessageFeedbackResponse": {
         "type": "object",
@@ -9684,6 +9676,178 @@
             }
           }
         }
+      },
+      "delete": {
+        "operationId": "deleteConversation",
+        "x-mcp": {
+          "tool": "chatbase_delete_conversation",
+          "scopes": [
+            "chatlogs:delete"
+          ],
+          "annotations": {
+            "destructive": true
+          }
+        },
+        "tags": [
+          "Conversations"
+        ],
+        "summary": "Delete conversation",
+        "description": "Deletes a conversation from any source (API, widget, WhatsApp, etc.). It no longer appears in chat logs or in API responses.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The conversation ID",
+              "example": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+            },
+            "required": true,
+            "description": "The conversation ID",
+            "name": "conversationId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "A Basic plan or higher is required to access the API"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No agent matches the provided `agentId`, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AGENT_NOT_FOUND",
+                    "message": "Agent not found"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "HIPAA accounts can delete a conversation only after its HIPAA processing finishes. Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "CONVERSATION_AWAITING_HIPAA_PROCESSING",
+                    "message": "The conversation is still awaiting HIPAA processing and cannot be deleted yet"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/agents/{agentId}/conversations/{conversationId}/messages": {
@@ -9949,6 +10113,154 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ListUserConversationsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "A Basic plan or higher is required to access the API"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteUserConversations",
+        "tags": [
+          "Conversations"
+        ],
+        "summary": "Delete all conversations for a user",
+        "description": "Deletes every conversation of a user under an agent, from any source (API, widget, WhatsApp, etc.). They no longer appear in chat logs or in API responses. Deleting a contact does not delete their conversations; call this endpoint as well.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "The user ID, URL-encoded (for example `jane%40example.com` for `jane@example.com`). For widget conversations of identified users, this is the contact's external ID.",
+              "example": "user_abc123"
+            },
+            "required": true,
+            "description": "The user ID, URL-encoded (for example `jane%40example.com` for `jane@example.com`). For widget conversations of identified users, this is the contact's external ID.",
+            "name": "userId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversations deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteUserConversationsResponse"
                 }
               }
             }
