@@ -307,7 +307,11 @@ export interface paths {
         get: operations["getConversation"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete conversation
+         * @description Deletes a conversation from any source (API, widget, WhatsApp, etc.). It no longer appears in chat logs or in API responses.
+         */
+        delete: operations["deleteConversation"];
         options?: never;
         head?: never;
         /**
@@ -357,7 +361,11 @@ export interface paths {
         get: operations["listUserConversations"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete all conversations for a user
+         * @description Deletes every conversation of a user under an agent, from any source (API, widget, WhatsApp, etc.). They no longer appear in chat logs or in API responses. Deleting a contact does not delete their conversations; call this endpoint as well.
+         */
+        delete: operations["deleteUserConversations"];
         options?: never;
         head?: never;
         patch?: never;
@@ -833,7 +841,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.1" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6.1-terra" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /** @description Whether the agent automatically retrains every 7 days */
             autoRetrain: boolean;
             /**
@@ -920,7 +928,7 @@ export interface components {
                 maxCallDurationSeconds?: number | null;
                 maxDailyCallsPerUser?: number | null;
                 /** @enum {string} */
-                model?: "gpt-4o" | "gpt-4o-mini" | "o4-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5" | "gpt-5.1" | "gpt-5.2" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-6.1-sol" | "gpt-6-luna" | "gpt-5-mini" | "gpt-5-nano" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "claude-opus-4-8" | "claude-opus-4-7" | "claude-opus-4-6" | "claude-sonnet-4-6" | "claude-opus-4-5" | "claude-haiku-4-5" | "claude-sonnet-4-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "grok-3" | "grok-3-mini" | "grok-4" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+                model?: "gpt-4o-mini" | "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.1" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6.1-terra" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
                 temperature?: number;
                 allowInterruptions?: boolean;
                 allowTextInput?: boolean;
@@ -1102,7 +1110,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6.1-terra" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /**
              * @description Model temperature (0–1)
              * @example 0
@@ -1199,7 +1207,7 @@ export interface components {
              * @example gpt-5.6-terra
              * @enum {string}
              */
-            model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6.1-terra" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /** @description Temperature (0–1) */
             temp?: number;
             /**
@@ -1359,7 +1367,7 @@ export interface components {
                  * @example gpt-6-luna
                  * @enum {string}
                  */
-                model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+                model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6.1-terra" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
                 /**
                  * @description Randomness of voice responses (0–1). 0 = deterministic and focused, 1 = more varied and creative.
                  * @example 0
@@ -2016,6 +2024,14 @@ export interface components {
              * @enum {string}
              */
             status: "ongoing" | "paused" | "ended";
+        };
+        DeleteUserConversationsResponse: {
+            data: {
+                /** @description Number of conversations deleted */
+                deletedCount: number;
+                /** @description Number of conversations not deleted because their HIPAA processing has not finished. Retry later to delete them. */
+                skippedCount: number;
+            };
         };
         UpdateMessageFeedbackResponse: {
             data: components["schemas"]["ConversationMessage"];
@@ -5118,6 +5134,150 @@ export interface operations {
             };
         };
     };
+    deleteConversation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The conversation ID */
+                conversationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Conversation deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Basic plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description HIPAA accounts can delete a conversation only after its HIPAA processing finishes. Retry later. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "CONVERSATION_AWAITING_HIPAA_PROCESSING",
+                     *         "message": "The conversation is still awaiting HIPAA processing and cannot be deleted yet"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     updateConversation: {
         parameters: {
             query?: never;
@@ -5458,6 +5618,133 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListUserConversationsResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Basic plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteUserConversations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The user ID, URL-encoded (for example `jane%40example.com` for `jane@example.com`). For widget conversations of identified users, this is the contact's external ID. */
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Conversations deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteUserConversationsResponse"];
                 };
             };
             /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */

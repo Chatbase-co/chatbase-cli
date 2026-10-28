@@ -21,7 +21,7 @@ const agent = {
 const agent2 = {
     id: 'agt_2',
     name: 'Sales Bot',
-    model: 'gpt-4o',
+    model: 'gpt-4o-mini',
     visibility: 'public',
     autoRetrain: true
 }
