@@ -935,6 +935,27 @@ export interface components {
                 endConversationAfterSilenceSeconds?: number | null;
                 initialMessage?: string;
                 errorMessage?: string;
+                /** @description What users see during a voice conversation: a basic ring or a customizable orb. */
+                visualization: {
+                    /** @enum {string} */
+                    style: "basic" | "orb";
+                    color: string;
+                    contrast: number;
+                    flow: number;
+                    swirl: number;
+                };
+                /**
+                 * @description `live`: the agent listens and speaks with one realtime model, replying almost instantly. `classic`: a separate transcriber and voice, with more languages and custom voices.
+                 * @enum {string}
+                 */
+                mode: "live" | "classic";
+                /**
+                 * @description Voice used when `mode` is `live`.
+                 * @enum {string}
+                 */
+                liveVoice?: "marin" | "beacon" | "bossa" | "brise" | "cinder" | "delta" | "flitz" | "gleam" | "harema" | "juni" | "meridian" | "nira" | "noeul" | "nuri" | "quartz" | "ripple" | "shida" | "sillage" | "stone" | "tempo" | "vesper" | "willow";
+                /** @description How the voice sounds when `mode` is `live`: tone, pace, formality and emotion. */
+                liveInstructions?: string;
             } | null;
             styles: components["schemas"]["AgentStyles"];
             /**
@@ -1284,6 +1305,23 @@ export interface components {
             } | null;
             /** @description Voice mode configuration (null = disable voice mode) */
             voiceSettings?: {
+                /**
+                 * @description `live`: the agent listens and speaks with one realtime model, replying almost instantly. `classic`: a separate transcriber and voice, with more languages and custom voices. `voice` and `transcriber` apply to `classic` only.
+                 * @example live
+                 * @enum {string}
+                 */
+                mode?: "live" | "classic";
+                /**
+                 * @description Voice used when `mode` is `live`.
+                 * @example marin
+                 * @enum {string}
+                 */
+                liveVoice?: "marin" | "beacon" | "bossa" | "brise" | "cinder" | "delta" | "flitz" | "gleam" | "harema" | "juni" | "meridian" | "nira" | "noeul" | "nuri" | "quartz" | "ripple" | "shida" | "sillage" | "stone" | "tempo" | "vesper" | "willow";
+                /**
+                 * @description How the voice sounds when `mode` is `live`: tone, pace, formality and emotion (max 500 chars). Write it in the language the agent speaks. An empty string clears it.
+                 * @example Speak warmly and naturally, at an unhurried pace. Sound friendly but professional.
+                 */
+                liveInstructions?: string;
                 /** @description Text-to-speech voice configuration */
                 voice?: {
                     /**
@@ -1386,6 +1424,34 @@ export interface components {
                 initialMessage?: string;
                 /** @description Fallback message spoken to the user when the agent encounters an unrecoverable error during a call (max 500 chars). */
                 errorMessage?: string;
+                /** @description Voice visualization shown during voice conversations. Omitted fields keep their current values. */
+                visualization?: {
+                    /**
+                     * @description basic shows a minimal ring that follows the widget theme. orb shows a fluid sphere tuned by the fields below.
+                     * @enum {string}
+                     */
+                    style?: "basic" | "orb";
+                    /**
+                     * @description Orb base color as a 6-digit hex.
+                     * @example #C1D4E6
+                     */
+                    color?: string;
+                    /**
+                     * @description Orb contrast (0.5–3).
+                     * @example 1
+                     */
+                    contrast?: number;
+                    /**
+                     * @description Orb animation speed (0–3).
+                     * @example 2.5
+                     */
+                    flow?: number;
+                    /**
+                     * @description Orb swirl strength (0–3).
+                     * @example 1
+                     */
+                    swirl?: number;
+                };
             } | null;
             /**
              * @description ISO 3166-1 alpha-2 country codes to block (null = remove all blocking)
@@ -8301,20 +8367,12 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description This ticket was merged into another ticket. It no longer accepts replies, and its status can only move between closed statuses. Continue on the ticket it was merged into. */
+            /** @description The ticket was merged into another ticket, or it is closed and cannot be reopened. */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    /**
-                     * @example {
-                     *       "error": {
-                     *         "code": "TICKET_MERGED",
-                     *         "message": "The ticket was merged into another ticket"
-                     *       }
-                     *     }
-                     */
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
@@ -8603,20 +8661,12 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description This ticket is linked to a live conversation that has not been taken over from the AI agent, so a human reply cannot be posted. Take over the conversation from the dashboard first. Also returned with code `TICKET_MERGED` when the ticket was merged into another ticket. */
+            /** @description The ticket cannot take a human reply: its conversation is not taken over, the ticket was merged into another ticket, or the ticket is closed. */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    /**
-                     * @example {
-                     *       "error": {
-                     *         "code": "CONVERSATION_NOT_TAKEN_OVER",
-                     *         "message": "The linked conversation is not taken over"
-                     *       }
-                     *     }
-                     */
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
