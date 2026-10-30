@@ -51,7 +51,9 @@ const REMEDIATIONS: Record<string, string> = {
     VALIDATION_SEARCH_WINDOW_EXCEEDED:
         'Search covers conversations created since the 1st of the month 12 months ago (UTC). Use `chatbase conversations export` for older ones.',
     TICKET_MERGED:
-        'This ticket was merged into another ticket and no longer accepts replies; only moves between closed statuses are allowed. Continue on the ticket it was merged into.'
+        'This ticket was merged into another ticket and no longer accepts replies; only moves between closed statuses are allowed. Continue on the ticket it was merged into.',
+    TICKET_CLOSED:
+        "This ticket is closed or cancelled and cannot be reopened or replied to; it can only move between closed and cancelled. Reply on the conversation's open ticket, or take over the conversation from the dashboard to open a new one."
 }
 
 /**

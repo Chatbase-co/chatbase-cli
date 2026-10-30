@@ -846,8 +846,92 @@
               "errorMessage": {
                 "type": "string",
                 "maxLength": 500
+              },
+              "visualization": {
+                "type": "object",
+                "properties": {
+                  "style": {
+                    "type": "string",
+                    "enum": [
+                      "basic",
+                      "orb"
+                    ]
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9a-fA-F]{6}$"
+                  },
+                  "contrast": {
+                    "type": "number",
+                    "minimum": 0.5,
+                    "maximum": 3
+                  },
+                  "flow": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 3
+                  },
+                  "swirl": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 3
+                  }
+                },
+                "required": [
+                  "style",
+                  "color",
+                  "contrast",
+                  "flow",
+                  "swirl"
+                ],
+                "description": "What users see during a voice conversation: a basic ring or a customizable orb."
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "live",
+                  "classic"
+                ],
+                "description": "`live`: the agent listens and speaks with one realtime model, replying almost instantly. `classic`: a separate transcriber and voice, with more languages and custom voices."
+              },
+              "liveVoice": {
+                "type": "string",
+                "enum": [
+                  "marin",
+                  "beacon",
+                  "bossa",
+                  "brise",
+                  "cinder",
+                  "delta",
+                  "flitz",
+                  "gleam",
+                  "harema",
+                  "juni",
+                  "meridian",
+                  "nira",
+                  "noeul",
+                  "nuri",
+                  "quartz",
+                  "ripple",
+                  "shida",
+                  "sillage",
+                  "stone",
+                  "tempo",
+                  "vesper",
+                  "willow"
+                ],
+                "description": "Voice used when `mode` is `live`."
+              },
+              "liveInstructions": {
+                "type": "string",
+                "maxLength": 500,
+                "description": "How the voice sounds when `mode` is `live`: tone, pace, formality and emotion."
               }
             },
+            "required": [
+              "visualization",
+              "mode"
+            ],
             "description": "Voice mode settings"
           },
           "styles": {
@@ -2152,6 +2236,50 @@
               "null"
             ],
             "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "live",
+                  "classic"
+                ],
+                "description": "`live`: the agent listens and speaks with one realtime model, replying almost instantly. `classic`: a separate transcriber and voice, with more languages and custom voices. `voice` and `transcriber` apply to `classic` only.",
+                "example": "live"
+              },
+              "liveVoice": {
+                "type": "string",
+                "enum": [
+                  "marin",
+                  "beacon",
+                  "bossa",
+                  "brise",
+                  "cinder",
+                  "delta",
+                  "flitz",
+                  "gleam",
+                  "harema",
+                  "juni",
+                  "meridian",
+                  "nira",
+                  "noeul",
+                  "nuri",
+                  "quartz",
+                  "ripple",
+                  "shida",
+                  "sillage",
+                  "stone",
+                  "tempo",
+                  "vesper",
+                  "willow"
+                ],
+                "description": "Voice used when `mode` is `live`.",
+                "example": "marin"
+              },
+              "liveInstructions": {
+                "type": "string",
+                "maxLength": 500,
+                "description": "How the voice sounds when `mode` is `live`: tone, pace, formality and emotion (max 500 chars). Write it in the language the agent speaks. An empty string clears it.",
+                "example": "Speak warmly and naturally, at an unhurried pace. Sound friendly but professional."
+              },
               "voice": {
                 "type": "object",
                 "properties": {
@@ -2435,6 +2563,47 @@
                 "type": "string",
                 "maxLength": 500,
                 "description": "Fallback message spoken to the user when the agent encounters an unrecoverable error during a call (max 500 chars)."
+              },
+              "visualization": {
+                "type": "object",
+                "properties": {
+                  "style": {
+                    "type": "string",
+                    "enum": [
+                      "basic",
+                      "orb"
+                    ],
+                    "description": "basic shows a minimal ring that follows the widget theme. orb shows a fluid sphere tuned by the fields below."
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9a-fA-F]{6}$",
+                    "description": "Orb base color as a 6-digit hex.",
+                    "example": "#C1D4E6"
+                  },
+                  "contrast": {
+                    "type": "number",
+                    "minimum": 0.5,
+                    "maximum": 3,
+                    "description": "Orb contrast (0.5–3).",
+                    "example": 1
+                  },
+                  "flow": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 3,
+                    "description": "Orb animation speed (0–3).",
+                    "example": 2.5
+                  },
+                  "swirl": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 3,
+                    "description": "Orb swirl strength (0–3).",
+                    "example": 1
+                  }
+                },
+                "description": "Voice visualization shown during voice conversations. Omitted fields keep their current values."
               }
             },
             "description": "Voice mode configuration (null = disable voice mode)"
@@ -13667,16 +13836,30 @@
             }
           },
           "409": {
-            "description": "This ticket was merged into another ticket. It no longer accepts replies, and its status can only move between closed statuses. Continue on the ticket it was merged into.",
+            "description": "The ticket was merged into another ticket, or it is closed and cannot be reopened.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 },
-                "example": {
-                  "error": {
-                    "code": "TICKET_MERGED",
-                    "message": "The ticket was merged into another ticket"
+                "examples": {
+                  "TICKET_MERGED": {
+                    "summary": "This ticket was merged into another ticket. It no longer accepts replies, and its status can only move between closed statuses. Continue on the ticket it was merged into.",
+                    "value": {
+                      "error": {
+                        "code": "TICKET_MERGED",
+                        "message": "The ticket was merged into another ticket"
+                      }
+                    }
+                  },
+                  "TICKET_CLOSED": {
+                    "summary": "This ticket is closed or cancelled and its conversation was handed over from the AI agent, so it accepts no replies and cannot be reopened. It can still move between closed and cancelled statuses. To keep talking to the customer, reply on the conversation's open ticket, or take over the conversation from the dashboard to open a new one.",
+                    "value": {
+                      "error": {
+                        "code": "TICKET_CLOSED",
+                        "message": "The ticket is closed and cannot be reopened or replied to"
+                      }
+                    }
                   }
                 }
               }
@@ -14140,16 +14323,39 @@
             }
           },
           "409": {
-            "description": "This ticket is linked to a live conversation that has not been taken over from the AI agent, so a human reply cannot be posted. Take over the conversation from the dashboard first. Also returned with code `TICKET_MERGED` when the ticket was merged into another ticket.",
+            "description": "The ticket cannot take a human reply: its conversation is not taken over, the ticket was merged into another ticket, or the ticket is closed.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 },
-                "example": {
-                  "error": {
-                    "code": "CONVERSATION_NOT_TAKEN_OVER",
-                    "message": "The linked conversation is not taken over"
+                "examples": {
+                  "CONVERSATION_NOT_TAKEN_OVER": {
+                    "summary": "This ticket is linked to a live conversation that has not been taken over from the AI agent, so a human reply cannot be posted. Take over the conversation from the dashboard first.",
+                    "value": {
+                      "error": {
+                        "code": "CONVERSATION_NOT_TAKEN_OVER",
+                        "message": "The linked conversation is not taken over"
+                      }
+                    }
+                  },
+                  "TICKET_MERGED": {
+                    "summary": "This ticket was merged into another ticket. It no longer accepts replies, and its status can only move between closed statuses. Continue on the ticket it was merged into.",
+                    "value": {
+                      "error": {
+                        "code": "TICKET_MERGED",
+                        "message": "The ticket was merged into another ticket"
+                      }
+                    }
+                  },
+                  "TICKET_CLOSED": {
+                    "summary": "This ticket is closed or cancelled and its conversation was handed over from the AI agent, so it accepts no replies and cannot be reopened. It can still move between closed and cancelled statuses. To keep talking to the customer, reply on the conversation's open ticket, or take over the conversation from the dashboard to open a new one.",
+                    "value": {
+                      "error": {
+                        "code": "TICKET_CLOSED",
+                        "message": "The ticket is closed and cannot be reopened or replied to"
+                      }
+                    }
                   }
                 }
               }
