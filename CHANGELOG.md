@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.5](https://github.com/Chatbase-co/chatbase-cli/compare/v0.10.4...v0.10.5) (2026-10-30)
+
+
+### Bug Fixes
+
+* **tickets:** add remediation for TICKET_CLOSED error ([0f0856f](https://github.com/Chatbase-co/chatbase-cli/commit/0f0856f5314f5b271562f18329e678124aa6b6be))
+
 ## [0.10.4](https://github.com/Chatbase-co/chatbase-cli/compare/v0.10.3...v0.10.4) (2026-10-26)
 
 
