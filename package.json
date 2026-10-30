@@ -1,6 +1,6 @@
 {
     "name": "chatbase",
-    "version": "0.10.4",
+    "version": "0.10.5",
     "description": "The official command-line interface for the Chatbase API v2",
     "license": "MIT",
     "type": "module",
