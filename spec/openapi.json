@@ -5293,6 +5293,357 @@
           "memberCount"
         ]
       },
+      "AttendanceRowListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttendanceRow"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/HelpdeskReportPagination"
+          }
+        },
+        "required": [
+          "data",
+          "pagination"
+        ]
+      },
+      "AttendanceRow": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "Calendar day of the row in `timezone`",
+            "example": "2026-10-29"
+          },
+          "operator": {
+            "$ref": "#/components/schemas/AttendanceOperator"
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttendanceTeam"
+            },
+            "description": "Teams the operator belongs to. Empty when the operator is in no team."
+          },
+          "shiftNumber": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "Position of the row among the operator's rows for this day, starting at 1. The export calls it Shift 1, Shift 2 when there is more than one."
+          },
+          "shiftCount": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "How many rows the operator has on this day: one per part of a shift that falls on it, plus one for time logged outside those parts"
+          },
+          "shiftName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the operator's shift on a row for part of that shift or for planned time off, or null on a row of time logged outside the shift"
+          },
+          "scheduledStart": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 8601 start of the part of the shift this row covers, or null on a row without scheduled time",
+            "example": "2026-10-29T07:00:00.000Z"
+          },
+          "scheduledEnd": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 8601 end of the part of the shift this row covers, or null on a row without scheduled time",
+            "example": "2026-10-29T07:00:00.000Z"
+          },
+          "timeScheduledMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Length of the scheduled part of the shift on this day, in minutes"
+          },
+          "loggedStart": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 8601 start of the first session on this row, or null when there is none",
+            "example": "2026-10-29T07:00:00.000Z"
+          },
+          "loggedEnd": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 8601 end of the last session on this row, or null when there is none",
+            "example": "2026-10-29T07:00:00.000Z"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "start": {
+                  "type": "string",
+                  "description": "ISO 8601 start of the session"
+                },
+                "end": {
+                  "type": "string",
+                  "description": "ISO 8601 end of the session"
+                }
+              },
+              "required": [
+                "start",
+                "end"
+              ]
+            },
+            "description": "Each continuous stretch the operator was logged in. A gap of 2 minutes or less does not split a session, unless the operator was idle in it."
+          },
+          "timeLoggedMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Total of all sessions, in minutes"
+          },
+          "productiveTimeMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Part of the logged time spent on tickets, in minutes"
+          },
+          "breaksMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Time between sessions inside the scheduled hours, idle time included, in minutes"
+          },
+          "lateMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "How long after the scheduled start the first session began, in minutes"
+          },
+          "leftEarlyMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "How long before the scheduled end the last session ended, in minutes. Null until that end has passed."
+          },
+          "overtimeMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Time logged outside the scheduled hours, in minutes"
+          },
+          "unplannedTimeOff": {
+            "type": "boolean",
+            "description": "Whether the shift started and the operator never logged in for it"
+          },
+          "plannedTimeOff": {
+            "type": "boolean",
+            "description": "Whether time off from Scheduling covers a shift that would have fallen on this day. Such a day gets its own row."
+          },
+          "occupancyPercent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Productive time divided by time logged, as a percentage"
+          },
+          "adherencePercent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Time logged inside the scheduled hours divided by time scheduled, as a percentage. At most 100."
+          },
+          "conformancePercent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Time logged divided by time scheduled, as a percentage. Overtime counts, so it can go above 100."
+          },
+          "utilizationPercent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Productive time divided by time scheduled, as a percentage"
+          }
+        },
+        "required": [
+          "date",
+          "operator",
+          "teams",
+          "shiftNumber",
+          "shiftCount",
+          "shiftName",
+          "scheduledStart",
+          "scheduledEnd",
+          "timeScheduledMinutes",
+          "loggedStart",
+          "loggedEnd",
+          "sessions",
+          "timeLoggedMinutes",
+          "productiveTimeMinutes",
+          "breaksMinutes",
+          "lateMinutes",
+          "leftEarlyMinutes",
+          "overtimeMinutes",
+          "unplannedTimeOff",
+          "plannedTimeOff",
+          "occupancyPercent",
+          "adherencePercent",
+          "conformancePercent",
+          "utilizationPercent"
+        ]
+      },
+      "AttendanceOperator": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "User ID of the operator"
+          },
+          "name": {
+            "type": "string",
+            "description": "Operator name"
+          },
+          "email": {
+            "type": "string",
+            "description": "Operator email"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email"
+        ]
+      },
+      "AttendanceTeam": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Team ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Team name"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "HelpdeskReportPagination": {
+        "type": "object",
+        "properties": {
+          "cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor for the next page, or null if no more pages"
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "Whether more pages follow"
+          }
+        },
+        "required": [
+          "cursor",
+          "hasMore"
+        ]
+      },
+      "ActivitySegmentListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivitySegment"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/HelpdeskReportPagination"
+          }
+        },
+        "required": [
+          "data",
+          "pagination"
+        ]
+      },
+      "ActivitySegment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Segment ID"
+          },
+          "operator": {
+            "$ref": "#/components/schemas/AttendanceOperator"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ticket",
+              "untracked",
+              "idle"
+            ],
+            "description": "`ticket` while a ticket was open, `untracked` while logged in without a ticket open, `idle` after 10 minutes without input"
+          },
+          "ticketNumber": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Ticket number for a `ticket` segment, or null for other kinds and for deleted tickets"
+          },
+          "startedAt": {
+            "type": "string",
+            "description": "ISO 8601 time the segment started",
+            "example": "2026-10-29T07:02:13.418Z"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "description": "ISO 8601 time the segment was last refreshed. An open segment is refreshed every few minutes while the operator is active.",
+            "example": "2026-10-29T07:16:40.102Z"
+          },
+          "endedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 8601 time the segment ended, or null while it is still open",
+            "example": "2026-10-29T07:17:05.733Z"
+          }
+        },
+        "required": [
+          "id",
+          "operator",
+          "kind",
+          "ticketNumber",
+          "startedAt",
+          "lastSeenAt",
+          "endedAt"
+        ]
+      },
       "Ticket": {
         "type": "object",
         "properties": {
@@ -12738,6 +13089,571 @@
                   "error": {
                     "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
                     "message": "A Basic plan or higher is required to access the API"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No agent matches the provided `agentId`, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AGENT_NOT_FOUND",
+                    "message": "Agent not found"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/helpdesk/attendance": {
+      "get": {
+        "operationId": "listAttendanceRows",
+        "x-mcp": {
+          "tool": "chatbase_list_attendance_rows",
+          "scopes": [
+            "analytics:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          },
+          "fields": [
+            "date",
+            "operator",
+            "shiftNumber",
+            "shiftCount",
+            "shiftName",
+            "scheduledStart",
+            "scheduledEnd",
+            "loggedStart",
+            "loggedEnd",
+            "timeLoggedMinutes",
+            "lateMinutes",
+            "leftEarlyMinutes",
+            "unplannedTimeOff",
+            "plannedTimeOff",
+            "adherencePercent"
+          ],
+          "maxItems": 50
+        },
+        "tags": [
+          "Helpdesk"
+        ],
+        "summary": "List attendance rows",
+        "description": "Returns the Attendance report for each day in the range: one row per operator for each part of a shift and for time logged outside them, matching the Attendance CSV export. Days are calendar days in `timezone`. A day that has not ended yet returns what has happened so far. Pages can shift if the data changes between calls. Both reports share a limit of 30 calls per 10 seconds per account.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Opaque cursor from a previous response to fetch the next page",
+              "example": "eyJ0IjoiMjAyNC0wMS0xNVQxMDozMDowMC4wMDBaIiwiaWQiOiJhYmMxMjMifQ=="
+            },
+            "required": false,
+            "description": "Opaque cursor from a previous response to fetch the next page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100,
+              "description": "Number of items per page (1 to 1000, default 100)",
+              "example": 100
+            },
+            "required": false,
+            "description": "Number of items per page (1 to 1000, default 100)",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "First day to return (`YYYY-MM-DD`), as a calendar day in `timezone`. At most 396 days ago.",
+              "example": "2026-10-29"
+            },
+            "required": true,
+            "description": "First day to return (`YYYY-MM-DD`), as a calendar day in `timezone`. At most 396 days ago.",
+            "name": "startDate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "Last day to return (`YYYY-MM-DD`), inclusive. Not after today in `timezone`, and at most 31 days from `startDate` counting both.",
+              "example": "2026-10-30"
+            },
+            "required": true,
+            "description": "Last day to return (`YYYY-MM-DD`), inclusive. Not after today in `timezone`, and at most 31 days from `startDate` counting both.",
+            "name": "endDate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "IANA time zone that decides where each day starts and ends, the same as the time zone picker on the dashboard.",
+              "example": "Africa/Cairo"
+            },
+            "required": true,
+            "description": "IANA time zone that decides where each day starts and ends, the same as the time zone picker on the dashboard.",
+            "name": "timezone",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attendance rows, by day and then by operator name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceRowListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "VALIDATION_INVALID_BODY": {
+                    "summary": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_INVALID_BODY",
+                        "message": "Invalid request"
+                      }
+                    }
+                  },
+                  "VALIDATION_INVALID_CURSOR": {
+                    "summary": "The `cursor` could not be decoded. Pass the exact `pagination.cursor` value from a previous response, without modification.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_INVALID_CURSOR",
+                        "message": "Invalid pagination cursor"
+                      }
+                    }
+                  },
+                  "VALIDATION_CURSOR_QUERY_MISMATCH": {
+                    "summary": "The cursor was issued for a different `query` or filter set. Keep every search parameter except `cursor` and `limit` constant across a cursor walk, or drop the cursor to restart from the first page.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_CURSOR_QUERY_MISMATCH",
+                        "message": "Cursor does not match the requested search"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "HELPDESK_NOT_ENABLED": {
+                    "summary": "The agent exists but help desk is not activated for it. Enable help desk before calling its endpoints.",
+                    "value": {
+                      "error": {
+                        "code": "HELPDESK_NOT_ENABLED",
+                        "message": "Help desk is not enabled for this agent"
+                      }
+                    }
+                  },
+                  "AUTH_INSUFFICIENT_PERMISSIONS": {
+                    "summary": "The API key does not have the required permissions for this operation. Ensure the key's account has the appropriate plan and role.",
+                    "value": {
+                      "error": {
+                        "code": "AUTH_INSUFFICIENT_PERMISSIONS",
+                        "message": "You don't have permission to perform this action"
+                      }
+                    }
+                  },
+                  "SUBSCRIPTION_API_RESTRICTED_PLAN": {
+                    "summary": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+                    "value": {
+                      "error": {
+                        "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                        "message": "A Basic plan or higher is required to access the API"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No agent matches the provided `agentId`, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AGENT_NOT_FOUND",
+                    "message": "Agent not found"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/helpdesk/activity": {
+      "get": {
+        "operationId": "listActivitySegments",
+        "x-mcp": {
+          "tool": "chatbase_list_activity_segments",
+          "scopes": [
+            "analytics:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          },
+          "fields": [
+            "operator",
+            "kind",
+            "ticketNumber",
+            "startedAt",
+            "lastSeenAt",
+            "endedAt"
+          ],
+          "maxItems": 50
+        },
+        "tags": [
+          "Helpdesk"
+        ],
+        "summary": "List activity segments",
+        "description": "Returns the stored activity segments of the agent's current Help Desk operators, unmerged and unrounded, so totals can differ slightly from the Activity export. One item per ticket, untracked or idle stretch, listed only in the range where it started. Both reports share a limit of 30 calls per 10 seconds per account.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Opaque cursor from a previous response to fetch the next page",
+              "example": "eyJ0IjoiMjAyNC0wMS0xNVQxMDozMDowMC4wMDBaIiwiaWQiOiJhYmMxMjMifQ=="
+            },
+            "required": false,
+            "description": "Opaque cursor from a previous response to fetch the next page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100,
+              "description": "Number of items per page (1 to 1000, default 100)",
+              "example": 100
+            },
+            "required": false,
+            "description": "Number of items per page (1 to 1000, default 100)",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "First day to return (`YYYY-MM-DD`), as a calendar day in `timezone`. At most 396 days ago.",
+              "example": "2026-10-29"
+            },
+            "required": true,
+            "description": "First day to return (`YYYY-MM-DD`), as a calendar day in `timezone`. At most 396 days ago.",
+            "name": "startDate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "Last day to return (`YYYY-MM-DD`), inclusive. Not after today in `timezone`, and at most 31 days from `startDate` counting both.",
+              "example": "2026-10-30"
+            },
+            "required": true,
+            "description": "Last day to return (`YYYY-MM-DD`), inclusive. Not after today in `timezone`, and at most 31 days from `startDate` counting both.",
+            "name": "endDate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "IANA time zone that decides where each day starts and ends, the same as the time zone picker on the dashboard.",
+              "example": "Africa/Cairo"
+            },
+            "required": true,
+            "description": "IANA time zone that decides where each day starts and ends, the same as the time zone picker on the dashboard.",
+            "name": "timezone",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity segments, by start, then segment ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivitySegmentListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "VALIDATION_INVALID_BODY": {
+                    "summary": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_INVALID_BODY",
+                        "message": "Invalid request"
+                      }
+                    }
+                  },
+                  "VALIDATION_INVALID_CURSOR": {
+                    "summary": "The `cursor` could not be decoded. Pass the exact `pagination.cursor` value from a previous response, without modification.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_INVALID_CURSOR",
+                        "message": "Invalid pagination cursor"
+                      }
+                    }
+                  },
+                  "VALIDATION_CURSOR_QUERY_MISMATCH": {
+                    "summary": "The cursor was issued for a different `query` or filter set. Keep every search parameter except `cursor` and `limit` constant across a cursor walk, or drop the cursor to restart from the first page.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_CURSOR_QUERY_MISMATCH",
+                        "message": "Cursor does not match the requested search"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "HELPDESK_NOT_ENABLED": {
+                    "summary": "The agent exists but help desk is not activated for it. Enable help desk before calling its endpoints.",
+                    "value": {
+                      "error": {
+                        "code": "HELPDESK_NOT_ENABLED",
+                        "message": "Help desk is not enabled for this agent"
+                      }
+                    }
+                  },
+                  "AUTH_INSUFFICIENT_PERMISSIONS": {
+                    "summary": "The API key does not have the required permissions for this operation. Ensure the key's account has the appropriate plan and role.",
+                    "value": {
+                      "error": {
+                        "code": "AUTH_INSUFFICIENT_PERMISSIONS",
+                        "message": "You don't have permission to perform this action"
+                      }
+                    }
+                  },
+                  "SUBSCRIPTION_API_RESTRICTED_PLAN": {
+                    "summary": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+                    "value": {
+                      "error": {
+                        "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                        "message": "A Basic plan or higher is required to access the API"
+                      }
+                    }
                   }
                 }
               }
