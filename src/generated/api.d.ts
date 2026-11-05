@@ -588,6 +588,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agents/{agentId}/helpdesk/attendance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List attendance rows
+         * @description Returns the Attendance report for each day in the range: one row per operator for each part of a shift and for time logged outside them, matching the Attendance CSV export. Days are calendar days in `timezone`. A day that has not ended yet returns what has happened so far. Pages can shift if the data changes between calls. Both reports share a limit of 30 calls per 10 seconds per account.
+         */
+        get: operations["listAttendanceRows"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agents/{agentId}/helpdesk/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List activity segments
+         * @description Returns the stored activity segments of the agent's current Help Desk operators, unmerged and unrounded, so totals can differ slightly from the Activity export. One item per ticket, untracked or idle stretch, listed only in the range where it started. Both reports share a limit of 30 calls per 10 seconds per account.
+         */
+        get: operations["listActivitySegments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agents/{agentId}/helpdesk/tickets": {
         parameters: {
             query?: never;
@@ -2425,6 +2465,130 @@ export interface components {
             isDefault: boolean;
             /** @description Number of members assigned to this team */
             memberCount: number;
+        };
+        AttendanceRowListResponse: {
+            data: components["schemas"]["AttendanceRow"][];
+            pagination: components["schemas"]["HelpdeskReportPagination"];
+        };
+        AttendanceRow: {
+            /**
+             * @description Calendar day of the row in `timezone`
+             * @example 2026-10-29
+             */
+            date: string;
+            operator: components["schemas"]["AttendanceOperator"];
+            /** @description Teams the operator belongs to. Empty when the operator is in no team. */
+            teams: components["schemas"]["AttendanceTeam"][];
+            /** @description Position of the row among the operator's rows for this day, starting at 1. The export calls it Shift 1, Shift 2 when there is more than one. */
+            shiftNumber: number;
+            /** @description How many rows the operator has on this day: one per part of a shift that falls on it, plus one for time logged outside those parts */
+            shiftCount: number;
+            /** @description Name of the operator's shift on a row for part of that shift or for planned time off, or null on a row of time logged outside the shift */
+            shiftName: string | null;
+            /**
+             * @description ISO 8601 start of the part of the shift this row covers, or null on a row without scheduled time
+             * @example 2026-10-29T07:00:00.000Z
+             */
+            scheduledStart: string | null;
+            /**
+             * @description ISO 8601 end of the part of the shift this row covers, or null on a row without scheduled time
+             * @example 2026-10-29T07:00:00.000Z
+             */
+            scheduledEnd: string | null;
+            /** @description Length of the scheduled part of the shift on this day, in minutes */
+            timeScheduledMinutes: number | null;
+            /**
+             * @description ISO 8601 start of the first session on this row, or null when there is none
+             * @example 2026-10-29T07:00:00.000Z
+             */
+            loggedStart: string | null;
+            /**
+             * @description ISO 8601 end of the last session on this row, or null when there is none
+             * @example 2026-10-29T07:00:00.000Z
+             */
+            loggedEnd: string | null;
+            /** @description Each continuous stretch the operator was logged in. A gap of 2 minutes or less does not split a session, unless the operator was idle in it. */
+            sessions: {
+                /** @description ISO 8601 start of the session */
+                start: string;
+                /** @description ISO 8601 end of the session */
+                end: string;
+            }[];
+            /** @description Total of all sessions, in minutes */
+            timeLoggedMinutes: number | null;
+            /** @description Part of the logged time spent on tickets, in minutes */
+            productiveTimeMinutes: number | null;
+            /** @description Time between sessions inside the scheduled hours, idle time included, in minutes */
+            breaksMinutes: number | null;
+            /** @description How long after the scheduled start the first session began, in minutes */
+            lateMinutes: number | null;
+            /** @description How long before the scheduled end the last session ended, in minutes. Null until that end has passed. */
+            leftEarlyMinutes: number | null;
+            /** @description Time logged outside the scheduled hours, in minutes */
+            overtimeMinutes: number | null;
+            /** @description Whether the shift started and the operator never logged in for it */
+            unplannedTimeOff: boolean;
+            /** @description Whether time off from Scheduling covers a shift that would have fallen on this day. Such a day gets its own row. */
+            plannedTimeOff: boolean;
+            /** @description Productive time divided by time logged, as a percentage */
+            occupancyPercent: number | null;
+            /** @description Time logged inside the scheduled hours divided by time scheduled, as a percentage. At most 100. */
+            adherencePercent: number | null;
+            /** @description Time logged divided by time scheduled, as a percentage. Overtime counts, so it can go above 100. */
+            conformancePercent: number | null;
+            /** @description Productive time divided by time scheduled, as a percentage */
+            utilizationPercent: number | null;
+        };
+        AttendanceOperator: {
+            /** @description User ID of the operator */
+            id: string;
+            /** @description Operator name */
+            name: string;
+            /** @description Operator email */
+            email: string;
+        };
+        AttendanceTeam: {
+            /** @description Team ID */
+            id: string;
+            /** @description Team name */
+            name: string;
+        };
+        HelpdeskReportPagination: {
+            /** @description Cursor for the next page, or null if no more pages */
+            cursor: string | null;
+            /** @description Whether more pages follow */
+            hasMore: boolean;
+        };
+        ActivitySegmentListResponse: {
+            data: components["schemas"]["ActivitySegment"][];
+            pagination: components["schemas"]["HelpdeskReportPagination"];
+        };
+        ActivitySegment: {
+            /** @description Segment ID */
+            id: string;
+            operator: components["schemas"]["AttendanceOperator"];
+            /**
+             * @description `ticket` while a ticket was open, `untracked` while logged in without a ticket open, `idle` after 10 minutes without input
+             * @enum {string}
+             */
+            kind: "ticket" | "untracked" | "idle";
+            /** @description Ticket number for a `ticket` segment, or null for other kinds and for deleted tickets */
+            ticketNumber: number | null;
+            /**
+             * @description ISO 8601 time the segment started
+             * @example 2026-10-29T07:02:13.418Z
+             */
+            startedAt: string;
+            /**
+             * @description ISO 8601 time the segment was last refreshed. An open segment is refreshed every few minutes while the operator is active.
+             * @example 2026-10-29T07:16:40.102Z
+             */
+            lastSeenAt: string;
+            /**
+             * @description ISO 8601 time the segment ended, or null while it is still open
+             * @example 2026-10-29T07:17:05.733Z
+             */
+            endedAt: string | null;
         };
         Ticket: {
             /**
@@ -7625,6 +7789,280 @@ export interface operations {
                      *       }
                      *     }
                      */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listAttendanceRows: {
+        parameters: {
+            query: {
+                /** @description Opaque cursor from a previous response to fetch the next page */
+                cursor?: string;
+                /** @description Number of items per page (1 to 1000, default 100) */
+                limit?: number;
+                /** @description First day to return (`YYYY-MM-DD`), as a calendar day in `timezone`. At most 396 days ago. */
+                startDate: string;
+                /** @description Last day to return (`YYYY-MM-DD`), inclusive. Not after today in `timezone`, and at most 31 days from `startDate` counting both. */
+                endDate: string;
+                /** @description IANA time zone that decides where each day starts and ends, the same as the time zone picker on the dashboard. */
+                timezone: string;
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Attendance rows, by day and then by operator name */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttendanceRowListResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listActivitySegments: {
+        parameters: {
+            query: {
+                /** @description Opaque cursor from a previous response to fetch the next page */
+                cursor?: string;
+                /** @description Number of items per page (1 to 1000, default 100) */
+                limit?: number;
+                /** @description First day to return (`YYYY-MM-DD`), as a calendar day in `timezone`. At most 396 days ago. */
+                startDate: string;
+                /** @description Last day to return (`YYYY-MM-DD`), inclusive. Not after today in `timezone`, and at most 31 days from `startDate` counting both. */
+                endDate: string;
+                /** @description IANA time zone that decides where each day starts and ends, the same as the time zone picker on the dashboard. */
+                timezone: string;
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Activity segments, by start, then segment ID */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivitySegmentListResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
