@@ -430,10 +430,8 @@
           "model": {
             "type": "string",
             "enum": [
-              "gpt-4o-mini",
               "gpt-oss-120b",
               "gpt-oss-20b",
-              "gpt-5.1",
               "gpt-5.2",
               "gpt-5.5",
               "gpt-5.6-terra",
@@ -788,10 +786,8 @@
               "model": {
                 "type": "string",
                 "enum": [
-                  "gpt-4o-mini",
                   "gpt-oss-120b",
                   "gpt-oss-20b",
-                  "gpt-5.1",
                   "gpt-5.2",
                   "gpt-5.5",
                   "gpt-5.6-terra",
