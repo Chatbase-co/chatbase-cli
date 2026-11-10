@@ -2407,6 +2407,7 @@
                       "deepgram/nova-3",
                       "deepgram/nova-2",
                       "deepgram/flux-general-multi",
+                      "soniox/stt-rt-v6",
                       "soniox/stt-rt-v5",
                       "soniox/stt-rt-v4",
                       "google/gemini-3.5-transcribe-live",
