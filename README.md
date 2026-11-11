@@ -50,6 +50,7 @@ calls you invoke.
 * [`chatbase auth status`](#chatbase-auth-status)
 * [`chatbase chat`](#chatbase-chat)
 * [`chatbase chat retry`](#chatbase-chat-retry)
+* [`chatbase collected-data list`](#chatbase-collected-data-list)
 * [`chatbase config get KEY`](#chatbase-config-get-key)
 * [`chatbase config list`](#chatbase-config-list)
 * [`chatbase config set KEY [VALUE]`](#chatbase-config-set-key-value)
@@ -62,6 +63,8 @@ calls you invoke.
 * [`chatbase conversations tool-result [CONVERSATIONID]`](#chatbase-conversations-tool-result-conversationid)
 * [`chatbase health`](#chatbase-health)
 * [`chatbase help [COMMAND]`](#chatbase-help-command)
+* [`chatbase helpdesk activity`](#chatbase-helpdesk-activity)
+* [`chatbase helpdesk attendance`](#chatbase-helpdesk-attendance)
 * [`chatbase helpdesk statuses`](#chatbase-helpdesk-statuses)
 * [`chatbase helpdesk teams`](#chatbase-helpdesk-teams)
 * [`chatbase messages feedback [MESSAGEID]`](#chatbase-messages-feedback-messageid)
@@ -604,6 +607,50 @@ EXAMPLES
 
 _See code: [src/commands/chat/retry.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.5/src/commands/chat/retry.ts)_
 
+## `chatbase collected-data list`
+
+List data saved by an agent’s Collect data actions
+
+```
+USAGE
+  $ chatbase collected-data list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--limit <value>] [--cursor <value>] [--all] [--action-id <value>] [--start-date <value>] [--end-date
+    <value>]
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --action-id=<value>   Only submissions collected by this action (UUID)
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --all                 Fetch every page
+      --cursor=<value>      Pagination cursor from a previous page
+      --end-date=<value>    Created at or before this YYYY-MM-DD date (inclusive, end of day UTC) or ISO 8601 date-time
+      --limit=<value>       Maximum items per page
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --start-date=<value>  Created after this YYYY-MM-DD date (start of day, UTC) or ISO 8601 date-time
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  List data saved by an agent’s Collect data actions
+
+  Lists submissions newest first. Narrow by action with --action-id and by submission time with --start-date /
+  --end-date.
+
+EXAMPLES
+  $ chatbase collected-data list -a agt_123
+
+  $ chatbase collected-data list -a agt_123 --action-id 3f6c1a2e-0000-4000-8000-000000000000 --start-date 2026-11-01
+
+  $ chatbase collected-data list -a agt_123 --all --json
+```
+
+_See code: [src/commands/collected-data/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.5/src/commands/collected-data/list.ts)_
+
 ## `chatbase config get KEY`
 
 Print a resolved CLI configuration value and where it comes from
@@ -1084,6 +1131,95 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/6.2.58/src/commands/help.ts)_
+
+## `chatbase helpdesk activity`
+
+List Help Desk operator activity segments
+
+```
+USAGE
+  $ chatbase helpdesk activity --start-date <value> --end-date <value> [--json] [--plain] [-q] [--verbose] [--no-input]
+    [--no-color] [--agent-name <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all] [--timezone <value>]
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --all                 Fetch every page
+      --cursor=<value>      Pagination cursor from a previous page; repeat the same dates and time zone or the API
+                            rejects it
+      --end-date=<value>    (required) Last day (YYYY-MM-DD), inclusive; not after today and at most 31 days from
+                            --start-date counting both
+      --limit=<value>       Maximum items per page (1–1000, default 100)
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --start-date=<value>  (required) First day (YYYY-MM-DD) in --timezone; at most 396 days ago
+      --timezone=<value>    IANA time zone that decides where each day starts (default: this machine’s time zone)
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  List Help Desk operator activity segments
+
+  One item per ticket, untracked, or idle stretch of the agent’s current operators, listed only in the day range where
+  it started (days are in --timezone). Segments are unmerged and unrounded, so totals can differ slightly from the
+  dashboard’s Activity export. An empty ENDED means the segment is still open. Both reports share a limit of 30 calls
+  per 10 seconds per account.
+
+EXAMPLES
+  $ chatbase helpdesk activity -a agt_123 --start-date 2026-11-01 --end-date 2026-11-07
+
+  $ chatbase helpdesk activity -a agt_123 --start-date 2026-11-01 --end-date 2026-11-01 --timezone America/New_York --all --json
+```
+
+_See code: [src/commands/helpdesk/activity.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.5/src/commands/helpdesk/activity.ts)_
+
+## `chatbase helpdesk attendance`
+
+Show the Help Desk attendance report
+
+```
+USAGE
+  $ chatbase helpdesk attendance --start-date <value> --end-date <value> [--json] [--plain] [-q] [--verbose] [--no-input]
+    [--no-color] [--agent-name <value> | -a <value>] [--limit <value>] [--cursor <value>] [--all] [--timezone <value>]
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --all                 Fetch every page
+      --cursor=<value>      Pagination cursor from a previous page; repeat the same dates and time zone or the API
+                            rejects it
+      --end-date=<value>    (required) Last day (YYYY-MM-DD), inclusive; not after today and at most 31 days from
+                            --start-date counting both
+      --limit=<value>       Maximum items per page (1–1000, default 100)
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --start-date=<value>  (required) First day (YYYY-MM-DD) in --timezone; at most 396 days ago
+      --timezone=<value>    IANA time zone that decides where each day starts (default: this machine’s time zone)
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Show the Help Desk attendance report
+
+  One row per operator for each part of a shift, and for time logged outside shifts, per calendar day in --timezone.
+  Matches the dashboard’s Attendance CSV export. A day that has not ended yet shows what has happened so far. Use --json
+  for every metric. Both reports share a limit of 30 calls per 10 seconds per account.
+
+EXAMPLES
+  $ chatbase helpdesk attendance -a agt_123 --start-date 2026-11-01 --end-date 2026-11-07
+
+  $ chatbase helpdesk attendance -a agt_123 --start-date 2026-11-01 --end-date 2026-11-30 --timezone Europe/Berlin --all --json
+```
+
+_See code: [src/commands/helpdesk/attendance.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.5/src/commands/helpdesk/attendance.ts)_
 
 ## `chatbase helpdesk statuses`
 

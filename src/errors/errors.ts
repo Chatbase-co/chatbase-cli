@@ -44,6 +44,12 @@ const REMEDIATIONS: Record<string, string> = {
     VALIDATION_INVALID_BODY: 'Fix the fields above and retry.',
     CONVERSATION_SEARCH_UNAVAILABLE:
         'Free-text search is off for HIPAA or redacted agents. Drop the QUERY argument and search with filters only.',
+    VALIDATION_INVALID_CURSOR:
+        'Pass the exact --cursor value the CLI printed for the previous page, or drop --cursor to start over.',
+    VALIDATION_INVALID_DATE_RANGE:
+        '--start-date is after --end-date. Swap them or fix the dates.',
+    HELPDESK_NOT_ENABLED:
+        'Help Desk is not activated for this agent. Enable it in the agent’s dashboard, then retry.',
     VALIDATION_CURSOR_QUERY_MISMATCH:
         'A --cursor only works with the exact query and filters that produced it. Repeat them unchanged, or drop --cursor to start over.',
     CONVERSATION_STATE_CHANGED:
