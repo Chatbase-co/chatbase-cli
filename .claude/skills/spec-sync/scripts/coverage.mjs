@@ -9,8 +9,8 @@
  * Tiers:
  *   missing  — no client call and no path literal found: likely needs a
  *              command (or an entry in spec/coverage-ignore.json)
- *   verify   — the path literal exists but not adjacent to a .METHOD( call
- *              (e.g. a path chosen via a variable): confirm by hand
+ *   verify   — the path literal exists in a file that calls .METHOD(, but
+ *              not adjacent (e.g. a path chosen via a variable): confirm by hand
  *   orphaned — a spec-shaped path literal in src/ that is not in the spec:
  *              stale code, usually from a removed/renamed endpoint
  *
@@ -39,7 +39,8 @@ const files = []
         }
     }
 })('src')
-const src = files.map((f) => fs.readFileSync(f, 'utf8')).join('\n')
+const sources = files.map((f) => fs.readFileSync(f, 'utf8'))
+const src = sources.join('\n')
 
 const IGNORE_FILE = 'spec/coverage-ignore.json'
 const ignored = fs.existsSync(IGNORE_FILE)
@@ -49,7 +50,12 @@ const isIgnored = (method, p) =>
     ignored.some((e) => e.method?.toUpperCase() === method && e.path === p)
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-const hasLiteral = (p) => src.includes(`'${p}'`) || src.includes(`"${p}"`)
+const hasLiteral = (text, p) =>
+    text.includes(`'${p}'`) || text.includes(`"${p}"`)
+// A path picked via a variable only counts if the same file calls this method:
+// GET/PATCH on a path must not hide a DELETE nobody calls.
+const literalWithMethod = (p, M) =>
+    sources.some((text) => hasLiteral(text, p) && text.includes(`.${M}(`))
 
 const missing = []
 const verify = []
@@ -64,7 +70,7 @@ for (const [p, item] of Object.entries(spec.paths)) {
         }
         const adjacentCall = new RegExp(`\\.${M}\\(\\s*['"]${escapeRe(p)}['"]`)
         if (adjacentCall.test(src)) continue
-        if (hasLiteral(p)) verify.push(`${M} ${p}`)
+        if (literalWithMethod(p, M)) verify.push(`${M} ${p}`)
         else missing.push(`${M} ${p}`)
     }
 }
@@ -72,9 +78,7 @@ for (const [p, item] of Object.entries(spec.paths)) {
 // Orphans: quoted literals in src/ that look like spec paths but aren't in
 // the spec any more. Scoped to the spec's own top-level segments so command
 // help text and unrelated strings don't false-positive.
-const topSegments = new Set(
-    Object.keys(spec.paths).map((p) => p.split('/')[1])
-)
+const topSegments = new Set(Object.keys(spec.paths).map((p) => p.split('/')[1]))
 const specPaths = new Set(Object.keys(spec.paths))
 const orphans = new Set()
 for (const m of src.matchAll(/['"](\/[a-zA-Z0-9_{}/-]+)['"]/g)) {

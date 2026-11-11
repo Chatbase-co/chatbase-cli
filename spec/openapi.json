@@ -3754,6 +3754,34 @@
             ],
             "description": "AI-generated summary of the parent conversation, if any"
           },
+          "sentiment": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "neutral",
+              "positive",
+              "negative",
+              null
+            ],
+            "description": "Sentiment of the conversation, as shown on the Analytics page. Null until it has been analyzed."
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Visitor's country, detected from their IP address when the conversation started. Null when unknown.",
+            "example": "Egypt"
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Names of the active topics assigned to the conversation, as shown on the Analytics page."
+          },
           "messages": {
             "type": "array",
             "items": {
@@ -3770,7 +3798,10 @@
           "userId",
           "source",
           "embedOrigin",
-          "status"
+          "status",
+          "sentiment",
+          "country",
+          "topics"
         ]
       },
       "ExportMessage": {
@@ -4012,6 +4043,34 @@
             ],
             "description": "AI-generated summary of the parent conversation, if any"
           },
+          "sentiment": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "neutral",
+              "positive",
+              "negative",
+              null
+            ],
+            "description": "Sentiment of the conversation, as shown on the Analytics page. Null until it has been analyzed."
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Visitor's country, detected from their IP address when the conversation started. Null when unknown.",
+            "example": "Egypt"
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Names of the active topics assigned to the conversation, as shown on the Analytics page."
+          },
           "snippet": {
             "anyOf": [
               {
@@ -4033,6 +4092,9 @@
           "source",
           "embedOrigin",
           "status",
+          "sentiment",
+          "country",
+          "topics",
           "snippet"
         ]
       },
@@ -4419,6 +4481,91 @@
           "toolCallId"
         ],
         "additionalProperties": false
+      },
+      "ListCollectedDataResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectedDataSubmission"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/CollectedDataPaginationMeta"
+          }
+        },
+        "required": [
+          "data",
+          "pagination"
+        ]
+      },
+      "CollectedDataSubmission": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Submission ID"
+          },
+          "conversationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ID of the conversation the data was collected in. Null when the conversation has been deleted."
+          },
+          "actionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ID of the Collect data Action that collected it"
+          },
+          "actionName": {
+            "type": "string",
+            "description": "Name of the Action when the data was collected"
+          },
+          "customFields": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {},
+            "description": "Submitted values, keyed by the field names configured on the Action"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Unix epoch timestamp (seconds)"
+          }
+        },
+        "required": [
+          "id",
+          "conversationId",
+          "actionId",
+          "actionName",
+          "customFields",
+          "createdAt"
+        ]
+      },
+      "CollectedDataPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor for the next page, or null if no more pages"
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "Whether more results are available"
+          }
+        },
+        "required": [
+          "cursor",
+          "hasMore"
+        ]
       },
       "SourcesSummaryResponse": {
         "type": "object",
@@ -9149,6 +9296,9 @@
             "updatedAt",
             "parentConversationId",
             "parentSummary",
+            "sentiment",
+            "country",
+            "topics",
             "messages"
           ],
           "maxItems": 20
@@ -11200,6 +11350,235 @@
                   "error": {
                     "code": "RESOURCE_TOOL_CALL_NOT_FOUND",
                     "message": "Tool call not found or expired"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/collected-data": {
+      "get": {
+        "operationId": "listCollectedData",
+        "x-mcp": {
+          "tool": "chatbase_list_collected_data",
+          "scopes": [
+            "leads:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          },
+          "maxItems": 50
+        },
+        "tags": [
+          "Collected Data"
+        ],
+        "summary": "List collected data",
+        "description": "Returns the data an agent's Collect data Actions have saved, newest first. Filter by Action with `actionId` and by submission time with `startDate` / `endDate`. Supports cursor-based pagination.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Opaque cursor from a previous response to fetch the next page",
+              "example": "eyJ0IjoiMjAyNC0wMS0xNVQxMDozMDowMC4wMDBaIiwiaWQiOiJhYmMxMjMifQ=="
+            },
+            "required": false,
+            "description": "Opaque cursor from a previous response to fetch the next page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Number of items per page (1 to 100, default 20)",
+              "example": 20
+            },
+            "required": false,
+            "description": "Number of items per page (1 to 100, default 20)",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Return only submissions collected by the Action with this ID"
+            },
+            "required": false,
+            "description": "Return only submissions collected by the Action with this ID",
+            "name": "actionId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Only return submissions created after this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the start of that day in UTC) or an ISO 8601 date-time.",
+              "example": "2024-01-01"
+            },
+            "required": false,
+            "description": "Only return submissions created after this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the start of that day in UTC) or an ISO 8601 date-time.",
+            "name": "startDate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Only return submissions created at or before this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the *end* of that day in UTC, so the day itself is included) or an ISO 8601 date-time.",
+              "example": "2024-01-31"
+            },
+            "required": false,
+            "description": "Only return submissions created at or before this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the *end* of that day in UTC, so the day itself is included) or an ISO 8601 date-time.",
+            "name": "endDate",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Collected data submissions, newest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListCollectedDataResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "VALIDATION_INVALID_BODY": {
+                    "summary": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_INVALID_BODY",
+                        "message": "Invalid request"
+                      }
+                    }
+                  },
+                  "VALIDATION_INVALID_CURSOR": {
+                    "summary": "The `cursor` could not be decoded. Pass the exact `pagination.cursor` value from a previous response, without modification.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_INVALID_CURSOR",
+                        "message": "Invalid pagination cursor"
+                      }
+                    }
+                  },
+                  "VALIDATION_INVALID_DATE_RANGE": {
+                    "summary": "The requested `createdAt` window is inverted. An inverted window can never match a row, so it is rejected rather than silently returning an empty page.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_INVALID_DATE_RANGE",
+                        "message": "startDate must not be after endDate"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "A Basic plan or higher is required to access the API"
                   }
                 }
               }

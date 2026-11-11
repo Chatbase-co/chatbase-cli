@@ -321,12 +321,19 @@ PR is open. Run steps 1–9 as written, with these substitutions:
 - **Step 5, removed endpoints**: never delete a command. Make the
   smallest change that keeps the gate green and list the removal under a
   "Needs a decision" heading in the report.
-- **Step 6, new endpoints**: build nothing. Write each proposal (command
-  name, args/flags, base class, output shape — or the coverage-ignore
-  recommendation) under "Needs a decision" in the report. Base it on
-  `operation.mjs` output: list every param's flag, and address every ⚠
-  line, description caveat and error code. The reviewer
-  answers on the PR; a later run builds what they approve.
+- **Step 6, new endpoints**: the sign-off moves to PR review. For every
+  **Missing** endpoint (new in this refresh or not), design the command
+  from `operation.mjs` output: a flag for every param, every ⚠ line,
+  description caveat and error code addressed. Then build it (steps 7–8)
+  without asking. Use the step-4 table to pick the branch name, which is
+  `feat/` once a command is added. Machine-to-machine plumbing is the one
+  exception: record it in `spec/coverage-ignore.json` with its reason
+  instead of building it. List each design (command name, args/flags,
+  base class, output shape) or skip under "Designs to review" in the
+  report. The reviewer changes the code through `@claude` on the PR.
+  If one endpoint's command can't get the gate green after one fix
+  attempt, drop that command, leave the endpoint uncovered, and put its
+  proposal under "Needs a decision" so the rest still ships.
 - **Step 9** ends in a commit and a PR instead of a chat message:
 
   ```bash

@@ -411,6 +411,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agents/{agentId}/collected-data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List collected data
+         * @description Returns the data an agent's Collect data Actions have saved, newest first. Filter by Action with `actionId` and by submission time with `startDate` / `endDate`. Supports cursor-based pagination.
+         */
+        get: operations["listCollectedData"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agents/{agentId}/sources/summary": {
         parameters: {
             query?: never;
@@ -1962,6 +1982,18 @@ export interface components {
             parentConversationId?: string | null;
             /** @description AI-generated summary of the parent conversation, if any */
             parentSummary?: string | null;
+            /**
+             * @description Sentiment of the conversation, as shown on the Analytics page. Null until it has been analyzed.
+             * @enum {string|null}
+             */
+            sentiment: "neutral" | "positive" | "negative" | null;
+            /**
+             * @description Visitor's country, detected from their IP address when the conversation started. Null when unknown.
+             * @example Egypt
+             */
+            country: string | null;
+            /** @description Names of the active topics assigned to the conversation, as shown on the Analytics page. */
+            topics: string[];
             /** @description Conversation messages. Present unless `include=summary` was requested. */
             messages?: components["schemas"]["ExportMessage"][];
         };
@@ -2038,6 +2070,18 @@ export interface components {
             parentConversationId?: string | null;
             /** @description AI-generated summary of the parent conversation, if any */
             parentSummary?: string | null;
+            /**
+             * @description Sentiment of the conversation, as shown on the Analytics page. Null until it has been analyzed.
+             * @enum {string|null}
+             */
+            sentiment: "neutral" | "positive" | "negative" | null;
+            /**
+             * @description Visitor's country, detected from their IP address when the conversation started. Null when unknown.
+             * @example Egypt
+             */
+            country: string | null;
+            /** @description Names of the active topics assigned to the conversation, as shown on the Analytics page. */
+            topics: string[];
             /** @description Best matching excerpt. Null when no `query` was given or the match was only in the title. */
             snippet: components["schemas"]["ConversationSearchSnippet"] | null;
         };
@@ -2159,6 +2203,32 @@ export interface components {
             toolCallId: string;
             /** @description The result of executing the tool action */
             output?: unknown;
+        };
+        ListCollectedDataResponse: {
+            data: components["schemas"]["CollectedDataSubmission"][];
+            pagination: components["schemas"]["CollectedDataPaginationMeta"];
+        };
+        CollectedDataSubmission: {
+            /** @description Submission ID */
+            id: string;
+            /** @description ID of the conversation the data was collected in. Null when the conversation has been deleted. */
+            conversationId: string | null;
+            /** @description ID of the Collect data Action that collected it */
+            actionId: string | null;
+            /** @description Name of the Action when the data was collected */
+            actionName: string;
+            /** @description Submitted values, keyed by the field names configured on the Action */
+            customFields: {
+                [key: string]: unknown;
+            } | null;
+            /** @description Unix epoch timestamp (seconds) */
+            createdAt: number;
+        };
+        CollectedDataPaginationMeta: {
+            /** @description Cursor for the next page, or null if no more pages */
+            cursor: string | null;
+            /** @description Whether more results are available */
+            hasMore: boolean;
         };
         SourcesSummaryResponse: {
             links: components["schemas"]["SourceTypeCount"];
@@ -6337,6 +6407,134 @@ export interface operations {
                      *       "error": {
                      *         "code": "RESOURCE_TOOL_CALL_NOT_FOUND",
                      *         "message": "Tool call not found or expired"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listCollectedData: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from a previous response to fetch the next page */
+                cursor?: string;
+                /** @description Number of items per page (1 to 100, default 20) */
+                limit?: number;
+                /** @description Return only submissions collected by the Action with this ID */
+                actionId?: string;
+                /** @description Only return submissions created after this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the start of that day in UTC) or an ISO 8601 date-time. */
+                startDate?: string;
+                /** @description Only return submissions created at or before this point. Accepts a calendar date (`YYYY-MM-DD`, interpreted as the *end* of that day in UTC, so the day itself is included) or an ISO 8601 date-time. */
+                endDate?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Collected data submissions, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListCollectedDataResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Basic plan or higher is required to access the API"
                      *       }
                      *     }
                      */

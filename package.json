@@ -71,13 +71,16 @@
                 "description": "Manage helpdesk tickets and their message threads"
             },
             "helpdesk": {
-                "description": "Look up helpdesk teams and ticket statuses"
+                "description": "Look up helpdesk teams and statuses, and run operator attendance and activity reports"
             },
             "voice": {
                 "description": "Start real-time voice sessions for an agent"
             },
             "whatsapp": {
                 "description": "List WhatsApp templates and send template messages"
+            },
+            "collected-data": {
+                "description": "List data saved by Collect data actions"
             },
             "config": {
                 "description": "Manage CLI configuration (agent, timeout)"
