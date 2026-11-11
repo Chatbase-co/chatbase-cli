@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.11.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.10.5...v0.11.0) (2026-11-11)
+
+
+### Features
+
+* **conversations:** add conversations delete (single or --user) ([094e7ab](https://github.com/Chatbase-co/chatbase-cli/commit/094e7ab7b66086343541f99a52b74283cde6cbd7))
+* **helpdesk:** add collected-data list, helpdesk attendance and activity commands ([6388f03](https://github.com/Chatbase-co/chatbase-cli/commit/6388f03cf8dd9d3f93ab954426e43845dd31cd42))
+
 ## [0.10.5](https://github.com/Chatbase-co/chatbase-cli/compare/v0.10.4...v0.10.5) (2026-10-30)
 
 
