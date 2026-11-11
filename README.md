@@ -54,6 +54,7 @@ calls you invoke.
 * [`chatbase config get KEY`](#chatbase-config-get-key)
 * [`chatbase config list`](#chatbase-config-list)
 * [`chatbase config set KEY [VALUE]`](#chatbase-config-set-key-value)
+* [`chatbase conversations delete [CONVERSATIONID]`](#chatbase-conversations-delete-conversationid)
 * [`chatbase conversations export`](#chatbase-conversations-export)
 * [`chatbase conversations get [CONVERSATIONID]`](#chatbase-conversations-get-conversationid)
 * [`chatbase conversations list`](#chatbase-conversations-list)
@@ -744,6 +745,50 @@ EXAMPLES
 ```
 
 _See code: [src/commands/config/set.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.5/src/commands/config/set.ts)_
+
+## `chatbase conversations delete [CONVERSATIONID]`
+
+Permanently delete a conversation, or all of a user’s conversations
+
+```
+USAGE
+  $ chatbase conversations delete [CONVERSATIONID] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+    [--agent-name <value> | -a <value>] [--user <value>] [--confirm <value>]
+
+ARGUMENTS
+  [CONVERSATIONID]  Conversation ID (omit when using --user)
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --confirm=<value>     Confirm by repeating the conversation or user ID (required in scripts and CI)
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --user=<value>        Delete every conversation of this user ID (for identified widget users, the contact’s
+                            external ID)
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Permanently delete a conversation, or all of a user’s conversations
+
+  Deletes from every source (API, widget, WhatsApp, and the like); deleted conversations disappear from chat logs and
+  API responses. This cannot be undone.
+
+  With --user, deletes every conversation of that user. Deleting a contact does not delete their conversations, so run
+  this as well. Conversations still in HIPAA processing are skipped; rerun later to delete them.
+
+EXAMPLES
+  $ chatbase conversations delete conv_123 -a agt_123 --confirm conv_123
+
+  $ chatbase conversations delete --user jane@example.com -a agt_123 --confirm jane@example.com
+```
+
+_See code: [src/commands/conversations/delete.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.10.5/src/commands/conversations/delete.ts)_
 
 ## `chatbase conversations export`
 
