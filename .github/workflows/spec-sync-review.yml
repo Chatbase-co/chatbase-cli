@@ -52,8 +52,9 @@ jobs:
                          every call, @file/@- input through readBodyData/readTextInput, examples on
                          every command, no Co-Authored-By trailer in the commit, and a commit type
                          (feat/fix/chore) that matches what users will see.
-                      4. Read the PR body's "Needs a decision" section, if present, and say whether
-                         each proposal looks right or what you would change. Check each one against
+                      4. Read the PR body's "Designs to review" and "Needs a decision" sections, if
+                         present, and say whether each new command or proposal looks right or what
+                         you would change. Check each one against
                          `node .claude/skills/spec-sync/scripts/operation.mjs <METHOD> '<path>'`: every
                          parameter needs a flag or a stated reason, and every ⚠ line, description
                          caveat, and error code must be addressed.

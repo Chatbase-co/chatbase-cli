@@ -74,10 +74,10 @@ jobs:
                       This is the unattended spec-sync workflow; nobody can answer questions.
                       Follow the skill's "Unattended runs" section end to end: branch, fix drift,
                       run the full gate, commit with the matching conventional type, push, and open
-                      a PR labelled spec-sync whose body is the step-9 report. Proposals for new
-                      endpoints go in the PR body, not into code.
+                      a PR labelled spec-sync whose body is the step-9 report. Build commands and
+                      tests for every endpoint without one, and list their designs in the PR body.
                   claude_args: >-
-                      --max-turns 100
+                      --max-turns 250
                       --allowedTools "Read,Glob,Grep,Edit,Write,Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(git:*),Bash(gh pr:*),Bash(bash scripts/*),Bash(cat:*),Bash(ls:*),Bash(diff:*),Bash(jq:*),Bash(mkdir:*)"
             - name: Find the PR Claude opened
               id: pr
