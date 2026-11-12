@@ -10,7 +10,8 @@ export default class TicketsReply extends AgentCommand {
     static override description =
         "Post an agent reply to a ticket's message thread"
     static override examples = [
-        '<%= config.bin %> tickets reply 42 -m "On it" --author-email sam@example.com -a agt_123'
+        '<%= config.bin %> tickets reply 42 -m "On it" --author-email sam@example.com -a agt_123',
+        '<%= config.bin %> tickets reply 42 -m "Called customer" --type note --author-email sam@example.com -a agt_123'
     ]
     static override args = {
         ticketNumber: Args.integer({
@@ -23,10 +24,16 @@ export default class TicketsReply extends AgentCommand {
         ticket: Flags.integer({
             description: 'Ticket number'
         }),
+        type: Flags.string({
+            description:
+                'reply (default) is delivered to the customer; note is internal, never delivered, and also works on closed or merged tickets',
+            options: ['reply', 'note'],
+            default: 'reply'
+        }),
         message: Flags.string({
             char: 'm',
             required: true,
-            description: 'Reply body as GitHub-flavored Markdown'
+            description: 'Message body as GitHub-flavored Markdown'
         }),
         'author-id': Flags.string({
             description:
@@ -59,7 +66,7 @@ export default class TicketsReply extends AgentCommand {
         const client = this.apiClient(flags)
         const agentId = await this.agentId(flags, client)
         const body: CreateTicketMessageBody = {
-            type: 'reply',
+            type: flags.type as CreateTicketMessageBody['type'],
             content: flags.message,
             ...(flags['author-id'] ? { authorId: flags['author-id'] } : {}),
             ...(flags['author-email']
@@ -76,6 +83,9 @@ export default class TicketsReply extends AgentCommand {
             }
         )
         throwIfError(response, error)
-        this.success(flags, `Reply posted to ticket ${ticketNumber}`)
+        this.success(
+            flags,
+            `${flags.type === 'note' ? 'Note' : 'Reply'} posted to ticket ${ticketNumber}`
+        )
     }
 }

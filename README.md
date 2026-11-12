@@ -35,6 +35,7 @@ Chatbase can distinguish CLI traffic server-side. The only network calls are the
 calls you invoke.
 
 <!-- commands -->
+* [`chatbase agents analytics`](#chatbase-agents-analytics)
 * [`chatbase agents auto-retrain [AGENTID]`](#chatbase-agents-auto-retrain-agentid)
 * [`chatbase agents clone AGENTID`](#chatbase-agents-clone-agentid)
 * [`chatbase agents create`](#chatbase-agents-create)
@@ -87,6 +88,49 @@ calls you invoke.
 * [`chatbase voice start`](#chatbase-voice-start)
 * [`chatbase whatsapp send-template TEMPLATE`](#chatbase-whatsapp-send-template-template)
 * [`chatbase whatsapp templates`](#chatbase-whatsapp-templates)
+
+## `chatbase agents analytics`
+
+Show an agent’s activity over a date range
+
+```
+USAGE
+  $ chatbase agents analytics [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--start-date <value>] [--end-date <value>] [--time-zone <value>]
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --end-date=<value>    Range end (YYYY-MM-DD, inclusive, or ISO 8601); defaults to now and is capped to now
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --start-date=<value>  Range start (YYYY-MM-DD or ISO 8601); defaults to 7 days before --end-date
+      --time-zone=<value>   IANA time zone for conversationsByHour, e.g. America/New_York (default UTC)
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Show an agent’s activity over a date range
+
+  Splits the range into 7 equal buckets (oldest first) with conversations, messages, sentiment, escalations and ratings
+  per bucket. Use --json for the full response: help desk tickets, procedure, tool and action counts per bucket, plus
+  totals by source, tool, country, answer confidence, hour of day and credits per day.
+
+  Conversations count by last activity. The range must fall inside the searchable window (since the 1st of the month 12
+  months ago, UTC). --time-zone only affects conversationsByHour, which is approximate for zones with a 30- or 45-minute
+  offset.
+
+EXAMPLES
+  $ chatbase agents analytics -a agt_123
+
+  $ chatbase agents analytics -a agt_123 --start-date 2026-10-01 --end-date 2026-10-31 --time-zone America/New_York --json
+```
+
+_See code: [src/commands/agents/analytics.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.11.0/src/commands/agents/analytics.ts)_
 
 ## `chatbase agents auto-retrain [AGENTID]`
 
@@ -1521,7 +1565,8 @@ List sources for an agent
 ```
 USAGE
   $ chatbase sources list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
-    <value>] [--limit <value>] [--cursor <value>] [--all] [--type <value>] [--name <value>]
+    <value>] [--limit <value>] [--cursor <value>] [--all] [--type <value>] [--name <value>] [--status
+    untrained|trained|toBeDeleted|updated|failed]
 
 FLAGS
   -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
@@ -1533,6 +1578,8 @@ FLAGS
       --name=<value>        Filter by source name
       --no-color            Disable colored output
       --no-input            Never prompt; fail instead
+      --status=<option>     Filter by training status
+                            <options: untrained|trained|toBeDeleted|updated|failed>
       --type=<value>        Filter by source type
       --verbose             Verbose diagnostics
 
@@ -1829,14 +1876,15 @@ Post an agent reply to a ticket's message thread
 ```
 USAGE
   $ chatbase tickets reply [TICKETNUMBER] -m <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
-    [--agent-name <value> | -a <value>] [--ticket <value>] [--author-id <value>] [--author-email <value>]
+    [--agent-name <value> | -a <value>] [--ticket <value>] [--type reply|note] [--author-id <value>] [--author-email
+    <value>]
 
 ARGUMENTS
   [TICKETNUMBER]  Ticket number (alternative to --ticket)
 
 FLAGS
   -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID)
-  -m, --message=<value>       (required) Reply body as GitHub-flavored Markdown
+  -m, --message=<value>       (required) Message body as GitHub-flavored Markdown
   -q, --quiet                 Suppress non-essential output
       --agent-name=<value>    Agent display name (looked up to an ID)
       --author-email=<value>  Email of the team member the reply is attributed to (exactly one of
@@ -1846,6 +1894,9 @@ FLAGS
       --no-color              Disable colored output
       --no-input              Never prompt; fail instead
       --ticket=<value>        Ticket number
+      --type=<option>         [default: reply] reply (default) is delivered to the customer; note is internal, never
+                              delivered, and also works on closed or merged tickets
+                              <options: reply|note>
       --verbose               Verbose diagnostics
 
 OUTPUT FLAGS
@@ -1857,6 +1908,8 @@ DESCRIPTION
 
 EXAMPLES
   $ chatbase tickets reply 42 -m "On it" --author-email sam@example.com -a agt_123
+
+  $ chatbase tickets reply 42 -m "Called customer" --type note --author-email sam@example.com -a agt_123
 ```
 
 _See code: [src/commands/tickets/reply.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.11.0/src/commands/tickets/reply.ts)_

@@ -173,6 +173,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agents/{agentId}/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get agent analytics
+         * @description Returns an agent's activity over a date range split into 7 equal buckets: conversations, messages, sentiment, escalations, ratings, help desk tickets, procedure runs, tool calls and action types per bucket. For the whole range it adds conversation counts by source, action, country, answer confidence and hour of day, plus credits per day. Conversations count by last activity, and the range must fall inside the searchable window (since the 1st of the month 12 months ago, UTC).
+         */
+        get: operations["getAgentAnalytics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agents/{agentId}/chat": {
         parameters: {
             query?: never;
@@ -731,7 +751,7 @@ export interface paths {
         put?: never;
         /**
          * Add a message to a ticket
-         * @description Posts an agent reply to a ticket on behalf of a team member. Delivery to the customer is asynchronous; a 201 confirms the reply was recorded, not delivered. Posting a reply may transition the ticket status, matching dashboard behavior.
+         * @description Posts an agent reply or internal note to a ticket on behalf of a team member. Reply delivery to the customer is asynchronous; a 201 confirms the reply was recorded, not delivered. Posting a reply may transition the ticket status, matching dashboard behavior. Notes are never delivered to the customer.
          */
         post: operations["createTicketMessage"];
         delete?: never;
@@ -1758,6 +1778,63 @@ export interface components {
             /** @example Deprecated: this endpoint does nothing. Sources train as soon as they are created, updated or deleted, so changes take effect immediately. Poll GET /agents/{agentId}/sources/{sourceId} for a source status. */
             message: string;
         };
+        AgentAnalyticsResponse: {
+            /** @description The range split into 7 equal buckets, oldest first */
+            buckets: components["schemas"]["AnalyticsBucket"][];
+            /** @description Conversations in the range by source */
+            sources: components["schemas"]["AnalyticsCount"][];
+            /** @description Conversations in the range by tool used */
+            toolsUsed: components["schemas"]["AnalyticsCount"][];
+            /** @description Conversations in the range by country code */
+            countries: components["schemas"]["AnalyticsCount"][];
+            /** @description Conversations in the range by their lowest answer confidence score, in 10 bins of 0.1: index 0 is 0–0.1, index 9 is 0.9–1. A conversation with no scored answers counts as 1. */
+            confidence: number[];
+            /** @description Conversations in the range by the hour they started in `timeZone`: 24 counts, index 0 is 00:00–01:00. Counts come from whole UTC hours, so zones with a 30- or 45-minute offset are approximate. */
+            conversationsByHour: number[];
+            /** @description Credits the agent used per UTC day that overlaps the range. Days with no usage are omitted. */
+            creditsByDay: {
+                /** @description UTC day (`YYYY-MM-DD`) */
+                date: string;
+                credits: number;
+            }[];
+        };
+        AnalyticsBucket: {
+            /** @description Bucket start, inclusive (Unix timestamp in seconds) */
+            start: number;
+            /** @description Bucket end, exclusive (Unix timestamp in seconds) */
+            end: number;
+            /** @description Conversations last active in this bucket */
+            conversations: number;
+            /** @description Messages in those conversations */
+            messages: number;
+            /** @description Conversations with positive sentiment */
+            positive: number;
+            /** @description Conversations with neutral sentiment */
+            neutral: number;
+            /** @description Conversations with negative sentiment */
+            negative: number;
+            /** @description Conversations escalated to a human (ticket or live-chat handoff) */
+            escalated: number;
+            /** @description Messages rated thumbs up */
+            thumbsUp: number;
+            /** @description Messages rated thumbs down */
+            thumbsDown: number;
+            /** @description Help desk tickets created in this bucket, by their current status category. Statuses with no tickets are omitted. `null` when help desk is off for the agent or the key cannot read tickets. */
+            ticketsByStatus: (components["schemas"]["AnalyticsCount"] & {
+                /** @enum {string} */
+                value?: "new" | "on_you" | "on_customer" | "on_hold" | "closed" | "cancelled";
+            })[] | null;
+            /** @description Procedure run statuses (`completed`, `stalled`, `turn_limit`, …) in conversations last active in this bucket. Each count is the number of conversation–procedure pairs that reached that status. */
+            procedures: components["schemas"]["AnalyticsCount"][];
+            /** @description Tool result statuses (`success`, `error`, …) in conversations last active in this bucket. Each count is the number of conversation–tool pairs that returned that status. */
+            tools: components["schemas"]["AnalyticsCount"][];
+            /** @description Action types (e.g. `collect-leads`) in conversations last active in this bucket. Each count is the number of conversations where that type ran, so one conversation can count under several types. */
+            actionTypes: components["schemas"]["AnalyticsCount"][];
+        };
+        AnalyticsCount: {
+            value: string;
+            count: number;
+        };
         /**
          * @description Streaming response using the AI SDK UIMessage Stream protocol.
          *
@@ -2071,10 +2148,10 @@ export interface components {
             /** @description AI-generated summary of the parent conversation, if any */
             parentSummary?: string | null;
             /**
-             * @description Sentiment of the conversation, as shown on the Analytics page. Null until it has been analyzed.
+             * @description Overall customer sentiment. Null when the conversation has not been analyzed.
              * @enum {string|null}
              */
-            sentiment: "neutral" | "positive" | "negative" | null;
+            sentiment: "neutral" | "positive" | "negative" | "unspecified" | null;
             /**
              * @description Visitor's country, detected from their IP address when the conversation started. Null when unknown.
              * @example Egypt
@@ -2103,6 +2180,8 @@ export interface components {
             cursor: string | null;
             /** @description Whether more results are available */
             hasMore: boolean;
+            /** @description Number of matching conversations, capped at 10,000. */
+            total: number;
         };
         GetConversationResponse: {
             data: components["schemas"]["ConversationMetadata"] & {
@@ -2238,6 +2317,7 @@ export interface components {
             texts: components["schemas"]["SourceTypeCount"] & unknown;
             zendeskTickets: components["schemas"]["SourceTypeCount"] & unknown;
             salesforceCases: components["schemas"]["SourceTypeCount"] & unknown;
+            zendeskMacros: components["schemas"]["SourceTypeCount"] & unknown;
             /** @description True when the agent knowledge base requires a retrain to reflect any changes */
             shouldRetrain: boolean;
         };
@@ -2959,6 +3039,8 @@ export interface components {
              * @example 2026-07-25T10:15:00.000Z
              */
             createdAt: string;
+            /** @description Why the message failed to reach the customer on its channel. Present only when delivery failed. */
+            sendError?: string;
             metadata?: components["schemas"]["MessageEventMetadata"];
         };
         /** @description Null on `event` messages */
@@ -3101,7 +3183,7 @@ export interface components {
              * @example reply
              * @enum {string}
              */
-            type: "reply";
+            type: "reply" | "note";
             sender: components["schemas"]["MessageSender"] & unknown;
             /** @description Rendered, sanitized HTML body */
             content: string;
@@ -3115,11 +3197,11 @@ export interface components {
         };
         CreateTicketMessageBody: {
             /**
-             * @description Message type. Only `reply` (customer-visible, delivered to the customer) is supported.
+             * @description Message type. `reply` is customer-visible and delivered to the customer. `note` is internal to your team, is never delivered, and can be added to closed or merged tickets.
              * @example reply
              * @enum {string}
              */
-            type: "reply";
+            type: "reply" | "note";
             /**
              * @description Message body as GitHub-flavored Markdown. Plain text is valid markdown; single newlines are kept as line breaks. Raw inline HTML is stripped. Limited to 10,000 characters after trimming.
              * @example Thanks for reaching out. This is **fixed** now.
@@ -4403,6 +4485,131 @@ export interface operations {
                      *       }
                      *     }
                      */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getAgentAnalytics: {
+        parameters: {
+            query?: {
+                /** @description Range start (`YYYY-MM-DD` or ISO 8601). Defaults to 7 days before `endDate`. */
+                startDate?: string;
+                /** @description Range end (`YYYY-MM-DD`, inclusive, or ISO 8601). Defaults to now; a later end is capped to now. */
+                endDate?: string;
+                /** @description IANA time zone for `conversationsByHour`, e.g. `America/New_York`. Defaults to `UTC`. */
+                timeZone?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agent analytics for the range */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentAnalyticsResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
@@ -6713,6 +6920,8 @@ export interface operations {
                 type?: string;
                 /** @description Partial (case-insensitive) name match */
                 name?: string;
+                /** @description Only return sources with this training status */
+                status?: "untrained" | "trained" | "toBeDeleted" | "updated" | "failed";
             };
             header?: never;
             path: {
@@ -9263,20 +9472,12 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    /**
-                     * @example {
-                     *       "error": {
-                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                     *         "message": "A Basic plan or higher is required to access the API"
-                     *       }
-                     *     }
-                     */
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };

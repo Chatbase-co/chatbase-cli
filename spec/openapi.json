@@ -3217,6 +3217,209 @@
           "message"
         ]
       },
+      "AgentAnalyticsResponse": {
+        "type": "object",
+        "properties": {
+          "buckets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsBucket"
+            },
+            "description": "The range split into 7 equal buckets, oldest first"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsCount"
+            },
+            "description": "Conversations in the range by source"
+          },
+          "toolsUsed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsCount"
+            },
+            "description": "Conversations in the range by tool used"
+          },
+          "countries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsCount"
+            },
+            "description": "Conversations in the range by country code"
+          },
+          "confidence": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Conversations in the range by their lowest answer confidence score, in 10 bins of 0.1: index 0 is 0–0.1, index 9 is 0.9–1. A conversation with no scored answers counts as 1."
+          },
+          "conversationsByHour": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Conversations in the range by the hour they started in `timeZone`: 24 counts, index 0 is 00:00–01:00. Counts come from whole UTC hours, so zones with a 30- or 45-minute offset are approximate."
+          },
+          "creditsByDay": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "UTC day (`YYYY-MM-DD`)"
+                },
+                "credits": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "date",
+                "credits"
+              ]
+            },
+            "description": "Credits the agent used per UTC day that overlaps the range. Days with no usage are omitted."
+          }
+        },
+        "required": [
+          "buckets",
+          "sources",
+          "toolsUsed",
+          "countries",
+          "confidence",
+          "conversationsByHour",
+          "creditsByDay"
+        ]
+      },
+      "AnalyticsBucket": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "number",
+            "description": "Bucket start, inclusive (Unix timestamp in seconds)"
+          },
+          "end": {
+            "type": "number",
+            "description": "Bucket end, exclusive (Unix timestamp in seconds)"
+          },
+          "conversations": {
+            "type": "number",
+            "description": "Conversations last active in this bucket"
+          },
+          "messages": {
+            "type": "number",
+            "description": "Messages in those conversations"
+          },
+          "positive": {
+            "type": "number",
+            "description": "Conversations with positive sentiment"
+          },
+          "neutral": {
+            "type": "number",
+            "description": "Conversations with neutral sentiment"
+          },
+          "negative": {
+            "type": "number",
+            "description": "Conversations with negative sentiment"
+          },
+          "escalated": {
+            "type": "number",
+            "description": "Conversations escalated to a human (ticket or live-chat handoff)"
+          },
+          "thumbsUp": {
+            "type": "number",
+            "description": "Messages rated thumbs up"
+          },
+          "thumbsDown": {
+            "type": "number",
+            "description": "Messages rated thumbs down"
+          },
+          "ticketsByStatus": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/AnalyticsCount"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "enum": [
+                        "new",
+                        "on_you",
+                        "on_customer",
+                        "on_hold",
+                        "closed",
+                        "cancelled"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "description": "Help desk tickets created in this bucket, by their current status category. Statuses with no tickets are omitted. `null` when help desk is off for the agent or the key cannot read tickets."
+          },
+          "procedures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsCount"
+            },
+            "description": "Procedure run statuses (`completed`, `stalled`, `turn_limit`, …) in conversations last active in this bucket. Each count is the number of conversation–procedure pairs that reached that status."
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsCount"
+            },
+            "description": "Tool result statuses (`success`, `error`, …) in conversations last active in this bucket. Each count is the number of conversation–tool pairs that returned that status."
+          },
+          "actionTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsCount"
+            },
+            "description": "Action types (e.g. `collect-leads`) in conversations last active in this bucket. Each count is the number of conversations where that type ran, so one conversation can count under several types."
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "conversations",
+          "messages",
+          "positive",
+          "neutral",
+          "negative",
+          "escalated",
+          "thumbsUp",
+          "thumbsDown",
+          "ticketsByStatus",
+          "procedures",
+          "tools",
+          "actionTypes"
+        ]
+      },
+      "AnalyticsCount": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "count"
+        ]
+      },
       "StreamFinishMetadata": {
         "type": "object",
         "properties": {
@@ -4052,9 +4255,10 @@
               "neutral",
               "positive",
               "negative",
+              "unspecified",
               null
             ],
-            "description": "Sentiment of the conversation, as shown on the Analytics page. Null until it has been analyzed."
+            "description": "Overall customer sentiment. Null when the conversation has not been analyzed."
           },
           "country": {
             "type": [
@@ -4148,11 +4352,16 @@
           "hasMore": {
             "type": "boolean",
             "description": "Whether more results are available"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Number of matching conversations, capped at 10,000."
           }
         },
         "required": [
           "cursor",
-          "hasMore"
+          "hasMore",
+          "total"
         ]
       },
       "GetConversationResponse": {
@@ -4633,6 +4842,16 @@
               }
             ]
           },
+          "zendeskMacros": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SourceTypeCount"
+              },
+              {
+                "description": "Aggregated stats for Zendesk macro sources. count = number of macros synced"
+              }
+            ]
+          },
           "shouldRetrain": {
             "type": "boolean",
             "description": "True when the agent knowledge base requires a retrain to reflect any changes"
@@ -4646,6 +4865,7 @@
           "texts",
           "zendeskTickets",
           "salesforceCases",
+          "zendeskMacros",
           "shouldRetrain"
         ]
       },
@@ -6470,6 +6690,10 @@
             "description": "ISO 8601 creation timestamp",
             "example": "2026-07-25T10:15:00.000Z"
           },
+          "sendError": {
+            "type": "string",
+            "description": "Why the message failed to reach the customer on its channel. Present only when delivery failed."
+          },
           "metadata": {
             "$ref": "#/components/schemas/MessageEventMetadata"
           }
@@ -6925,7 +7149,8 @@
           "type": {
             "type": "string",
             "enum": [
-              "reply"
+              "reply",
+              "note"
             ],
             "description": "Message type",
             "example": "reply"
@@ -6936,7 +7161,7 @@
                 "$ref": "#/components/schemas/MessageSender"
               },
               {
-                "description": "The team member the reply is attributed to"
+                "description": "The team member the message is attributed to"
               }
             ]
           },
@@ -6969,9 +7194,10 @@
           "type": {
             "type": "string",
             "enum": [
-              "reply"
+              "reply",
+              "note"
             ],
-            "description": "Message type. Only `reply` (customer-visible, delivered to the customer) is supported.",
+            "description": "Message type. `reply` is customer-visible and delivered to the customer. `note` is internal to your team, is never delivered, and can be added to closed or merged tickets.",
             "example": "reply"
           },
           "content": {
@@ -8490,6 +8716,252 @@
                   "error": {
                     "code": "INTERNAL_SERVER_ERROR",
                     "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/analytics": {
+      "get": {
+        "operationId": "getAgentAnalytics",
+        "x-mcp": {
+          "tool": "chatbase_get_agent_analytics",
+          "scopes": [
+            "analytics:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          }
+        },
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Get agent analytics",
+        "description": "Returns an agent's activity over a date range split into 7 equal buckets: conversations, messages, sentiment, escalations, ratings, help desk tickets, procedure runs, tool calls and action types per bucket. For the whole range it adds conversation counts by source, action, country, answer confidence and hour of day, plus credits per day. Conversations count by last activity, and the range must fall inside the searchable window (since the 1st of the month 12 months ago, UTC).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range start (`YYYY-MM-DD` or ISO 8601). Defaults to 7 days before `endDate`."
+            },
+            "required": false,
+            "description": "Range start (`YYYY-MM-DD` or ISO 8601). Defaults to 7 days before `endDate`.",
+            "name": "startDate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range end (`YYYY-MM-DD`, inclusive, or ISO 8601). Defaults to now; a later end is capped to now."
+            },
+            "required": false,
+            "description": "Range end (`YYYY-MM-DD`, inclusive, or ISO 8601). Defaults to now; a later end is capped to now.",
+            "name": "endDate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "default": "UTC",
+              "description": "IANA time zone for `conversationsByHour`, e.g. `America/New_York`. Defaults to `UTC`.",
+              "example": "UTC"
+            },
+            "required": false,
+            "description": "IANA time zone for `conversationsByHour`, e.g. `America/New_York`. Defaults to `UTC`.",
+            "name": "timeZone",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent analytics for the range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentAnalyticsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "VALIDATION_INVALID_BODY": {
+                    "summary": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_INVALID_BODY",
+                        "message": "Invalid request"
+                      }
+                    }
+                  },
+                  "VALIDATION_INVALID_DATE_RANGE": {
+                    "summary": "The requested `createdAt` window is inverted. An inverted window can never match a row, so it is rejected rather than silently returning an empty page.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_INVALID_DATE_RANGE",
+                        "message": "startDate must not be after endDate"
+                      }
+                    }
+                  },
+                  "VALIDATION_SEARCH_WINDOW_EXCEEDED": {
+                    "summary": "Conversation search covers conversations created since the first day of the month twelve months ago (UTC). `startDate`, `endDate` and `updatedBefore` must fall inside that window; use the export endpoint for older conversations.",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_SEARCH_WINDOW_EXCEEDED",
+                        "message": "The requested dates are before the searchable window"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "AUTH_INSUFFICIENT_PERMISSIONS": {
+                    "summary": "The API key does not have the required permissions for this operation. Ensure the key's account has the appropriate plan and role.",
+                    "value": {
+                      "error": {
+                        "code": "AUTH_INSUFFICIENT_PERMISSIONS",
+                        "message": "You don't have permission to perform this action"
+                      }
+                    }
+                  },
+                  "SUBSCRIPTION_API_RESTRICTED_PLAN": {
+                    "summary": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+                    "value": {
+                      "error": {
+                        "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                        "message": "A Basic plan or higher is required to access the API"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No agent matches the provided `agentId`, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AGENT_NOT_FOUND",
+                    "message": "Agent not found"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "SERVICE_UNDER_MAINTENANCE": {
+                    "summary": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+                    "value": {
+                      "error": {
+                        "code": "SERVICE_UNDER_MAINTENANCE",
+                        "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                      }
+                    }
+                  },
+                  "CONVERSATION_SEARCH_BUSY": {
+                    "summary": "The search index timed out or is overloaded. This is transient; retry after a short delay.",
+                    "value": {
+                      "error": {
+                        "code": "CONVERSATION_SEARCH_BUSY",
+                        "message": "Conversation search is temporarily unavailable, please retry"
+                      }
+                    }
                   }
                 }
               }
@@ -11849,6 +12321,24 @@
             "description": "Partial (case-insensitive) name match",
             "name": "name",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "untrained",
+                "trained",
+                "toBeDeleted",
+                "updated",
+                "failed"
+              ],
+              "description": "Only return sources with this training status",
+              "example": "failed"
+            },
+            "required": false,
+            "description": "Only return sources with this training status",
+            "name": "status",
+            "in": "query"
           }
         ],
         "responses": {
@@ -13727,11 +14217,11 @@
                 },
                 "examples": {
                   "HELPDESK_NOT_ENABLED": {
-                    "summary": "The agent exists but help desk is not activated for it. Enable help desk before calling its endpoints.",
+                    "summary": "The agent exists but Helpdesk is not activated for it. Enable Helpdesk before calling its endpoints.",
                     "value": {
                       "error": {
                         "code": "HELPDESK_NOT_ENABLED",
-                        "message": "Help desk is not enabled for this agent"
+                        "message": "Helpdesk is not enabled for this agent"
                       }
                     }
                   },
@@ -14005,11 +14495,11 @@
                 },
                 "examples": {
                   "HELPDESK_NOT_ENABLED": {
-                    "summary": "The agent exists but help desk is not activated for it. Enable help desk before calling its endpoints.",
+                    "summary": "The agent exists but Helpdesk is not activated for it. Enable Helpdesk before calling its endpoints.",
                     "value": {
                       "error": {
                         "code": "HELPDESK_NOT_ENABLED",
-                        "message": "Help desk is not enabled for this agent"
+                        "message": "Helpdesk is not enabled for this agent"
                       }
                     }
                   },
@@ -15250,6 +15740,7 @@
             "contentText",
             "attachments",
             "createdAt",
+            "sendError",
             "metadata"
           ],
           "maxItems": 50
@@ -15496,7 +15987,7 @@
           "Helpdesk"
         ],
         "summary": "Add a message to a ticket",
-        "description": "Posts an agent reply to a ticket on behalf of a team member. Delivery to the customer is asynchronous; a 201 confirms the reply was recorded, not delivered. Posting a reply may transition the ticket status, matching dashboard behavior.",
+        "description": "Posts an agent reply or internal note to a ticket on behalf of a team member. Reply delivery to the customer is asynchronous; a 201 confirms the reply was recorded, not delivered. Posting a reply may transition the ticket status, matching dashboard behavior. Notes are never delivered to the customer.",
         "security": [
           {
             "bearerAuth": []
@@ -15583,16 +16074,30 @@
             }
           },
           "403": {
-            "description": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 },
-                "example": {
-                  "error": {
-                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
-                    "message": "A Basic plan or higher is required to access the API"
+                "examples": {
+                  "SUBSCRIPTION_API_RESTRICTED_PLAN": {
+                    "summary": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+                    "value": {
+                      "error": {
+                        "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                        "message": "A Basic plan or higher is required to access the API"
+                      }
+                    }
+                  },
+                  "AUTHOR_NOT_CALLER": {
+                    "summary": "On calls made through a connected app, the authorId or authorEmail must be the signed-in user.",
+                    "value": {
+                      "error": {
+                        "code": "AUTHOR_NOT_CALLER",
+                        "message": "Messages can only be posted as yourself"
+                      }
+                    }
                   }
                 }
               }
