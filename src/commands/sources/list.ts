@@ -16,6 +16,16 @@ export default class SourcesList extends ListCommand {
         }),
         name: Flags.string({
             description: 'Filter by source name'
+        }),
+        status: Flags.string({
+            description: 'Filter by training status',
+            options: [
+                'untrained',
+                'trained',
+                'toBeDeleted',
+                'updated',
+                'failed'
+            ]
         })
     }
 
@@ -28,6 +38,7 @@ export default class SourcesList extends ListCommand {
         const extraQuery: Record<string, unknown> = {}
         if (flags.type) extraQuery.type = flags.type
         if (flags.name) extraQuery.name = flags.name
+        if (flags.status) extraQuery.status = flags.status
 
         const { pages, items } = await fetchPages<Record<string, unknown>>(
             (query) =>
