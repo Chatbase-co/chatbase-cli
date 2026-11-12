@@ -107,7 +107,8 @@ describe('chatbase agents analytics', () => {
         mock.get(BASE)
             .intercept({
                 path: '/api/v2/agents/agt_1/analytics',
-                method: 'GET'
+                method: 'GET',
+                query: { startDate: '2000-01-01' }
             })
             .reply(400, {
                 error: {
@@ -116,10 +117,32 @@ describe('chatbase agents analytics', () => {
                         'The requested dates are before the searchable window'
                 }
             })
-        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await expect(
             AgentsAnalytics.run(['--start-date', '2000-01-01'], process.cwd())
-        ).rejects.toThrow()
+        ).rejects.toMatchObject({ oclif: { exit: 1 } })
+        const printed = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(printed).toContain('VALIDATION_SEARCH_WINDOW_EXCEEDED')
+        expect(printed).toContain('chatbase conversations export')
+    })
+
+    it('adds a retry hint to CONVERSATION_SEARCH_BUSY', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/analytics',
+                method: 'GET'
+            })
+            .reply(503, {
+                error: { code: 'CONVERSATION_SEARCH_BUSY', message: 'busy' }
+            })
+            .times(2) // GETs retry once on 5xx
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            AgentsAnalytics.run([], process.cwd())
+        ).rejects.toMatchObject({ oclif: { exit: 1 } })
+        const printed = err.mock.calls.map((c) => String(c[0])).join('')
+        expect(printed).toContain('CONVERSATION_SEARCH_BUSY')
+        expect(printed).toContain('retry in a few seconds')
     })
 })
 
@@ -148,8 +171,15 @@ describe('chatbase sources list --status', () => {
     })
 })
 
-describe('chatbase tickets reply --type note', () => {
-    it('posts type note', async () => {
+describe('chatbase tickets reply --type', () => {
+    it.each([
+        { extra: [], type: 'reply', printed: 'Reply posted to ticket 42' },
+        {
+            extra: ['--type', 'note'],
+            type: 'note',
+            printed: 'Note posted to ticket 42'
+        }
+    ])('sends type $type', async ({ extra, type, printed }) => {
         let sent = ''
         mock.get(BASE)
             .intercept({
@@ -160,22 +190,21 @@ describe('chatbase tickets reply --type note', () => {
                 sent = Buffer.from(opts.body as Uint8Array).toString('utf8')
                 return {}
             })
-        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
         await TicketsReply.run(
             [
                 '42',
                 '-m',
                 'internal',
-                '--type',
-                'note',
+                ...extra,
                 '--author-email',
                 'sam@example.com'
             ],
             process.cwd()
         )
-        expect(JSON.parse(sent)).toMatchObject({
-            type: 'note',
-            content: 'internal'
-        })
+        expect(JSON.parse(sent)).toMatchObject({ type, content: 'internal' })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            printed
+        )
     })
 })

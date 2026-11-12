@@ -58,6 +58,8 @@ const REMEDIATIONS: Record<string, string> = {
         'Search covers conversations created since the 1st of the month 12 months ago (UTC). Use `chatbase conversations export` for older ones.',
     CONVERSATION_SEARCH_BUSY:
         'The search index timed out or is overloaded. This is transient; retry in a few seconds, or narrow the date range.',
+    AUTHOR_NOT_CALLER:
+        'Through a connected app, --author-id/--author-email must be the signed-in user. Pass your own id or email.',
     TICKET_MERGED:
         'This ticket was merged into another ticket and no longer accepts replies; only moves between closed statuses are allowed. Continue on the ticket it was merged into.',
     TICKET_CLOSED:
