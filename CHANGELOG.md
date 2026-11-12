@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.12.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.11.0...v0.12.0) (2026-11-12)
+
+
+### Features
+
+* **agents:** add analytics command, sources --status, tickets reply --type ([843d72d](https://github.com/Chatbase-co/chatbase-cli/commit/843d72d0a66b80555f8cafc9cfe6e2dbab065517))
+* **agents:** add analytics command, sources --status, tickets reply --type ([98793b8](https://github.com/Chatbase-co/chatbase-cli/commit/98793b8689c56c989a820dd095f7eb2e88efe766))
+
+
+### Bug Fixes
+
+* address review on analytics PR ([30ca981](https://github.com/Chatbase-co/chatbase-cli/commit/30ca981589f08a323b0576b882f063fe51dd5a14))
+
 ## [0.11.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.10.5...v0.11.0) (2026-11-11)
 
 
