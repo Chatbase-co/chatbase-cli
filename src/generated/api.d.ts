@@ -548,6 +548,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agents/{agentId}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List actions
+         * @description Returns a paginated list of an agent's actions, sorted by name. Action configuration is not included.
+         */
+        get: operations["listActions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agents/{agentId}/actions/{actionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an action
+         * @description Returns one action, including when the agent should use it, the fields it collects and the channels it can run on. Other configuration is not included.
+         */
+        get: operations["getAction"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete an action
+         * @description Deletes an action from the live agent at once. Refused while any procedure mentions it; remove the mention first. Publishing an older draft can bring it back.
+         */
+        delete: operations["deleteAction"];
+        options?: never;
+        head?: never;
+        /**
+         * Update an action
+         * @description Updates an action's name, status, whenToUse, procedureOnly, per-channel switches, or the inputs it collects. A draft cannot be set to disabled; finishing its setup turns it off, and status enabled turns it on only once setup is complete. whenToUse is required unless the action is procedure-only, and an update cannot leave a complete action incomplete. Properties you leave out keep their value, but `input` fields replace the whole list. Procedures that mention a disabled action stay enabled but are skipped until the action is enabled again. Renaming updates their mentions. Changes apply to the live agent at once; publishing an older draft can undo them.
+         */
+        patch: operations["updateAction"];
+        trace?: never;
+    };
+    "/agents/{agentId}/procedures": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List procedures
+         * @description Returns a paginated list of an agent's procedures, newest first. Steps are not included.
+         */
+        get: operations["listProcedures"];
+        put?: never;
+        /**
+         * Create a procedure
+         * @description Creates a procedure on the live agent. It starts disabled; enable it with an update once every action its steps mention exists and is enabled. Publishing an older draft can remove it.
+         */
+        post: operations["createProcedure"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agents/{agentId}/procedures/{procedureId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a procedure
+         * @description Returns one procedure, including its steps.
+         */
+        get: operations["getProcedure"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a procedure
+         * @description Deletes a procedure from the live agent at once, together with its run history. Publishing an older draft can bring the procedure back, but not its history.
+         */
+        delete: operations["deleteProcedure"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a procedure
+         * @description Updates a procedure's name, trigger, steps or status. Properties you leave out keep their value, but `steps` replaces all steps. Enabling needs every action the steps mention to exist and be enabled. Changes apply to the live agent at once; publishing an older draft can undo them.
+         */
+        patch: operations["updateProcedure"];
+        trace?: never;
+    };
     "/agents/{agentId}/whatsapp/templates": {
         parameters: {
             query?: never;
@@ -2432,6 +2532,323 @@ export interface components {
             excludePaths?: string[];
             includeOnlyPaths?: string[];
             slowScraping?: boolean;
+        };
+        ListActionsResponse: {
+            data: components["schemas"]["ActionListItem"][];
+            pagination: {
+                /** @description Cursor for the next page, or null if no more pages */
+                cursor: string | null;
+                /** @description Whether more results are available */
+                hasMore: boolean;
+                /** @description Total number of items matching the query */
+                total: number;
+            };
+        };
+        ActionListItem: {
+            /** @description Action ID */
+            id: string;
+            /** @description Action name, unique within the agent */
+            name: string;
+            /**
+             * @description Action type
+             * @example custom-action
+             * @enum {string}
+             */
+            type: "collect-leads" | "collect-data" | "custom-button" | "custom-action" | "shopify-get-cart" | "shopify-update-cart" | "shopify-place-order" | "shopify-exchange" | "shopify-show-product" | "shopify-show-order" | "shopify-update-profile" | "shopify-update-address" | "shopify-account-access" | "shopify-get-metafields" | "shopify-tag-order" | "shopify-create-return" | "magento-show-product" | "slack-notify" | "stripe-get-subscription-info" | "stripe-get-invoices" | "stripe-change-billing-address" | "stripe-manage-subscription" | "stripe-find-payments" | "stripe-refund-payment" | "chatbase-update-chatbot-settings" | "calcom-get-slots" | "calendly-get-slots" | "tavily-web-search" | "sunshine-live-chat" | "zendesk-messaging-live-chat" | "freshchat-live-chat" | "salesforce-live-chat" | "chatbase-live-chat" | "customize-suggested-messages" | "custom-form" | "create-ticket" | "transfer-to-phone-number" | "human-in-the-loop";
+            /**
+             * @description Whether the agent can use the action. `draft` means its setup isn't complete, so the agent can't use it.
+             * @enum {string}
+             */
+            status: "enabled" | "disabled" | "draft";
+            /** @description Whether the action runs only when a procedure calls it */
+            procedureOnly: boolean;
+        };
+        Action: components["schemas"]["ActionListItem"] & {
+            /** @description Tells the agent when to call the action. Null when it is not set. */
+            whenToUse: string | null;
+            /** @description What the action collects. `input` fields are the editable list, except on create-ticket actions, where they cannot be changed. `form` fields are the collect-leads form (description is the label) and `widget` fields are the linked widget variables; both are shown and cannot be changed. Built-in fields and a shared ticket form are not included. */
+            fields: components["schemas"]["ActionField"][];
+            /** @description Channels the action can be switched on or off for, as on the Deploy page. New channels may be added. */
+            channels: {
+                /** @enum {string} */
+                channel: "chat_widget" | "help_page" | "center_stage" | "side_panel" | "slack" | "whatsapp" | "messenger" | "instagram" | "salesforce" | "zendesk" | "zendesk_messaging" | "api" | "email" | "android_sdk" | "ios_sdk" | "phone" | "search";
+                /** @description Whether the channel is deployed on the agent */
+                connected: boolean;
+                /** @description Whether the channel is set up for the action to run */
+                setup: boolean;
+                /** @description Whether the action is switched on for this channel. It runs only when its status is also `enabled`. */
+                enabled: boolean;
+            }[];
+        };
+        ActionField: components["schemas"]["ActionInputField"] | components["schemas"]["ActionFormField"] | components["schemas"]["ActionWidgetField"];
+        ActionInputField: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            source: "input";
+            name: string;
+            /** @example text */
+            type: string;
+            description: string;
+            required: boolean;
+            array: boolean;
+            default?: string | null;
+        };
+        ActionFormField: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            source: "form";
+            name: string;
+            type: string;
+            /** @description The label shown on the collect-leads form */
+            description: string;
+            required: boolean;
+        };
+        ActionWidgetField: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            source: "widget";
+            name: string;
+            type: string;
+            description: string;
+            required: boolean;
+        };
+        UpdateActionResponse: components["schemas"]["Action"] & {
+            /** @description Problems with procedures or webhooks linked to the action. The update itself was saved. */
+            warnings: string[];
+        };
+        UpdateActionBody: {
+            /**
+             * @description New name: 3 to 64 letters, digits, `_` or `-`, unique within the agent. Most types need a leading letter or `_`. Spaces become `_`. Sending the current name leaves it unchanged, including names those rules would reject. Procedures that mention the old name are updated.
+             * @example check_order_status
+             */
+            name?: string;
+            /**
+             * @description Turns the action on or off
+             * @enum {string}
+             */
+            status?: "enabled" | "disabled";
+            /**
+             * @description Tells the agent when to call the action. Send null or "" to clear it. An enabled action that is not procedure-only must keep one.
+             * @example Use when the customer asks where their order is.
+             */
+            whenToUse?: string | null;
+            /** @description When true, only procedures can call the action */
+            procedureOnly?: boolean;
+            /**
+             * @description Switches the action on or off per channel. Channels you leave out keep their setting. Only channels listed in the action's `channels` are accepted.
+             * @example [
+             *       {
+             *         "channel": "whatsapp",
+             *         "enabled": false
+             *       }
+             *     ]
+             */
+            channels?: {
+                /** @enum {string} */
+                channel: "chat_widget" | "help_page" | "center_stage" | "side_panel" | "slack" | "whatsapp" | "messenger" | "instagram" | "salesforce" | "zendesk" | "zendesk_messaging" | "api" | "email" | "android_sdk" | "ios_sdk" | "phone" | "search";
+                enabled: boolean;
+            }[];
+            /**
+             * @description Replaces the `input` list, so send every field to keep. The GET list round-trips unchanged. Rules follow the dashboard for each type: collect-data takes 1 to 20 fields, collect-leads 20 besides name, email and phone, shopify-exchange 20 (names up to 30 characters, descriptions up to 200). Only shopify-exchange takes `image`. `required`, `array` and `default` change only where the dashboard edits them; send `default: null` to remove one. Create-ticket, `form` and `widget` fields are read-only.
+             * @example [
+             *       {
+             *         "source": "input",
+             *         "name": "order_id",
+             *         "type": "text",
+             *         "description": "The order number",
+             *         "required": true,
+             *         "array": false
+             *       }
+             *     ]
+             */
+            fields?: components["schemas"]["ActionField"][];
+        };
+        ListProceduresResponse: {
+            data: components["schemas"]["ProcedureListItem"][];
+            pagination: {
+                /** @description Cursor for the next page, or null if no more pages */
+                cursor: string | null;
+                /** @description Whether more results are available */
+                hasMore: boolean;
+                /** @description Total number of items matching the query */
+                total: number;
+            };
+        };
+        ProcedureListItem: {
+            /** @description Procedure ID */
+            id: string;
+            /** @description Procedure name, unique within the agent */
+            name: string;
+            /**
+             * @description Whether the agent can run the procedure.
+             * @enum {string}
+             */
+            status: "enabled" | "disabled";
+            /**
+             * @description When the agent should start the procedure
+             * @example The customer asks for a refund
+             */
+            trigger: string;
+            /**
+             * @description Action mentions in the steps, such as `@refund_payment`, whose action is missing or disabled. While any is listed, the agent skips the procedure. It also skips the procedure on a channel where a mentioned action is switched off.
+             * @example [
+             *       "@refund_payment"
+             *     ]
+             */
+            unavailableActions: string[];
+        };
+        Procedure: components["schemas"]["ProcedureListItem"] & {
+            /** @description The steps in order. */
+            steps: components["schemas"]["ProcedureStep"][];
+        };
+        ProcedureStep: components["schemas"]["ProcedureInstructionStep"] | components["schemas"]["ProcedureBranchStep"];
+        ProcedureInstructionStep: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "instruction";
+            /**
+             * @description What the agent does. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action.
+             * @example Ask for the order number, then call @get_order
+             */
+            text: string;
+        };
+        ProcedureBranchStep: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "branch";
+            branches: {
+                /**
+                 * @description When this branch runs
+                 * @example The order is older than 30 days
+                 */
+                condition: string;
+                steps: components["schemas"]["ProcedureStep"][];
+            }[];
+            /** @description Runs when no condition matches */
+            otherwise?: {
+                steps: components["schemas"]["ProcedureStep"][];
+            };
+        };
+        CreateProcedureBody: {
+            /**
+             * @description Name: 1 to 100 characters, no line breaks, unique within the agent
+             * @example Refund a recent order
+             */
+            name: string;
+            /**
+             * @description When the agent should start the procedure, up to 500 characters
+             * @example The customer asks for a refund
+             */
+            trigger: string;
+            /** @description The steps in order. An `instruction` step is one line; in it `@` plus an action name in lowercase, with `-` written as `_`, mentions that action (`Order-Issue` becomes `@order_issue`), and `{{variable}}` inserts one of the agent's variables. A `branch` step runs the instructions of its first matching condition (1 to 5), or else `otherwise`; a branch cannot contain another branch. Up to 15 instruction steps in total, counting those inside branches. */
+            steps: ({
+                /** @enum {string} */
+                kind: "instruction";
+                /**
+                 * @description What the agent does, on one line. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action; `{{variable}}` inserts a variable.
+                 * @example Ask for the order number, then call @get_order
+                 */
+                text: string;
+            } | {
+                /** @enum {string} */
+                kind: "branch";
+                branches: {
+                    /**
+                     * @description When this branch runs
+                     * @example The order is older than 30 days
+                     */
+                    condition: string;
+                    steps: {
+                        /** @enum {string} */
+                        kind: "instruction";
+                        /**
+                         * @description What the agent does, on one line. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action; `{{variable}}` inserts a variable.
+                         * @example Ask for the order number, then call @get_order
+                         */
+                        text: string;
+                    }[];
+                }[];
+                /** @description Runs when no condition matches */
+                otherwise?: {
+                    steps: {
+                        /** @enum {string} */
+                        kind: "instruction";
+                        /**
+                         * @description What the agent does, on one line. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action; `{{variable}}` inserts a variable.
+                         * @example Ask for the order number, then call @get_order
+                         */
+                        text: string;
+                    }[];
+                };
+            })[];
+        };
+        UpdateProcedureBody: {
+            /**
+             * @description New name: 1 to 100 characters, no line breaks, unique within the agent
+             * @example Refund request
+             */
+            name?: string;
+            /**
+             * @description When the agent should start the procedure, up to 500 characters
+             * @example The customer wants their money back
+             */
+            trigger?: string;
+            /** @description Replaces all steps, so send the full list in order, including unchanged steps. An `instruction` step is one line; in it `@` plus an action name in lowercase, with `-` written as `_`, mentions that action (`Order-Issue` becomes `@order_issue`), and `{{variable}}` inserts one of the agent's variables. A `branch` step runs the instructions of its first matching condition (1 to 5), or else `otherwise`; a branch cannot contain another branch. Up to 15 instruction steps in total, counting those inside branches. */
+            steps?: ({
+                /** @enum {string} */
+                kind: "instruction";
+                /**
+                 * @description What the agent does, on one line. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action; `{{variable}}` inserts a variable.
+                 * @example Ask for the order number, then call @get_order
+                 */
+                text: string;
+            } | {
+                /** @enum {string} */
+                kind: "branch";
+                branches: {
+                    /**
+                     * @description When this branch runs
+                     * @example The order is older than 30 days
+                     */
+                    condition: string;
+                    steps: {
+                        /** @enum {string} */
+                        kind: "instruction";
+                        /**
+                         * @description What the agent does, on one line. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action; `{{variable}}` inserts a variable.
+                         * @example Ask for the order number, then call @get_order
+                         */
+                        text: string;
+                    }[];
+                }[];
+                /** @description Runs when no condition matches */
+                otherwise?: {
+                    steps: {
+                        /** @enum {string} */
+                        kind: "instruction";
+                        /**
+                         * @description What the agent does, on one line. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action; `{{variable}}` inserts a variable.
+                         * @example Ask for the order number, then call @get_order
+                         */
+                        text: string;
+                    }[];
+                };
+            })[];
+            /**
+             * @description Turns the procedure on or off
+             * @enum {string}
+             */
+            status?: "enabled" | "disabled";
         };
         ListWhatsAppTemplatesResponse: {
             templates: components["schemas"]["WhatsAppTemplate"][];
@@ -7763,6 +8180,1354 @@ export interface operations {
                      *       "error": {
                      *         "code": "INTERNAL_SERVER_ERROR",
                      *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listActions: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from a previous response to fetch the next page */
+                cursor?: string;
+                /** @description Number of items per page (1 to 100, default 20) */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of actions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListActionsResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Basic plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The action ID */
+                actionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The action */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Action"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Basic plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No action matches the provided `actionId` on this agent, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "ACTION_NOT_FOUND",
+                     *         "message": "Action not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The action ID */
+                actionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Action deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Basic plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No action matches the provided `actionId` on this agent, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "ACTION_NOT_FOUND",
+                     *         "message": "Action not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Procedures mention the action, so it cannot be deleted. The message names them; remove the mention from each first. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "ACTION_IN_USE",
+                     *         "message": "Procedures mention this action"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The action ID */
+                actionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateActionBody"];
+            };
+        };
+        responses: {
+            /** @description The updated action */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateActionResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The plan does not allow API access or AI Actions, or enabling the action would exceed its action limit. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No action matches the provided `actionId` on this agent, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "ACTION_NOT_FOUND",
+                     *         "message": "Action not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The new name is taken, or the action cannot be put in the requested state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listProcedures: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from a previous response to fetch the next page */
+                cursor?: string;
+                /** @description Number of items per page (1 to 100, default 20) */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of procedures */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListProceduresResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Basic plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createProcedure: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProcedureBody"];
+            };
+        };
+        responses: {
+            /** @description The created procedure */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Procedure"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Basic plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No agent matches the provided `agentId`, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AGENT_NOT_FOUND",
+                     *         "message": "Agent not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Procedure names are unique within an agent, ignoring case. Choose a different `name`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "PROCEDURE_NAME_TAKEN",
+                     *         "message": "A procedure with this name already exists on this agent"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getProcedure: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The procedure ID */
+                procedureId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The procedure */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Procedure"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Basic plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No procedure matches the provided `procedureId` on this agent, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "PROCEDURE_NOT_FOUND",
+                     *         "message": "Procedure not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteProcedure: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The procedure ID */
+                procedureId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Procedure deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                     *         "message": "A Basic plan or higher is required to access the API"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No procedure matches the provided `procedureId` on this agent, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "PROCEDURE_NOT_FOUND",
+                     *         "message": "Procedure not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateProcedure: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+                /** @description The procedure ID */
+                procedureId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProcedureBody"];
+            };
+        };
+        responses: {
+            /** @description The updated procedure */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Procedure"];
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The plan does not allow API access, or enabling the procedure would exceed its procedure limit. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No procedure matches the provided `procedureId` on this agent, or it does not belong to the authenticated account. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "PROCEDURE_NOT_FOUND",
+                     *         "message": "Procedure not found"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The new name is taken, or the procedure cannot be enabled yet. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SERVICE_UNDER_MAINTENANCE",
+                     *         "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
                      *       }
                      *     }
                      */

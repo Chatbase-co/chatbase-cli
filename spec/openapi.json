@@ -5275,6 +5275,954 @@
           }
         ]
       },
+      "ListActionsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionListItem"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "cursor": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Cursor for the next page, or null if no more pages"
+              },
+              "hasMore": {
+                "type": "boolean",
+                "description": "Whether more results are available"
+              },
+              "total": {
+                "type": "number",
+                "description": "Total number of items matching the query"
+              }
+            },
+            "required": [
+              "cursor",
+              "hasMore",
+              "total"
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "pagination"
+        ]
+      },
+      "ActionListItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Action ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Action name, unique within the agent"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "collect-leads",
+              "collect-data",
+              "custom-button",
+              "custom-action",
+              "shopify-get-cart",
+              "shopify-update-cart",
+              "shopify-place-order",
+              "shopify-exchange",
+              "shopify-show-product",
+              "shopify-show-order",
+              "shopify-update-profile",
+              "shopify-update-address",
+              "shopify-account-access",
+              "shopify-get-metafields",
+              "shopify-tag-order",
+              "shopify-create-return",
+              "magento-show-product",
+              "slack-notify",
+              "stripe-get-subscription-info",
+              "stripe-get-invoices",
+              "stripe-change-billing-address",
+              "stripe-manage-subscription",
+              "stripe-find-payments",
+              "stripe-refund-payment",
+              "chatbase-update-chatbot-settings",
+              "calcom-get-slots",
+              "calendly-get-slots",
+              "tavily-web-search",
+              "sunshine-live-chat",
+              "zendesk-messaging-live-chat",
+              "freshchat-live-chat",
+              "salesforce-live-chat",
+              "chatbase-live-chat",
+              "customize-suggested-messages",
+              "custom-form",
+              "create-ticket",
+              "transfer-to-phone-number",
+              "human-in-the-loop"
+            ],
+            "description": "Action type",
+            "example": "custom-action"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "enabled",
+              "disabled",
+              "draft"
+            ],
+            "description": "Whether the agent can use the action. `draft` means its setup isn't complete, so the agent can't use it."
+          },
+          "procedureOnly": {
+            "type": "boolean",
+            "description": "Whether the action runs only when a procedure calls it"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "status",
+          "procedureOnly"
+        ]
+      },
+      "Action": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ActionListItem"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "whenToUse": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Tells the agent when to call the action. Null when it is not set."
+              },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ActionField"
+                },
+                "description": "What the action collects. `input` fields are the editable list, except on create-ticket actions, where they cannot be changed. `form` fields are the collect-leads form (description is the label) and `widget` fields are the linked widget variables; both are shown and cannot be changed. Built-in fields and a shared ticket form are not included."
+              },
+              "channels": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "channel": {
+                      "type": "string",
+                      "enum": [
+                        "chat_widget",
+                        "help_page",
+                        "center_stage",
+                        "side_panel",
+                        "slack",
+                        "whatsapp",
+                        "messenger",
+                        "instagram",
+                        "salesforce",
+                        "zendesk",
+                        "zendesk_messaging",
+                        "api",
+                        "email",
+                        "android_sdk",
+                        "ios_sdk",
+                        "phone",
+                        "search"
+                      ]
+                    },
+                    "connected": {
+                      "type": "boolean",
+                      "description": "Whether the channel is deployed on the agent"
+                    },
+                    "setup": {
+                      "type": "boolean",
+                      "description": "Whether the channel is set up for the action to run"
+                    },
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Whether the action is switched on for this channel. It runs only when its status is also `enabled`."
+                    }
+                  },
+                  "required": [
+                    "channel",
+                    "connected",
+                    "setup",
+                    "enabled"
+                  ]
+                },
+                "description": "Channels the action can be switched on or off for, as on the Deploy page. New channels may be added."
+              }
+            },
+            "required": [
+              "whenToUse",
+              "fields",
+              "channels"
+            ]
+          }
+        ]
+      },
+      "ActionField": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ActionInputField"
+          },
+          {
+            "$ref": "#/components/schemas/ActionFormField"
+          },
+          {
+            "$ref": "#/components/schemas/ActionWidgetField"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "source",
+          "mapping": {
+            "input": "#/components/schemas/ActionInputField",
+            "form": "#/components/schemas/ActionFormField",
+            "widget": "#/components/schemas/ActionWidgetField"
+          }
+        }
+      },
+      "ActionInputField": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "input"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "example": "text"
+          },
+          "description": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "array": {
+            "type": "boolean"
+          },
+          "default": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "source",
+          "name",
+          "type",
+          "description",
+          "required",
+          "array"
+        ]
+      },
+      "ActionFormField": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "form"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "description": "The label shown on the collect-leads form"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "source",
+          "name",
+          "type",
+          "description",
+          "required"
+        ]
+      },
+      "ActionWidgetField": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "widget"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "source",
+          "name",
+          "type",
+          "description",
+          "required"
+        ]
+      },
+      "UpdateActionResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Action"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "warnings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Problems with procedures or webhooks linked to the action. The update itself was saved."
+              }
+            },
+            "required": [
+              "warnings"
+            ]
+          }
+        ]
+      },
+      "UpdateActionBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "New name: 3 to 64 letters, digits, `_` or `-`, unique within the agent. Most types need a leading letter or `_`. Spaces become `_`. Sending the current name leaves it unchanged, including names those rules would reject. Procedures that mention the old name are updated.",
+            "example": "check_order_status"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "enabled",
+              "disabled"
+            ],
+            "description": "Turns the action on or off"
+          },
+          "whenToUse": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 3000,
+            "description": "Tells the agent when to call the action. Send null or \"\" to clear it. An enabled action that is not procedure-only must keep one.",
+            "example": "Use when the customer asks where their order is."
+          },
+          "procedureOnly": {
+            "type": "boolean",
+            "description": "When true, only procedures can call the action"
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "channel": {
+                  "type": "string",
+                  "enum": [
+                    "chat_widget",
+                    "help_page",
+                    "center_stage",
+                    "side_panel",
+                    "slack",
+                    "whatsapp",
+                    "messenger",
+                    "instagram",
+                    "salesforce",
+                    "zendesk",
+                    "zendesk_messaging",
+                    "api",
+                    "email",
+                    "android_sdk",
+                    "ios_sdk",
+                    "phone",
+                    "search"
+                  ]
+                },
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "channel",
+                "enabled"
+              ]
+            },
+            "minItems": 1,
+            "description": "Switches the action on or off per channel. Channels you leave out keep their setting. Only channels listed in the action's `channels` are accepted.",
+            "example": [
+              {
+                "channel": "whatsapp",
+                "enabled": false
+              }
+            ]
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionField"
+            },
+            "description": "Replaces the `input` list, so send every field to keep. The GET list round-trips unchanged. Rules follow the dashboard for each type: collect-data takes 1 to 20 fields, collect-leads 20 besides name, email and phone, shopify-exchange 20 (names up to 30 characters, descriptions up to 200). Only shopify-exchange takes `image`. `required`, `array` and `default` change only where the dashboard edits them; send `default: null` to remove one. Create-ticket, `form` and `widget` fields are read-only.",
+            "example": [
+              {
+                "source": "input",
+                "name": "order_id",
+                "type": "text",
+                "description": "The order number",
+                "required": true,
+                "array": false
+              }
+            ]
+          }
+        }
+      },
+      "ListProceduresResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcedureListItem"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "cursor": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Cursor for the next page, or null if no more pages"
+              },
+              "hasMore": {
+                "type": "boolean",
+                "description": "Whether more results are available"
+              },
+              "total": {
+                "type": "number",
+                "description": "Total number of items matching the query"
+              }
+            },
+            "required": [
+              "cursor",
+              "hasMore",
+              "total"
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "pagination"
+        ]
+      },
+      "ProcedureListItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Procedure ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Procedure name, unique within the agent"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "enabled",
+              "disabled"
+            ],
+            "description": "Whether the agent can run the procedure."
+          },
+          "trigger": {
+            "type": "string",
+            "description": "When the agent should start the procedure",
+            "example": "The customer asks for a refund"
+          },
+          "unavailableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Action mentions in the steps, such as `@refund_payment`, whose action is missing or disabled. While any is listed, the agent skips the procedure. It also skips the procedure on a channel where a mentioned action is switched off.",
+            "example": [
+              "@refund_payment"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "trigger",
+          "unavailableActions"
+        ]
+      },
+      "Procedure": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProcedureListItem"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "steps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProcedureStep"
+                },
+                "description": "The steps in order."
+              }
+            },
+            "required": [
+              "steps"
+            ]
+          }
+        ]
+      },
+      "ProcedureStep": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ProcedureInstructionStep"
+          },
+          {
+            "$ref": "#/components/schemas/ProcedureBranchStep"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "instruction": "#/components/schemas/ProcedureInstructionStep",
+            "branch": "#/components/schemas/ProcedureBranchStep"
+          }
+        }
+      },
+      "ProcedureInstructionStep": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "instruction"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "description": "What the agent does. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action.",
+            "example": "Ask for the order number, then call @get_order"
+          }
+        },
+        "required": [
+          "kind",
+          "text"
+        ]
+      },
+      "ProcedureBranchStep": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "branch"
+            ]
+          },
+          "branches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "condition": {
+                  "type": "string",
+                  "description": "When this branch runs",
+                  "example": "The order is older than 30 days"
+                },
+                "steps": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProcedureStep"
+                  }
+                }
+              },
+              "required": [
+                "condition",
+                "steps"
+              ]
+            }
+          },
+          "otherwise": {
+            "type": "object",
+            "properties": {
+              "steps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProcedureStep"
+                }
+              }
+            },
+            "required": [
+              "steps"
+            ],
+            "description": "Runs when no condition matches"
+          }
+        },
+        "required": [
+          "kind",
+          "branches"
+        ]
+      },
+      "CreateProcedureBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[^\\n\\r]+$",
+            "description": "Name: 1 to 100 characters, no line breaks, unique within the agent",
+            "example": "Refund a recent order"
+          },
+          "trigger": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "When the agent should start the procedure, up to 500 characters",
+            "example": "The customer asks for a refund"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "instruction"
+                      ]
+                    },
+                    "text": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 1000,
+                      "pattern": "^[^\\n\\r]*$",
+                      "description": "What the agent does, on one line. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action; `{{variable}}` inserts a variable.",
+                      "example": "Ask for the order number, then call @get_order"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "text"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "branch"
+                      ]
+                    },
+                    "branches": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "condition": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "pattern": "^[^\\n\\r]*$",
+                            "description": "When this branch runs",
+                            "example": "The order is older than 30 days"
+                          },
+                          "steps": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "instruction"
+                                  ]
+                                },
+                                "text": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 1000,
+                                  "pattern": "^[^\\n\\r]*$",
+                                  "description": "What the agent does, on one line. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action; `{{variable}}` inserts a variable.",
+                                  "example": "Ask for the order number, then call @get_order"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "text"
+                              ]
+                            },
+                            "minItems": 1
+                          }
+                        },
+                        "required": [
+                          "condition",
+                          "steps"
+                        ]
+                      },
+                      "minItems": 1,
+                      "maxItems": 5
+                    },
+                    "otherwise": {
+                      "type": "object",
+                      "properties": {
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "instruction"
+                                ]
+                              },
+                              "text": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 1000,
+                                "pattern": "^[^\\n\\r]*$",
+                                "description": "What the agent does, on one line. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action; `{{variable}}` inserts a variable.",
+                                "example": "Ask for the order number, then call @get_order"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "text"
+                            ]
+                          },
+                          "minItems": 1
+                        }
+                      },
+                      "required": [
+                        "steps"
+                      ],
+                      "description": "Runs when no condition matches"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "branches"
+                  ]
+                }
+              ]
+            },
+            "minItems": 1,
+            "description": "The steps in order. An `instruction` step is one line; in it `@` plus an action name in lowercase, with `-` written as `_`, mentions that action (`Order-Issue` becomes `@order_issue`), and `{{variable}}` inserts one of the agent's variables. A `branch` step runs the instructions of its first matching condition (1 to 5), or else `otherwise`; a branch cannot contain another branch. Up to 15 instruction steps in total, counting those inside branches."
+          }
+        },
+        "required": [
+          "name",
+          "trigger",
+          "steps"
+        ]
+      },
+      "UpdateProcedureBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[^\\n\\r]+$",
+            "description": "New name: 1 to 100 characters, no line breaks, unique within the agent",
+            "example": "Refund request"
+          },
+          "trigger": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "When the agent should start the procedure, up to 500 characters",
+            "example": "The customer wants their money back"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "instruction"
+                      ]
+                    },
+                    "text": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 1000,
+                      "pattern": "^[^\\n\\r]*$",
+                      "description": "What the agent does, on one line. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action; `{{variable}}` inserts a variable.",
+                      "example": "Ask for the order number, then call @get_order"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "text"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "branch"
+                      ]
+                    },
+                    "branches": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "condition": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "pattern": "^[^\\n\\r]*$",
+                            "description": "When this branch runs",
+                            "example": "The order is older than 30 days"
+                          },
+                          "steps": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "instruction"
+                                  ]
+                                },
+                                "text": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 1000,
+                                  "pattern": "^[^\\n\\r]*$",
+                                  "description": "What the agent does, on one line. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action; `{{variable}}` inserts a variable.",
+                                  "example": "Ask for the order number, then call @get_order"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "text"
+                              ]
+                            },
+                            "minItems": 1
+                          }
+                        },
+                        "required": [
+                          "condition",
+                          "steps"
+                        ]
+                      },
+                      "minItems": 1,
+                      "maxItems": 5
+                    },
+                    "otherwise": {
+                      "type": "object",
+                      "properties": {
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "instruction"
+                                ]
+                              },
+                              "text": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 1000,
+                                "pattern": "^[^\\n\\r]*$",
+                                "description": "What the agent does, on one line. `@` plus an action name in lowercase, with `-` written as `_`, mentions that action; `{{variable}}` inserts a variable.",
+                                "example": "Ask for the order number, then call @get_order"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "text"
+                            ]
+                          },
+                          "minItems": 1
+                        }
+                      },
+                      "required": [
+                        "steps"
+                      ],
+                      "description": "Runs when no condition matches"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "branches"
+                  ]
+                }
+              ]
+            },
+            "minItems": 1,
+            "description": "Replaces all steps, so send the full list in order, including unchanged steps. An `instruction` step is one line; in it `@` plus an action name in lowercase, with `-` written as `_`, mentions that action (`Order-Issue` becomes `@order_issue`), and `{{variable}}` inserts one of the agent's variables. A `branch` step runs the instructions of its first matching condition (1 to 5), or else `otherwise`; a branch cannot contain another branch. Up to 15 instruction steps in total, counting those inside branches."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "enabled",
+              "disabled"
+            ],
+            "description": "Turns the procedure on or off"
+          }
+        }
+      },
       "ListWhatsAppTemplatesResponse": {
         "type": "object",
         "properties": {
@@ -13304,6 +14252,1741 @@
                   "error": {
                     "code": "INTERNAL_SERVER_ERROR",
                     "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/actions": {
+      "get": {
+        "operationId": "listActions",
+        "x-mcp": {
+          "tool": "chatbase_list_actions",
+          "scopes": [
+            "actions:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          },
+          "maxItems": 50
+        },
+        "tags": [
+          "Actions"
+        ],
+        "summary": "List actions",
+        "description": "Returns a paginated list of an agent's actions, sorted by name. Action configuration is not included.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Opaque cursor from a previous response to fetch the next page",
+              "example": "eyJ0IjoiMjAyNC0wMS0xNVQxMDozMDowMC4wMDBaIiwiaWQiOiJhYmMxMjMifQ=="
+            },
+            "required": false,
+            "description": "Opaque cursor from a previous response to fetch the next page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Number of items per page (1 to 100, default 20)",
+              "example": 20
+            },
+            "required": false,
+            "description": "Number of items per page (1 to 100, default 20)",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of actions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListActionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "A Basic plan or higher is required to access the API"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No agent matches the provided `agentId`, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AGENT_NOT_FOUND",
+                    "message": "Agent not found"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/actions/{actionId}": {
+      "get": {
+        "operationId": "getAction",
+        "x-mcp": {
+          "tool": "chatbase_get_action",
+          "scopes": [
+            "actions:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          }
+        },
+        "tags": [
+          "Actions"
+        ],
+        "summary": "Get an action",
+        "description": "Returns one action, including when the agent should use it, the fields it collects and the channels it can run on. Other configuration is not included.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The action ID",
+              "example": "3f1c2a9e-8b7d-4c1e-9f0a-2d6b7e8c9a10"
+            },
+            "required": true,
+            "description": "The action ID",
+            "name": "actionId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Action"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "A Basic plan or higher is required to access the API"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No action matches the provided `actionId` on this agent, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "ACTION_NOT_FOUND",
+                    "message": "Action not found"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateAction",
+        "x-mcp": {
+          "tool": "chatbase_update_action",
+          "scopes": [
+            "actions:write"
+          ],
+          "annotations": {
+            "idempotent": true
+          }
+        },
+        "tags": [
+          "Actions"
+        ],
+        "summary": "Update an action",
+        "description": "Updates an action's name, status, whenToUse, procedureOnly, per-channel switches, or the inputs it collects. A draft cannot be set to disabled; finishing its setup turns it off, and status enabled turns it on only once setup is complete. whenToUse is required unless the action is procedure-only, and an update cannot leave a complete action incomplete. Properties you leave out keep their value, but `input` fields replace the whole list. Procedures that mention a disabled action stay enabled but are skipped until the action is enabled again. Renaming updates their mentions. Changes apply to the live agent at once; publishing an older draft can undo them.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The action ID",
+              "example": "3f1c2a9e-8b7d-4c1e-9f0a-2d6b7e8c9a10"
+            },
+            "required": true,
+            "description": "The action ID",
+            "name": "actionId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateActionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateActionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The plan does not allow API access or AI Actions, or enabling the action would exceed its action limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "SUBSCRIPTION_API_RESTRICTED_PLAN": {
+                    "summary": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+                    "value": {
+                      "error": {
+                        "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                        "message": "A Basic plan or higher is required to access the API"
+                      }
+                    }
+                  },
+                  "PLAN_FEATURE_NOT_AVAILABLE": {
+                    "summary": "The requested feature requires a higher-tier subscription plan.",
+                    "value": {
+                      "error": {
+                        "code": "PLAN_FEATURE_NOT_AVAILABLE",
+                        "message": "This feature is not available on your current plan. Please upgrade to use it."
+                      }
+                    }
+                  },
+                  "ACTION_LIMIT_REACHED": {
+                    "summary": "Enabling this action would exceed the number of enabled actions per agent that the current plan allows.",
+                    "value": {
+                      "error": {
+                        "code": "ACTION_LIMIT_REACHED",
+                        "message": "You have reached the maximum number of enabled actions for your plan. Disable another action or upgrade."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No action matches the provided `actionId` on this agent, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "ACTION_NOT_FOUND",
+                    "message": "Action not found"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The new name is taken, or the action cannot be put in the requested state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "ACTION_NAME_TAKEN": {
+                    "summary": "Procedures mention an action as `@` plus its name in lowercase, with `-` written as `_`, so names that differ only in case or `-` and `_` would be ambiguous. Choose a different `name`.",
+                    "value": {
+                      "error": {
+                        "code": "ACTION_NAME_TAKEN",
+                        "message": "An action with this name, or one that differs only in case or `-` and `_`, already exists on this agent"
+                      }
+                    }
+                  },
+                  "ACTION_CHANGE_NOT_ALLOWED": {
+                    "summary": "The action cannot be put in the requested state, for example a draft cannot be enabled. The message says what to fix first.",
+                    "value": {
+                      "error": {
+                        "code": "ACTION_CHANGE_NOT_ALLOWED",
+                        "message": "This change is not allowed for this action"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteAction",
+        "x-mcp": {
+          "tool": "chatbase_delete_action",
+          "scopes": [
+            "actions:delete"
+          ],
+          "annotations": {
+            "destructive": true
+          }
+        },
+        "tags": [
+          "Actions"
+        ],
+        "summary": "Delete an action",
+        "description": "Deletes an action from the live agent at once. Refused while any procedure mentions it; remove the mention first. Publishing an older draft can bring it back.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The action ID",
+              "example": "3f1c2a9e-8b7d-4c1e-9f0a-2d6b7e8c9a10"
+            },
+            "required": true,
+            "description": "The action ID",
+            "name": "actionId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Action deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "A Basic plan or higher is required to access the API"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No action matches the provided `actionId` on this agent, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "ACTION_NOT_FOUND",
+                    "message": "Action not found"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Procedures mention the action, so it cannot be deleted. The message names them; remove the mention from each first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "ACTION_IN_USE",
+                    "message": "Procedures mention this action"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/procedures": {
+      "get": {
+        "operationId": "listProcedures",
+        "x-mcp": {
+          "tool": "chatbase_list_procedures",
+          "scopes": [
+            "actions:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          },
+          "maxItems": 50
+        },
+        "tags": [
+          "Procedures"
+        ],
+        "summary": "List procedures",
+        "description": "Returns a paginated list of an agent's procedures, newest first. Steps are not included.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Opaque cursor from a previous response to fetch the next page",
+              "example": "eyJ0IjoiMjAyNC0wMS0xNVQxMDozMDowMC4wMDBaIiwiaWQiOiJhYmMxMjMifQ=="
+            },
+            "required": false,
+            "description": "Opaque cursor from a previous response to fetch the next page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Number of items per page (1 to 100, default 20)",
+              "example": 20
+            },
+            "required": false,
+            "description": "Number of items per page (1 to 100, default 20)",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of procedures",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListProceduresResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "A Basic plan or higher is required to access the API"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No agent matches the provided `agentId`, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AGENT_NOT_FOUND",
+                    "message": "Agent not found"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createProcedure",
+        "x-mcp": {
+          "tool": "chatbase_create_procedure",
+          "scopes": [
+            "actions:write"
+          ],
+          "annotations": {
+            "destructive": false
+          }
+        },
+        "tags": [
+          "Procedures"
+        ],
+        "summary": "Create a procedure",
+        "description": "Creates a procedure on the live agent. It starts disabled; enable it with an update once every action its steps mention exists and is enabled. Publishing an older draft can remove it.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProcedureBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created procedure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Procedure"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "A Basic plan or higher is required to access the API"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No agent matches the provided `agentId`, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AGENT_NOT_FOUND",
+                    "message": "Agent not found"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Procedure names are unique within an agent, ignoring case. Choose a different `name`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "PROCEDURE_NAME_TAKEN",
+                    "message": "A procedure with this name already exists on this agent"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/procedures/{procedureId}": {
+      "get": {
+        "operationId": "getProcedure",
+        "x-mcp": {
+          "tool": "chatbase_get_procedure",
+          "scopes": [
+            "actions:read"
+          ],
+          "annotations": {
+            "readOnly": true,
+            "idempotent": true
+          }
+        },
+        "tags": [
+          "Procedures"
+        ],
+        "summary": "Get a procedure",
+        "description": "Returns one procedure, including its steps.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The procedure ID",
+              "example": "b1d47c2e-5a3f-4e8b-9c1d-2f6a7b8c9d0e"
+            },
+            "required": true,
+            "description": "The procedure ID",
+            "name": "procedureId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The procedure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Procedure"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "A Basic plan or higher is required to access the API"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No procedure matches the provided `procedureId` on this agent, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "PROCEDURE_NOT_FOUND",
+                    "message": "Procedure not found"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateProcedure",
+        "x-mcp": {
+          "tool": "chatbase_update_procedure",
+          "scopes": [
+            "actions:write"
+          ],
+          "annotations": {
+            "idempotent": true
+          }
+        },
+        "tags": [
+          "Procedures"
+        ],
+        "summary": "Update a procedure",
+        "description": "Updates a procedure's name, trigger, steps or status. Properties you leave out keep their value, but `steps` replaces all steps. Enabling needs every action the steps mention to exist and be enabled. Changes apply to the live agent at once; publishing an older draft can undo them.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The procedure ID",
+              "example": "b1d47c2e-5a3f-4e8b-9c1d-2f6a7b8c9d0e"
+            },
+            "required": true,
+            "description": "The procedure ID",
+            "name": "procedureId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProcedureBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated procedure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Procedure"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The plan does not allow API access, or enabling the procedure would exceed its procedure limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "SUBSCRIPTION_API_RESTRICTED_PLAN": {
+                    "summary": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+                    "value": {
+                      "error": {
+                        "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                        "message": "A Basic plan or higher is required to access the API"
+                      }
+                    }
+                  },
+                  "PROCEDURE_LIMIT_REACHED": {
+                    "summary": "Enabling this procedure would exceed the number of enabled procedures per agent that the current plan allows.",
+                    "value": {
+                      "error": {
+                        "code": "PROCEDURE_LIMIT_REACHED",
+                        "message": "You have reached the maximum number of enabled procedures for your plan. Disable another procedure or upgrade."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No procedure matches the provided `procedureId` on this agent, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "PROCEDURE_NOT_FOUND",
+                    "message": "Procedure not found"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The new name is taken, or the procedure cannot be enabled yet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "PROCEDURE_NAME_TAKEN": {
+                    "summary": "Procedure names are unique within an agent, ignoring case. Choose a different `name`.",
+                    "value": {
+                      "error": {
+                        "code": "PROCEDURE_NAME_TAKEN",
+                        "message": "A procedure with this name already exists on this agent"
+                      }
+                    }
+                  },
+                  "PROCEDURE_CHANGE_NOT_ALLOWED": {
+                    "summary": "The procedure cannot be enabled while an action it mentions is missing or disabled. The message names those actions.",
+                    "value": {
+                      "error": {
+                        "code": "PROCEDURE_CHANGE_NOT_ALLOWED",
+                        "message": "This change is not allowed for this procedure"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteProcedure",
+        "x-mcp": {
+          "tool": "chatbase_delete_procedure",
+          "scopes": [
+            "actions:delete"
+          ],
+          "annotations": {
+            "destructive": true
+          }
+        },
+        "tags": [
+          "Procedures"
+        ],
+        "summary": "Delete a procedure",
+        "description": "Deletes a procedure from the live agent at once, together with its run history. Publishing an older draft can bring the procedure back, but not its history.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The procedure ID",
+              "example": "b1d47c2e-5a3f-4e8b-9c1d-2f6a7b8c9d0e"
+            },
+            "required": true,
+            "description": "The procedure ID",
+            "name": "procedureId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Procedure deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your current plan does not include API access. Upgrade to the Basic plan or higher to use the API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SUBSCRIPTION_API_RESTRICTED_PLAN",
+                    "message": "A Basic plan or higher is required to access the API"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No procedure matches the provided `procedureId` on this agent, or it does not belong to the authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "PROCEDURE_NOT_FOUND",
+                    "message": "Procedure not found"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Chatbase is undergoing scheduled maintenance and the API is temporarily rejecting requests. This is transient; retry after a short delay. Requests are rejected before any data is read or written, so no partial changes are applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNDER_MAINTENANCE",
+                    "message": "The API is temporarily unavailable for scheduled maintenance, please try again later"
                   }
                 }
               }
