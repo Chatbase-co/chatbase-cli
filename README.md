@@ -35,6 +35,10 @@ Chatbase can distinguish CLI traffic server-side. The only network calls are the
 calls you invoke.
 
 <!-- commands -->
+* [`chatbase actions delete ACTIONID`](#chatbase-actions-delete-actionid)
+* [`chatbase actions get ACTIONID`](#chatbase-actions-get-actionid)
+* [`chatbase actions list`](#chatbase-actions-list)
+* [`chatbase actions update ACTIONID`](#chatbase-actions-update-actionid)
 * [`chatbase agents analytics`](#chatbase-agents-analytics)
 * [`chatbase agents auto-retrain [AGENTID]`](#chatbase-agents-auto-retrain-agentid)
 * [`chatbase agents clone AGENTID`](#chatbase-agents-clone-agentid)
@@ -71,6 +75,11 @@ calls you invoke.
 * [`chatbase helpdesk teams`](#chatbase-helpdesk-teams)
 * [`chatbase messages feedback [MESSAGEID]`](#chatbase-messages-feedback-messageid)
 * [`chatbase messages list`](#chatbase-messages-list)
+* [`chatbase procedures create`](#chatbase-procedures-create)
+* [`chatbase procedures delete PROCEDUREID`](#chatbase-procedures-delete-procedureid)
+* [`chatbase procedures get PROCEDUREID`](#chatbase-procedures-get-procedureid)
+* [`chatbase procedures list`](#chatbase-procedures-list)
+* [`chatbase procedures update PROCEDUREID`](#chatbase-procedures-update-procedureid)
 * [`chatbase sources create`](#chatbase-sources-create)
 * [`chatbase sources delete SOURCEID`](#chatbase-sources-delete-sourceid)
 * [`chatbase sources get SOURCEID`](#chatbase-sources-get-sourceid)
@@ -88,6 +97,162 @@ calls you invoke.
 * [`chatbase voice start`](#chatbase-voice-start)
 * [`chatbase whatsapp send-template TEMPLATE`](#chatbase-whatsapp-send-template-template)
 * [`chatbase whatsapp templates`](#chatbase-whatsapp-templates)
+
+## `chatbase actions delete ACTIONID`
+
+Delete an action from the live agent at once (refused while a procedure mentions it)
+
+```
+USAGE
+  $ chatbase actions delete ACTIONID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>]
+
+ARGUMENTS
+  ACTIONID  Action ID
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Delete an action from the live agent at once (refused while a procedure mentions it)
+
+EXAMPLES
+  $ chatbase actions delete 0b8f3c1e-... -a agt_123
+```
+
+_See code: [src/commands/actions/delete.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.12.0/src/commands/actions/delete.ts)_
+
+## `chatbase actions get ACTIONID`
+
+Show one action: when to use it, the fields it collects, and its channels
+
+```
+USAGE
+  $ chatbase actions get ACTIONID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>]
+
+ARGUMENTS
+  ACTIONID  Action ID
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Show one action: when to use it, the fields it collects, and its channels
+
+EXAMPLES
+  $ chatbase actions get 0b8f3c1e-... -a agt_123
+
+  $ chatbase actions get 0b8f3c1e-... -a agt_123 --json
+```
+
+_See code: [src/commands/actions/get.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.12.0/src/commands/actions/get.ts)_
+
+## `chatbase actions list`
+
+List an agent's actions, sorted by name (configuration is not included; use `actions get`)
+
+```
+USAGE
+  $ chatbase actions list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--limit <value>] [--cursor <value>] [--all]
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --all                 Fetch every page
+      --cursor=<value>      Pagination cursor from a previous page
+      --limit=<value>       Maximum items per page
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  List an agent's actions, sorted by name (configuration is not included; use `actions get`)
+
+EXAMPLES
+  $ chatbase actions list -a agt_123
+
+  $ chatbase actions list -a agt_123 --all --json
+```
+
+_See code: [src/commands/actions/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.12.0/src/commands/actions/list.ts)_
+
+## `chatbase actions update ACTIONID`
+
+Update an action's name, status, when-to-use, procedure-only flag, channel switches, or input fields. Changes go live at once.
+
+```
+USAGE
+  $ chatbase actions update ACTIONID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>] [-f <value>...] [--name <value>] [--status enabled|disabled] [--when-to-use <value>]
+    [--procedure-only] [--channel <value>...] [--data <value>]
+
+ARGUMENTS
+  ACTIONID  Action ID
+
+FLAGS
+  -a, --agent=<value>        Agent ID (or set CHATBASE_AGENT_ID)
+  -f, --field=<value>...     Set a body field: -f key=value (repeatable)
+  -q, --quiet                Suppress non-essential output
+      --agent-name=<value>   Agent display name (looked up to an ID)
+      --channel=<value>...   Switch a channel on or off as <channel>=on|off (repeatable); unlisted channels keep their
+                             setting
+      --data=<value>         JSON body (@file, @-, or inline). Use it for `fields`: it REPLACES the whole input-field
+                             list, so send every field to keep (the `actions get --json` fields round-trip)
+      --name=<value>         New name: 3-64 letters, digits, _ or -, unique per agent; procedures mentioning the old
+                             name are updated
+      --no-color             Disable colored output
+      --no-input             Never prompt; fail instead
+      --[no-]procedure-only  Only procedures can call the action
+      --status=<option>      enabled or disabled (a draft cannot be disabled; enabling needs completed setup)
+                             <options: enabled|disabled>
+      --verbose              Verbose diagnostics
+      --when-to-use=<value>  When the agent should call the action (max 3000 chars; @file or @- ok). Pass "" to clear;
+                             required on enabled actions that are not procedure-only
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Update an action's name, status, when-to-use, procedure-only flag, channel switches, or input fields. Changes go live
+  at once.
+
+EXAMPLES
+  $ chatbase actions update 0b8f3c1e-... --status enabled -a agt_123
+
+  $ chatbase actions update 0b8f3c1e-... --name check_order --when-to-use "Use when the customer asks where their order is." -a agt_123
+
+  $ chatbase actions update 0b8f3c1e-... --channel whatsapp=off --channel slack=on -a agt_123
+
+  $ chatbase actions update 0b8f3c1e-... --data @fields.json -a agt_123
+```
+
+_See code: [src/commands/actions/update.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.12.0/src/commands/actions/update.ts)_
 
 ## `chatbase agents analytics`
 
@@ -1444,6 +1609,193 @@ EXAMPLES
 ```
 
 _See code: [src/commands/messages/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.12.0/src/commands/messages/list.ts)_
+
+## `chatbase procedures create`
+
+Create a procedure on the live agent. It starts disabled; enable it with `procedures update --status enabled` once every action its steps mention exists and is enabled.
+
+```
+USAGE
+  $ chatbase procedures create --name <value> --trigger <value> [--json] [--plain] [-q] [--verbose] [--no-input]
+    [--no-color] [--agent-name <value> | -a <value>] [--steps <value> | --step <value>...]
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --name=<value>        (required) Name, 1-100 chars, no line breaks, unique per agent (case-insensitive)
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --step=<value>...     One instruction step (repeatable, single line); shorthand for --steps without branches
+      --steps=<value>       Steps as a JSON array (@file, @-, or inline): {"kind":"instruction","text":"..."} or
+                            {"kind":"branch","branches":[{"condition","steps"}],"otherwise":{"steps"}}. Mention an
+                            action as @action_name. REPLACES all steps on update
+      --trigger=<value>     (required) When the agent should start the procedure (max 500 chars)
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Create a procedure on the live agent. It starts disabled; enable it with `procedures update --status enabled` once
+  every action its steps mention exists and is enabled.
+
+EXAMPLES
+  $ chatbase procedures create --name "Refund a recent order" --trigger "The customer asks for a refund" --step "Ask for the order number, then call @get_order" -a agt_123
+
+  $ chatbase procedures create --name Refund --trigger "Refund request" --steps @steps.json -a agt_123
+```
+
+_See code: [src/commands/procedures/create.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.12.0/src/commands/procedures/create.ts)_
+
+## `chatbase procedures delete PROCEDUREID`
+
+Delete a procedure and its run history from the live agent at once
+
+```
+USAGE
+  $ chatbase procedures delete PROCEDUREID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>]
+
+ARGUMENTS
+  PROCEDUREID  Procedure ID
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Delete a procedure and its run history from the live agent at once
+
+EXAMPLES
+  $ chatbase procedures delete 0b8f3c1e-... -a agt_123
+```
+
+_See code: [src/commands/procedures/delete.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.12.0/src/commands/procedures/delete.ts)_
+
+## `chatbase procedures get PROCEDUREID`
+
+Show one procedure, including its steps
+
+```
+USAGE
+  $ chatbase procedures get PROCEDUREID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>]
+
+ARGUMENTS
+  PROCEDUREID  Procedure ID
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Show one procedure, including its steps
+
+EXAMPLES
+  $ chatbase procedures get 0b8f3c1e-... -a agt_123
+```
+
+_See code: [src/commands/procedures/get.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.12.0/src/commands/procedures/get.ts)_
+
+## `chatbase procedures list`
+
+List an agent's procedures, newest first (steps are not included; use `procedures get`)
+
+```
+USAGE
+  $ chatbase procedures list [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value> | -a
+    <value>] [--limit <value>] [--cursor <value>] [--all]
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --all                 Fetch every page
+      --cursor=<value>      Pagination cursor from a previous page
+      --limit=<value>       Maximum items per page
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  List an agent's procedures, newest first (steps are not included; use `procedures get`)
+
+EXAMPLES
+  $ chatbase procedures list -a agt_123
+
+  $ chatbase procedures list -a agt_123 --all --json
+```
+
+_See code: [src/commands/procedures/list.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.12.0/src/commands/procedures/list.ts)_
+
+## `chatbase procedures update PROCEDUREID`
+
+Update a procedure's name, trigger, steps, or status. Omitted properties keep their value; steps replace all steps. Changes go live at once.
+
+```
+USAGE
+  $ chatbase procedures update PROCEDUREID [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name
+    <value> | -a <value>] [--steps <value> | --step <value>...] [--name <value>] [--trigger <value>] [--status
+    enabled|disabled]
+
+ARGUMENTS
+  PROCEDUREID  Procedure ID
+
+FLAGS
+  -a, --agent=<value>       Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet               Suppress non-essential output
+      --agent-name=<value>  Agent display name (looked up to an ID)
+      --name=<value>        New name, 1-100 chars, no line breaks, unique per agent (case-insensitive)
+      --no-color            Disable colored output
+      --no-input            Never prompt; fail instead
+      --status=<option>     enabled or disabled (enabling needs every mentioned action to exist and be enabled)
+                            <options: enabled|disabled>
+      --step=<value>...     One instruction step (repeatable, single line); shorthand for --steps without branches
+      --steps=<value>       Steps as a JSON array (@file, @-, or inline): {"kind":"instruction","text":"..."} or
+                            {"kind":"branch","branches":[{"condition","steps"}],"otherwise":{"steps"}}. Mention an
+                            action as @action_name. REPLACES all steps on update
+      --trigger=<value>     When the agent should start the procedure (max 500 chars)
+      --verbose             Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Update a procedure's name, trigger, steps, or status. Omitted properties keep their value; steps replace all steps.
+  Changes go live at once.
+
+EXAMPLES
+  $ chatbase procedures update 0b8f3c1e-... --status enabled -a agt_123
+
+  $ chatbase procedures update 0b8f3c1e-... --name "Refund request" --trigger "The customer wants their money back" -a agt_123
+
+  $ chatbase procedures update 0b8f3c1e-... --steps @steps.json -a agt_123
+```
+
+_See code: [src/commands/procedures/update.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.12.0/src/commands/procedures/update.ts)_
 
 ## `chatbase sources create`
 

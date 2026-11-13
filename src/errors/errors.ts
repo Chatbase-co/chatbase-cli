@@ -62,6 +62,20 @@ const REMEDIATIONS: Record<string, string> = {
         'Through a connected app, --author-id/--author-email must be the signed-in user. Pass your own id or email.',
     TICKET_MERGED:
         'This ticket was merged into another ticket and no longer accepts replies; only moves between closed statuses are allowed. Continue on the ticket it was merged into.',
+    PLAN_FEATURE_NOT_AVAILABLE:
+        'This feature needs a higher-tier plan — upgrade at chatbase.co.',
+    ACTION_LIMIT_REACHED:
+        'Your plan caps enabled actions per agent. Disable another action with `chatbase actions update <id> --status disabled`, or upgrade.',
+    ACTION_NAME_TAKEN:
+        'Action names are compared ignoring case and treating `-` and `_` alike. Pick a different --name.',
+    ACTION_CHANGE_NOT_ALLOWED:
+        'The action cannot be put in that state (e.g. a draft cannot be enabled until its setup is finished in the dashboard). The message above says what to fix first.',
+    PROCEDURE_LIMIT_REACHED:
+        'Your plan caps enabled procedures per agent. Disable another with `chatbase procedures update <id> --status disabled`, or upgrade.',
+    PROCEDURE_NAME_TAKEN:
+        'Procedure names are unique per agent, ignoring case. Pick a different --name.',
+    PROCEDURE_CHANGE_NOT_ALLOWED:
+        'A procedure can only be enabled once every action its steps mention exists and is enabled. Enable those actions first (`chatbase actions update <id> --status enabled`).',
     TICKET_CLOSED:
         "This ticket is closed or cancelled and cannot be reopened or replied to; it can only move between closed and cancelled. Reply on the conversation's open ticket, or take over the conversation from the dashboard to open a new one."
 }

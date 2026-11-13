@@ -58,6 +58,12 @@
             "auth": {
                 "description": "Log in, log out, and inspect credentials"
             },
+            "actions": {
+                "description": "List, inspect, update, and delete an agent's actions"
+            },
+            "procedures": {
+                "description": "Create, list, inspect, update, and delete an agent's procedures"
+            },
             "sources": {
                 "description": "Manage an agent's knowledge sources (text, qna, link, file, sync)"
             },
