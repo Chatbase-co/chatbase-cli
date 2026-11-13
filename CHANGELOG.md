@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.13.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.12.0...v0.13.0) (2026-11-13)
+
+
+### Features
+
+* **actions:** add actions and procedures commands ([ea98c73](https://github.com/Chatbase-co/chatbase-cli/commit/ea98c73060655f522e9bf7623f259c3d5dfc75fb))
+* **actions:** add actions and procedures commands ([c30f4dd](https://github.com/Chatbase-co/chatbase-cli/commit/c30f4dd3b43928dd1a73ea1dbc094a2f25996ff7))
+
 ## [0.12.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.11.0...v0.12.0) (2026-11-12)
 
 
