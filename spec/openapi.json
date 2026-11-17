@@ -16416,6 +16416,251 @@
         }
       }
     },
+    "/agents/{agentId}/missions/events": {
+      "post": {
+        "operationId": "sendEvent",
+        "tags": [
+          "Events"
+        ],
+        "summary": "Send an event",
+        "description": "Records an event about a person or a mission run. Missions use events to start, wake and end runs.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The agent ID",
+              "example": "5QHA6VB-DIAbBhxwqxfdi"
+            },
+            "required": true,
+            "description": "The agent ID",
+            "name": "agentId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "pattern": "^[\\w.-]{1,100}$",
+                    "description": "Event name. A `custom.` prefix is optional: `trial_started` and `custom.trial_started` are the same event.",
+                    "example": "trial_started"
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {},
+                    "default": {},
+                    "description": "Fields of the event, at most 8 KB as JSON.",
+                    "example": {
+                      "plan": "pro"
+                    }
+                  },
+                  "subject": {
+                    "type": "object",
+                    "properties": {
+                      "run_id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "external_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                      },
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "phone": {
+                        "type": "string",
+                        "maxLength": 32,
+                        "pattern": "(\\D*\\d){3}"
+                      }
+                    },
+                    "description": "Who the event is about, exactly one of: a person by `external_id`, `email` or `phone` (the contact is created when new), or a mission run by `run_id`."
+                  },
+                  "effect": {
+                    "type": "string",
+                    "enum": [
+                      "wake",
+                      "context",
+                      "end_run"
+                    ],
+                    "description": "Required for a run subject, not allowed otherwise: wake the run, add to its context, or end it as succeeded."
+                  },
+                  "details": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "A short note for a run subject."
+                  },
+                  "idempotency_key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Sending the same key again does nothing.",
+                    "example": "signup-8812"
+                  }
+                },
+                "required": [
+                  "type",
+                  "subject"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "The event was recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The event ID"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed schema validation. Inspect the `details` object in the error response for field-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_INVALID_BODY",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "AUTH_MISSING_API_KEY",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The plan does not include Missions, the agent does not exist, or no run of this agent matches `subject.run_id`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "NOT_FOUND": {
+                    "summary": "The requested endpoint does not exist. Check the URL and HTTP method.",
+                    "value": {
+                      "error": {
+                        "code": "NOT_FOUND",
+                        "message": "not found"
+                      }
+                    }
+                  },
+                  "AGENT_NOT_FOUND": {
+                    "summary": "No agent matches the provided `agentId`, or it does not belong to the authenticated account.",
+                    "value": {
+                      "error": {
+                        "code": "AGENT_NOT_FOUND",
+                        "message": "Agent not found"
+                      }
+                    }
+                  },
+                  "EVENT_RUN_NOT_FOUND": {
+                    "summary": "No run of this agent matches `subject.run_id`. Verify the run ID.",
+                    "value": {
+                      "error": {
+                        "code": "EVENT_RUN_NOT_FOUND",
+                        "message": "The run could not be found"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An `end_run` effect was sent for a run that has already ended.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "EVENT_RUN_ENDED",
+                    "message": "This run has already ended"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                    "message": "Too many requests, please try again later"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "Something went wrong, please try again"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/agents/{agentId}/helpdesk/ticket-statuses": {
       "get": {
         "operationId": "listTicketStatuses",

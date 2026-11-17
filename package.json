@@ -73,6 +73,9 @@
             "messages": {
                 "description": "List conversation messages and set feedback"
             },
+            "events": {
+                "description": "Send events that start, wake, and end mission runs"
+            },
             "tickets": {
                 "description": "Manage helpdesk tickets and their message threads"
             },

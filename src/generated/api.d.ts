@@ -688,6 +688,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agents/{agentId}/missions/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send an event
+         * @description Records an event about a person or a mission run. Missions use events to start, wake and end runs.
+         */
+        post: operations["sendEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agents/{agentId}/helpdesk/ticket-statuses": {
         parameters: {
             query?: never;
@@ -9779,6 +9799,170 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    sendEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The agent ID */
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Event name. A `custom.` prefix is optional: `trial_started` and `custom.trial_started` are the same event.
+                     * @example trial_started
+                     */
+                    type: string;
+                    /**
+                     * @description Fields of the event, at most 8 KB as JSON.
+                     * @default {}
+                     * @example {
+                     *       "plan": "pro"
+                     *     }
+                     */
+                    properties?: {
+                        [key: string]: unknown;
+                    };
+                    /** @description Who the event is about, exactly one of: a person by `external_id`, `email` or `phone` (the contact is created when new), or a mission run by `run_id`. */
+                    subject: {
+                        /** Format: uuid */
+                        run_id?: string;
+                        external_id?: string;
+                        /** Format: email */
+                        email?: string;
+                        phone?: string;
+                    };
+                    /**
+                     * @description Required for a run subject, not allowed otherwise: wake the run, add to its context, or end it as succeeded.
+                     * @enum {string}
+                     */
+                    effect?: "wake" | "context" | "end_run";
+                    /** @description A short note for a run subject. */
+                    details?: string;
+                    /**
+                     * @description Sending the same key again does nothing.
+                     * @example signup-8812
+                     */
+                    idempotency_key?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The event was recorded */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * Format: uuid
+                         * @description The event ID
+                         */
+                        id: string;
+                    };
+                };
+            };
+            /** @description The request body failed schema validation. Inspect the `details` object in the error response for field-level errors. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_INVALID_BODY",
+                     *         "message": "Invalid request"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No Authorization header present. Provide a valid API key as a Bearer token in the Authorization header: `Authorization: Bearer <api-key>`. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AUTH_MISSING_API_KEY",
+                     *         "message": "Authentication required"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The plan does not include Missions, the agent does not exist, or no run of this agent matches `subject.run_id`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An `end_run` effect was sent for a run that has already ended. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "EVENT_RUN_ENDED",
+                     *         "message": "This run has already ended"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit exceeded. Check the `X-RateLimit-Reset` response header for the Unix epoch seconds when the limit resets. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMIT_TOO_MANY_REQUESTS",
+                     *         "message": "Too many requests, please try again later"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An unhandled server error occurred. If the issue persists, contact support with the `x-request-id` response header value for debugging. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INTERNAL_SERVER_ERROR",
+                     *         "message": "Something went wrong, please try again"
+                     *       }
+                     *     }
+                     */
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };

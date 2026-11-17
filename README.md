@@ -67,6 +67,7 @@ calls you invoke.
 * [`chatbase conversations resume [CONVERSATIONID]`](#chatbase-conversations-resume-conversationid)
 * [`chatbase conversations search [QUERY]`](#chatbase-conversations-search-query)
 * [`chatbase conversations tool-result [CONVERSATIONID]`](#chatbase-conversations-tool-result-conversationid)
+* [`chatbase events send TYPE`](#chatbase-events-send-type)
 * [`chatbase health`](#chatbase-health)
 * [`chatbase help [COMMAND]`](#chatbase-help-command)
 * [`chatbase helpdesk activity`](#chatbase-helpdesk-activity)
@@ -1336,6 +1337,52 @@ EXAMPLES
 ```
 
 _See code: [src/commands/conversations/tool-result.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.13.0/src/commands/conversations/tool-result.ts)_
+
+## `chatbase events send TYPE`
+
+Record an event about a person or a mission run. Missions use events to start, wake and end runs
+
+```
+USAGE
+  $ chatbase events send TYPE [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color] [--agent-name <value>
+    | -a <value>] [--external-id <value>] [--email <value>] [--phone <value>] [--run-id <value>] [--effect
+    wake|context|end_run] [--details <value>] [--properties <value>] [--idempotency-key <value>]
+
+ARGUMENTS
+  TYPE  Event name (letters, digits, _ . -, up to 100). A `custom.` prefix is optional
+
+FLAGS
+  -a, --agent=<value>            Agent ID (or set CHATBASE_AGENT_ID)
+  -q, --quiet                    Suppress non-essential output
+      --agent-name=<value>       Agent display name (looked up to an ID)
+      --details=<value>          Short note for a run subject (max 500 chars)
+      --effect=<option>          For --run-id only: wake the run, add to its context, or end it as succeeded
+                                 <options: wake|context|end_run>
+      --email=<value>            Person by email; the contact is created when new (exactly one subject flag)
+      --external-id=<value>      Person to record the event about, by your own ID (exactly one of
+                                 --external-id/--email/--phone/--run-id)
+      --idempotency-key=<value>  Sending the same key again does nothing (max 200 chars)
+      --no-color                 Disable colored output
+      --no-input                 Never prompt; fail instead
+      --phone=<value>            Person by phone number; the contact is created when new (exactly one subject flag)
+      --properties=<value>       Event fields as a JSON object, at most 8 KB (inline, @file, or @- for stdin)
+      --run-id=<value>           Mission run (UUID) to act on; requires --effect (exactly one subject flag)
+      --verbose                  Verbose diagnostics
+
+OUTPUT FLAGS
+  --json   Output raw API JSON
+  --plain  Tab-separated output for scripts
+
+DESCRIPTION
+  Record an event about a person or a mission run. Missions use events to start, wake and end runs
+
+EXAMPLES
+  $ chatbase events send trial_started --email ada@example.com --properties '{"plan":"pro"}' -a agt_123
+
+  $ chatbase events send follow_up --run-id 6f1c2d3e-0000-4000-8000-000000000000 --effect wake -a agt_123
+```
+
+_See code: [src/commands/events/send.ts](https://github.com/Chatbase-co/chatbase-cli/blob/v0.13.0/src/commands/events/send.ts)_
 
 ## `chatbase health`
 
