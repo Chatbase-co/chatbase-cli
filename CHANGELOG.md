@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.14.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.13.0...v0.14.0) (2026-11-17)
+
+
+### Features
+
+* **events:** add events send command for mission events ([d503ecc](https://github.com/Chatbase-co/chatbase-cli/commit/d503ecc437bb1785cbd082404043bd2c54d879e8))
+* **events:** add events send command for mission events ([23eb6f4](https://github.com/Chatbase-co/chatbase-cli/commit/23eb6f4ed4dd993711ea88df54252cdba7349bf6))
+
 ## [0.13.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.12.0...v0.13.0) (2026-11-13)
 
 
