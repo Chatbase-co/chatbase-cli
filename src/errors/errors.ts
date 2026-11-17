@@ -31,6 +31,10 @@ export class ApiError extends Error {
  * only add "here's what to do about it".
  */
 const REMEDIATIONS: Record<string, string> = {
+    EVENT_RUN_NOT_FOUND:
+        'No run of this agent matches --run-id. Check the run ID and that it belongs to this agent.',
+    EVENT_RUN_ENDED:
+        'This run has already ended, so end_run cannot be sent again. Use --effect wake or context on a live run.',
     AUTH_MISSING_API_KEY:
         'Run `chatbase auth login`, or set CHATBASE_API_KEY. Keys live in chatbase.co → Workspace Settings → API Keys.',
     AUTH_INVALID_API_KEY:
