@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.15.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.14.0...v0.15.0) (2026-11-28)
+
+
+### Features
+
+* **tickets:** add --attach to tickets reply and sync spec ([3f31caf](https://github.com/Chatbase-co/chatbase-cli/commit/3f31caffe19d093c419a8f9bc94a02ae1c0b6c6b))
+* **tickets:** add --attach to tickets reply and sync spec ([b709121](https://github.com/Chatbase-co/chatbase-cli/commit/b70912175338edb48091a1fbf374940b8cda36cb))
+
 ## [0.14.0](https://github.com/Chatbase-co/chatbase-cli/compare/v0.13.0...v0.14.0) (2026-11-17)
 
 
