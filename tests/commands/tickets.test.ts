@@ -2,7 +2,15 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { MockAgent, setGlobalDispatcher } from 'undici'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+    afterAll,
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi
+} from 'vitest'
 import HelpdeskStatuses from '../../src/commands/helpdesk/statuses.js'
 import HelpdeskTeams from '../../src/commands/helpdesk/teams.js'
 import TicketsCreate from '../../src/commands/tickets/create.js'
@@ -389,6 +397,14 @@ describe('chatbase tickets messages', () => {
 })
 
 describe('chatbase tickets reply', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cb-att-'))
+    afterAll(() => fs.rmSync(tmpDir, { recursive: true, force: true }))
+    const tmpFile = (name: string, content: string | Buffer) => {
+        const file = path.join(tmpDir, name)
+        fs.writeFileSync(file, content)
+        return file
+    }
+
     it('POSTs {type, content, authorEmail} and prints a success note', async () => {
         let sentBody = ''
         mock.get(BASE)
@@ -507,6 +523,179 @@ describe('chatbase tickets reply', () => {
                 process.cwd()
             )
         ).rejects.toMatchObject({ oclif: { exit: 2 } })
+    })
+
+    it('--attach sends base64 attachments and allows an empty message', async () => {
+        const file = tmpFile('note.txt', 'hello')
+        let sentBody = ''
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/helpdesk/tickets/42/messages',
+                method: 'POST'
+            })
+            .reply(201, (opts) => {
+                sentBody = bodyText(opts.body)
+                return { id: 'msg_5', type: 'reply' }
+            })
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await TicketsReply.run(
+            ['42', '--attach', file, '--author-email', 'sam@example.com'],
+            process.cwd()
+        )
+        expect(JSON.parse(sentBody)).toEqual({
+            type: 'reply',
+            content: '',
+            attachments: [
+                {
+                    name: 'note.txt',
+                    type: 'text/plain',
+                    data: Buffer.from('hello').toString('base64')
+                }
+            ],
+            authorEmail: 'sam@example.com'
+        })
+    })
+
+    it('rejects a reply with neither message nor attachment', async () => {
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            TicketsReply.run(
+                ['42', '--author-email', 'sam@example.com'],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+    })
+
+    it('shows remediation for TICKET_ATTACHMENT_UNSAFE', async () => {
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/helpdesk/tickets/42/messages',
+                method: 'POST'
+            })
+            .reply(422, {
+                error: { code: 'TICKET_ATTACHMENT_UNSAFE', message: 'unsafe' }
+            })
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            TicketsReply.run(
+                [
+                    '42',
+                    '--attach',
+                    tmpFile('run.txt', 'MZ'),
+                    '--author-email',
+                    'sam@example.com'
+                ],
+                process.cwd()
+            )
+        ).rejects.toBeDefined()
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            'executable'
+        )
+    })
+
+    it('falls back to application/octet-stream for unknown extensions', async () => {
+        let sentBody = ''
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/helpdesk/tickets/42/messages',
+                method: 'POST'
+            })
+            .reply(201, (opts) => {
+                sentBody = bodyText(opts.body)
+                return { id: 'msg_6', type: 'reply' }
+            })
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await TicketsReply.run(
+            [
+                '42',
+                '--attach',
+                tmpFile('blob.xyz', 'x'),
+                '--author-email',
+                'sam@example.com'
+            ],
+            process.cwd()
+        )
+        expect(JSON.parse(sentBody).attachments[0].type).toBe(
+            'application/octet-stream'
+        )
+    })
+
+    it('accepts the ticket number after --attach', async () => {
+        let sentBody = ''
+        mock.get(BASE)
+            .intercept({
+                path: '/api/v2/agents/agt_1/helpdesk/tickets/42/messages',
+                method: 'POST'
+            })
+            .reply(201, (opts) => {
+                sentBody = bodyText(opts.body)
+                return { id: 'msg_7', type: 'reply' }
+            })
+        vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await TicketsReply.run(
+            [
+                '--attach',
+                tmpFile('note.txt', 'x'),
+                '42',
+                '--author-email',
+                'sam@example.com'
+            ],
+            process.cwd()
+        )
+        expect(JSON.parse(sentBody).attachments).toHaveLength(1)
+    })
+
+    const MB = 1024 * 1024
+    it.each([
+        [
+            'a blank message and no attachment',
+            () => ['-m', '  '],
+            'Pass a message'
+        ],
+        [
+            'more than 5 attachments',
+            () =>
+                Array(6)
+                    .fill(['--attach', tmpFile('a.txt', 'x')])
+                    .flat(),
+            'At most 5'
+        ],
+        [
+            'an attachment over 3 MB',
+            () => ['--attach', tmpFile('big.txt', Buffer.alloc(3 * MB + 1))],
+            'over the 3 MB limit'
+        ],
+        [
+            'attachments over the request total',
+            () => [
+                '--attach',
+                tmpFile('a.txt', Buffer.alloc(2 * MB)),
+                '--attach',
+                tmpFile('b.txt', Buffer.alloc(2 * MB))
+            ],
+            'too large together'
+        ],
+        [
+            'a directory as attachment',
+            () => ['--attach', tmpDir],
+            'Not a regular file'
+        ],
+        [
+            'an unreadable attachment',
+            () => ['--attach', path.join(tmpDir, 'missing.txt')],
+            'File not found'
+        ]
+    ])('rejects %s before calling the API', async (_name, extra, message) => {
+        const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+        await expect(
+            TicketsReply.run(
+                ['42', ...extra(), '--author-email', 'sam@example.com'],
+                process.cwd()
+            )
+        ).rejects.toMatchObject({ oclif: { exit: 2 } })
+        expect(err.mock.calls.map((c) => String(c[0])).join('')).toContain(
+            message
+        )
     })
 
     it('rejects when neither --author-id nor --author-email is given', async () => {

@@ -2274,18 +2274,20 @@ Post an agent reply to a ticket's message thread
 
 ```
 USAGE
-  $ chatbase tickets reply [TICKETNUMBER] -m <value> [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
-    [--agent-name <value> | -a <value>] [--ticket <value>] [--type reply|note] [--author-id <value>] [--author-email
-    <value>]
+  $ chatbase tickets reply [TICKETNUMBER] [--json] [--plain] [-q] [--verbose] [--no-input] [--no-color]
+    [--agent-name <value> | -a <value>] [--ticket <value>] [--type reply|note] [-m <value>] [--attach <value>...]
+    [--author-id <value>] [--author-email <value>]
 
 ARGUMENTS
   [TICKETNUMBER]  Ticket number (alternative to --ticket)
 
 FLAGS
   -a, --agent=<value>         Agent ID (or set CHATBASE_AGENT_ID)
-  -m, --message=<value>       (required) Message body as GitHub-flavored Markdown
+  -m, --message=<value>       Message body as GitHub-flavored Markdown (may be omitted when --attach is given)
   -q, --quiet                 Suppress non-essential output
       --agent-name=<value>    Agent display name (looked up to an ID)
+      --attach=<value>...     File to attach; repeat for more (max 5 files, about 3 MB in total). Executables and files
+                              whose content does not match their extension are rejected
       --author-email=<value>  Email of the team member the reply is attributed to (exactly one of
                               --author-id/--author-email)
       --author-id=<value>     Platform user id of the team member the reply is attributed to (exactly one of
@@ -2307,6 +2309,8 @@ DESCRIPTION
 
 EXAMPLES
   $ chatbase tickets reply 42 -m "On it" --author-email sam@example.com -a agt_123
+
+  $ chatbase tickets reply 42 -m "See screenshots" --attach before.png --attach after.png --author-email sam@example.com -a agt_123
 
   $ chatbase tickets reply 42 -m "Called customer" --type note --author-email sam@example.com -a agt_123
 ```
