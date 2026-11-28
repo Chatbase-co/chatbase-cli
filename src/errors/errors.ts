@@ -80,6 +80,8 @@ const REMEDIATIONS: Record<string, string> = {
         'Procedure names are unique per agent, ignoring case. Pick a different --name.',
     PROCEDURE_CHANGE_NOT_ALLOWED:
         'A procedure can only be enabled once every action its steps mention exists and is enabled. Enable those actions first (`chatbase actions update <id> --status enabled`).',
+    TICKET_ATTACHMENT_UNSAFE:
+        'An attachment is an executable or its content does not match its file extension. Remove it or attach a genuine document/image.',
     TICKET_CLOSED:
         "This ticket is closed or cancelled and cannot be reopened or replied to; it can only move between closed and cancelled. Reply on the conversation's open ticket, or take over the conversation from the dashboard to open a new one."
 }
@@ -93,6 +95,7 @@ const REMEDIATIONS: Record<string, string> = {
  */
 const STATUS_REMEDIATIONS: Record<number, string> = {
     404: 'Resource not found — check the ID (agent IDs live in your dashboard).',
+    413: 'The request body is too large. Send smaller or fewer files, or less data.',
     429: 'Rate limited — the CLI already retried; wait for the reset and try again.'
 }
 

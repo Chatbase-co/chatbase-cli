@@ -461,7 +461,7 @@
               "auto"
             ],
             "description": "AI model used by the agent. Can be a deprecated model for agents that were configured before it was retired.",
-            "example": "gpt-5.6-terra"
+            "example": "gpt-6.1-terra"
           },
           "autoRetrain": {
             "type": "boolean",
@@ -1503,9 +1503,7 @@
             "enum": [
               "gpt-oss-120b",
               "gpt-oss-20b",
-              "gpt-5.2",
               "gpt-5.5",
-              "gpt-5.6-terra",
               "gpt-6.1-sol",
               "gpt-6.1-terra",
               "gpt-6-luna",
@@ -1532,7 +1530,7 @@
               "auto"
             ],
             "description": "AI model to use",
-            "example": "gpt-5.6-terra"
+            "example": "gpt-6.1-terra"
           },
           "temp": {
             "type": "number",
@@ -1953,9 +1951,7 @@
             "enum": [
               "gpt-oss-120b",
               "gpt-oss-20b",
-              "gpt-5.2",
               "gpt-5.5",
-              "gpt-5.6-terra",
               "gpt-6.1-sol",
               "gpt-6.1-terra",
               "gpt-6-luna",
@@ -1982,7 +1978,7 @@
               "auto"
             ],
             "description": "AI model",
-            "example": "gpt-5.6-terra"
+            "example": "gpt-6.1-terra"
           },
           "temp": {
             "type": "number",
@@ -2496,9 +2492,7 @@
                 "enum": [
                   "gpt-oss-120b",
                   "gpt-oss-20b",
-                  "gpt-5.2",
                   "gpt-5.5",
-                  "gpt-5.6-terra",
                   "gpt-6.1-sol",
                   "gpt-6.1-terra",
                   "gpt-6-luna",
@@ -8150,10 +8144,39 @@
           },
           "content": {
             "type": "string",
-            "minLength": 1,
             "maxLength": 10000,
-            "description": "Message body as GitHub-flavored Markdown. Plain text is valid markdown; single newlines are kept as line breaks. Raw inline HTML is stripped. Limited to 10,000 characters after trimming.",
+            "description": "Message body as GitHub-flavored Markdown. Plain text is valid markdown; single newlines are kept as line breaks. Raw inline HTML is stripped. Limited to 10,000 characters after trimming. May be empty when `attachments` are sent.",
             "example": "Thanks for reaching out. This is **fixed** now."
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "File name, including its extension"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "MIME type of the file",
+                  "example": "image/png"
+                },
+                "data": {
+                  "type": "string",
+                  "maxLength": 4194304,
+                  "description": "File contents, base64-encoded"
+                }
+              },
+              "required": [
+                "name",
+                "type",
+                "data"
+              ]
+            },
+            "maxItems": 5,
+            "description": "Files to attach, up to 5. Each file can be up to 3 MB, and the whole request body is limited to about 4 MB. Executables and other unsafe files are rejected."
           },
           "authorId": {
             "type": "string",
@@ -14466,7 +14489,7 @@
           "Actions"
         ],
         "summary": "Get an action",
-        "description": "Returns one action, including when the agent should use it, the fields it collects and the channels it can run on. Other configuration is not included.",
+        "description": "Returns one action, including when the agent should use it, the fields it collects and the channels it can run on. When a Collect data action collects through a form, its fields are managed in the dashboard and are not listed. Other configuration is not included.",
         "security": [
           {
             "bearerAuth": []
@@ -19087,7 +19110,7 @@
             }
           },
           "422": {
-            "description": "The authorId or authorEmail does not resolve to a member of your account. Authors must be existing team members. Also returned with code `MESSAGE_CONTENT_NOT_RENDERABLE` when the message body renders to empty HTML.",
+            "description": "The authorId or authorEmail does not resolve to a member of your account. Authors must be existing team members. Also returned with code `MESSAGE_CONTENT_NOT_RENDERABLE` when the message body renders to empty HTML, and `TICKET_ATTACHMENT_UNSAFE` when an attachment is an executable or its content does not match its extension.",
             "content": {
               "application/json": {
                 "schema": {

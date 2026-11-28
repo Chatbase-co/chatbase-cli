@@ -577,7 +577,7 @@ export interface paths {
         };
         /**
          * Get an action
-         * @description Returns one action, including when the agent should use it, the fields it collects and the channels it can run on. Other configuration is not included.
+         * @description Returns one action, including when the agent should use it, the fields it collects and the channels it can run on. When a Collect data action collects through a form, its fields are managed in the dashboard and are not listed. Other configuration is not included.
          */
         get: operations["getAction"];
         put?: never;
@@ -1038,7 +1038,7 @@ export interface components {
             } | null;
             /**
              * @description AI model used by the agent. Can be a deprecated model for agents that were configured before it was retired.
-             * @example gpt-5.6-terra
+             * @example gpt-6.1-terra
              * @enum {string}
              */
             model: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6.1-terra" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
@@ -1328,10 +1328,10 @@ export interface components {
             instructions?: string;
             /**
              * @description AI model to use
-             * @example gpt-5.6-terra
+             * @example gpt-6.1-terra
              * @enum {string}
              */
-            model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6.1-terra" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.5" | "gpt-6.1-sol" | "gpt-6.1-terra" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /**
              * @description Model temperature (0–1)
              * @example 0
@@ -1425,10 +1425,10 @@ export interface components {
             } | null;
             /**
              * @description AI model
-             * @example gpt-5.6-terra
+             * @example gpt-6.1-terra
              * @enum {string}
              */
-            model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6.1-terra" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+            model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.5" | "gpt-6.1-sol" | "gpt-6.1-terra" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
             /** @description Temperature (0–1) */
             temp?: number;
             /**
@@ -1605,7 +1605,7 @@ export interface components {
                  * @example gpt-6-luna
                  * @enum {string}
                  */
-                model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.2" | "gpt-5.5" | "gpt-5.6-terra" | "gpt-6.1-sol" | "gpt-6.1-terra" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
+                model?: "gpt-oss-120b" | "gpt-oss-20b" | "gpt-5.5" | "gpt-6.1-sol" | "gpt-6.1-terra" | "gpt-6-luna" | "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5" | "gemini-2.5-pro" | "gemini-3-flash" | "gemini-3.1-flash-lite" | "gemini-3.1-pro" | "gemini-3.5-flash-lite" | "gemini-3.6-flash" | "gemini-3.8-flash" | "grok-4.7" | "DeepSeek-V3.1" | "DeepSeek-R1" | "DeepSeek-V4-Flash" | "DeepSeek-V4.1-Flash" | "kimi-k2.6" | "mistral-medium-3.5" | "mistral-small-2603" | "glm-5.2" | "glm-5.3-flash" | "auto";
                 /**
                  * @description Randomness of voice responses (0–1). 0 = deterministic and focused, 1 = more varied and creative.
                  * @example 0
@@ -3640,10 +3640,22 @@ export interface components {
              */
             type: "reply" | "note";
             /**
-             * @description Message body as GitHub-flavored Markdown. Plain text is valid markdown; single newlines are kept as line breaks. Raw inline HTML is stripped. Limited to 10,000 characters after trimming.
+             * @description Message body as GitHub-flavored Markdown. Plain text is valid markdown; single newlines are kept as line breaks. Raw inline HTML is stripped. Limited to 10,000 characters after trimming. May be empty when `attachments` are sent.
              * @example Thanks for reaching out. This is **fixed** now.
              */
             content: string;
+            /** @description Files to attach, up to 5. Each file can be up to 3 MB, and the whole request body is limited to about 4 MB. Executables and other unsafe files are rejected. */
+            attachments?: {
+                /** @description File name, including its extension */
+                name: string;
+                /**
+                 * @description MIME type of the file
+                 * @example image/png
+                 */
+                type: string;
+                /** @description File contents, base64-encoded */
+                data: string;
+            }[];
             /**
              * Format: uuid
              * @description Platform user id of the team member the reply is attributed to. Provide exactly one of authorId / authorEmail.
@@ -11456,7 +11468,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description The authorId or authorEmail does not resolve to a member of your account. Authors must be existing team members. Also returned with code `MESSAGE_CONTENT_NOT_RENDERABLE` when the message body renders to empty HTML. */
+            /** @description The authorId or authorEmail does not resolve to a member of your account. Authors must be existing team members. Also returned with code `MESSAGE_CONTENT_NOT_RENDERABLE` when the message body renders to empty HTML, and `TICKET_ATTACHMENT_UNSAFE` when an attachment is an executable or its content does not match its extension. */
             422: {
                 headers: {
                     [name: string]: unknown;
